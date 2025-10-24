@@ -17,7 +17,7 @@ author:
     email: amaruaguero2004@gmail.com
     orcid: 0000-0001-7336-1833
 description: |
- A small part of the research done and available in https://www.nucleondp.cl/ 
+ Funded by project FONDECYT regular 1191282
 title-block-banner: "#00000"
 lang: en
 format: 
