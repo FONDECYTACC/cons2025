@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Defs_OnsetResolution" targetNamespace="http://example.com/onset-resolution" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.6.1">
+  <bpmn:process id="Process_OnsetResolution" name="Resolve Onset Ages (ANY &#38; PRIMARY) from C2–C6 + C1 bounds" isExecutable="false">
+    <bpmn:startEvent id="Start" name="Start" />
+    <bpmn:task id="LoadExcel" name="Load object w/ inconsistencies&#10;(invalid_age_onset_ext_info_w_c2c6)" />
+    <bpmn:task id="ComputeBounds" name="Compute Bounds">
+      <bpmn:documentation>
+        ANY: LB=5; UB=min_adm_age_rec3-1
+        PRIMARY(sub): LB=max(5, onset_any_final); UB=min(c1_min_adm_age_by_subs -1, min_adm_age_rec3 -1)
+      </bpmn:documentation>
+    </bpmn:task>
+    <bpmn:subProcess id="ResolveANY" name="Resolve ANY onset&#10;(mode → median)">
+      <bpmn:documentation>
+        Candidate pool: all *_age_subs_onset* columns.
+        Filter to [LB_any, UB_any], 5–80, &lt; min_adm_age_rec3.
+        Pick mode (smallest on tie), else median; else unresolved.
+        PROC_ANY: ANY=mode[...] / ANY=median[...] / ANY=unresolved.
+        FLAG_ANY: UB missing, LB&gt;UB, or no candidate in range.
+      </bpmn:documentation>
+    </bpmn:subProcess>
+    <bpmn:subProcess id="ResolvePRIMARY" name="Resolve PRIMARY onset per&#10;(hash × substance)">
+      <bpmn:documentation>
+        Candidate pool: c[1-6]_age_prim_subs_onset*_mean_* columns (per standardized substance).
+        Filter to [LB_primary, UB_primary], 5–80.
+        Enforce PRIMARY ≥ ANY (if ANY exists) — otherwise NA + conflict flag.
+        Pick mode (smallest on tie), else median; else unresolved.
+        PROC_PRIMARY: PRIMARY=mode[...] / PRIMARY=median[...] / PRIMARY=unresolved.
+        FLAG_PRIMARY: UB missing, LB&gt;UB, primary&lt;any, or no candidate in range.
+      </bpmn:documentation>
+    </bpmn:subProcess>
+    <bpmn:task id="Compose" name="Compose PROC &#38; FLAG + resolved values">
+      <bpmn:documentation>
+        PROC = PROC_ANY | PROC_PRIMARY
+        FLAG = FLAG_ANY ; FLAG_PRIMARY
+        Outputs:
+          onset_any_final, LB_any, UB_any
+          onset_primary_final, LB_primary, UB_primary
+      </bpmn:documentation>
+    </bpmn:task>
+    <bpmn:task id="QASummary" name="QA Summary (counts)">
+      <bpmn:documentation>
+        any_resolved, any_unresolved,
+        primary_resolved, primary_unresolved
+      </bpmn:documentation>
+    </bpmn:task>
+    <bpmn:endEvent id="End" name="End" />
+    <bpmn:sequenceFlow id="f1" sourceRef="Start" targetRef="LoadExcel" />
+    <bpmn:sequenceFlow id="f2" sourceRef="LoadExcel" targetRef="ComputeBounds" />
+    <bpmn:sequenceFlow id="f3" sourceRef="ComputeBounds" targetRef="ResolveANY" />
+    <bpmn:sequenceFlow id="f4" sourceRef="ResolveANY" targetRef="ResolvePRIMARY" />
+    <bpmn:sequenceFlow id="f5" sourceRef="ResolvePRIMARY" targetRef="Compose" />
+    <bpmn:sequenceFlow id="f6" sourceRef="Compose" targetRef="QASummary" />
+    <bpmn:sequenceFlow id="f7" sourceRef="QASummary" targetRef="End" />
+    <bpmn:textAnnotation id="AnnInputs">
+      <bpmn:text>Inputs from table:
+• *_age_subs_onset* (ANY candidates)
+• c[1-6]_age_prim_subs_onset*_mean_* (PRIMARY candidates)
+• min_adm_age_rec3 (minimum age at admission)
+• c1_min_adm_age_by_subs_* (one col per substance)</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="AnnRules">
+      <bpmn:text>Global rules:
+• Ages in [5,80]
+• ANY value &lt; minimum age at admission
+• PRIMARY(sub) &lt; min(c1_min_adm_age_by_subs, min_adm_age_rec3)
+• PRIMARY ≥ ANY (if ANY exists)</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="a1" sourceRef="LoadExcel" targetRef="AnnInputs" />
+    <bpmn:association id="a2" sourceRef="ComputeBounds" targetRef="AnnRules" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diag_OnsetResolution">
+    <bpmndi:BPMNPlane id="Plane_OnsetResolution" bpmnElement="Process_OnsetResolution">
+      <bpmndi:BPMNShape id="s_ComputeBounds" bpmnElement="ComputeBounds">
+        <dc:Bounds x="580" y="285" width="240" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_LoadExcel" bpmnElement="LoadExcel">
+        <dc:Bounds x="590" y="172" width="220" height="56" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_Start" bpmnElement="Start">
+        <dc:Bounds x="682" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="687" y="83" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_Compose" bpmnElement="Compose">
+        <dc:Bounds x="570" y="672" width="260" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_End" bpmnElement="End">
+        <dc:Bounds x="682" y="882" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="690" y="923" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_QA" bpmnElement="QASummary">
+        <dc:Bounds x="595" y="782" width="210" height="56" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_ResolvePRIMARY" bpmnElement="ResolvePRIMARY" isExpanded="false">
+        <dc:Bounds x="570" y="540" width="260" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_ResolveANY" bpmnElement="ResolveANY" isExpanded="false">
+        <dc:Bounds x="595" y="410" width="210" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="e_a2" bpmnElement="a2">
+        <di:waypoint x="580" y="320" />
+        <di:waypoint x="520" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_a1" bpmnElement="a1">
+        <di:waypoint x="590" y="200" />
+        <di:waypoint x="520" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="s_AnnRules" bpmnElement="AnnRules">
+        <dc:Bounds x="160" y="271" width="359.99363687782807" height="98.41628959276018" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="s_AnnInputs" bpmnElement="AnnInputs">
+        <dc:Bounds x="160" y="150" width="359.99363687782807" height="83.710407239819" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="e_f7" bpmnElement="f7">
+        <di:waypoint x="700" y="838" />
+        <di:waypoint x="700" y="882" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f6" bpmnElement="f6">
+        <di:waypoint x="700" y="728" />
+        <di:waypoint x="700" y="782" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f5" bpmnElement="f5">
+        <di:waypoint x="700" y="620" />
+        <di:waypoint x="700" y="672" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f2" bpmnElement="f2">
+        <di:waypoint x="700" y="228" />
+        <di:waypoint x="700" y="285" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f3" bpmnElement="f3">
+        <di:waypoint x="700" y="355" />
+        <di:waypoint x="700" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f1" bpmnElement="f1">
+        <di:waypoint x="700" y="138" />
+        <di:waypoint x="700" y="172" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="e_f4" bpmnElement="f4">
+        <di:waypoint x="700" y="490" />
+        <di:waypoint x="700" y="540" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane bpmnElement="ResolveANY" />
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram>
+    <bpmndi:BPMNPlane bpmnElement="ResolvePRIMARY" />
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

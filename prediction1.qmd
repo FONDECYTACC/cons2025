@@ -1,0 +1,3329 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022 (Prediction, step 1)"
+description: |
+  The dataset is enriched with derived variables, clinically meaningful recodings, and grouped diagnostic categories, while excluding patients still in treatment or with truncated admission dates. This results in a person-level dataset suitable for semi-competing risks modeling, where each row represents a unique index treatment episode with associated covariates and event times.
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-depth: 5
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.superbigimage {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+.superbigimage img, 
+.superbigimage svg {
+  max-width: none;
+  height: auto;
+}
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+<div class="scrollable-content">
+```{r load}
+#| message: false
+#| include: true
+#| warning: false
+#| results: "hold"
+
+# invisible("Only run from Ubuntu")
+# if (!(Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv"))) {
+#   if(Sys.info()["sysname"]!="Windows"){
+#     Sys.setenv(RETICULATE_PYTHON = "/home/fondecytacc/.pyenv/versions/3.11.5/bin/python")
+#   }
+# }
+
+#clean enviroment
+rm(list = ls()); gc()
+
+time_before_dedup2<-Sys.time()
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+find_python_rel <- function(start = getwd(),
+                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+    if (file.exists(cand)) return(cand)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+    cur <- parent
+  }
+}
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+if(Sys.info()["sysname"]!="Windows"){
+  Sys.setenv(RETICULATE_PYTHON = "usr/bin/python3")
+  reticulate::py_config()
+} else {
+  py <- find_python_rel()
+  if (is.na(py)) {
+    stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+         "Directorio actual: ", getwd())
+  }
+  # Forzar ese intérprete
+  Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+  Sys.setenv(RETICULATE_PYTHON = py)
+  reticulate::use_python(py, required=T)
+  reticulate::py_config()  # verificación
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# --- Load 250927_c1_1025_df_prev1y.rds (simple, project-root aware, no functions) ---
+
+# 1) Locate the file anywhere under the project root (current WD with a trailing "/cons" trimmed)
+project_root <- sub("(/)?cons/?$", "", normalizePath(getwd(), winslash = "/", mustWork = FALSE))
+fname        <- "251001_c1_1025_df_prev1y.rds"
+
+hits <- list.files(project_root, pattern = paste0("^", fname, "$"),
+                   recursive = TRUE, full.names = TRUE)
+
+if (!length(hits)) stop("File not found: ", fname, "\nSearched under: ", project_root)
+path <- hits[1]  # take first match
+
+message("Loading: ", path)
+
+# 2) Read into a dedicated environment (keeps .GlobalEnv clean)
+env_prev1y <- new.env(parent = emptyenv())
+obj        <- readRDS(path)
+assign("SISTRAT23_c1_2010_2024_df_prev1y", obj, envir = env_prev1y)
+rm(obj)
+
+# 3) Quick sanity check
+with(env_prev1y$SISTRAT23_c1_2010_2024_df_prev1y, { message("Rows: ", nrow(env_prev1y$SISTRAT23_c1_2010_2024_df_prev1y), " | Cols: ", ncol(env_prev1y$SISTRAT23_c1_2010_2024_df_prev1y));  print(str(env_prev1y$SISTRAT23_c1_2010_2024_df_prev1y))})
+SISTRAT23_c1_2010_2024_df_prev1y<- 
+env_prev1y$SISTRAT23_c1_2010_2024_df_prev1y
+
+rm(env_prev1y)
+# (Optional) If you want it in the global env, uncomment:
+# list2env(env_prev1y, envir = .GlobalEnv)
+```
+</div>
+
+<div class="scrollable-content">
+```{r setup}
+#| results: "hold"
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#only use explicit dependencies (in DESCRIPTION)
+renv::settings$snapshot.type("implicit")
+
+#check if rstools is installed
+if(Sys.info()["sysname"]=="Windows"){
+try(installr::install.Rtools(check_r_update=F))
+}
+
+check_quarto_version <- function(required = "1.7.29", comparator = c("ge","gt","le","lt","eq")) {
+  comparator <- match.arg(comparator)
+  current <- package_version(paste(unlist(quarto::quarto_version()), collapse = "."))
+  req     <- package_version(required)
+
+  ok <- switch(comparator,
+               ge = current >= req,
+               gt = current >  req,
+               le = current <= req,
+               lt = current <  req,
+               eq = current == req)
+
+  if (!ok) {
+    stop(sprintf("Quarto version check failed: need %s %s (installed: %s).",
+                 comparator, required, current), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+check_quarto_version("1.7.29", "ge") 
+
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+if(!require(pak)){install.packages("pak");require(pak)}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+
+#check docker
+check_docker_running <- function() {
+  # Try running 'docker info' to check if Docker is running
+  system("docker info", intern = TRUE, ignore.stderr = TRUE)
+}
+if(Sys.info()["sysname"]=="Windows"){
+  install_docker <- function() {
+    # Open the Docker Desktop download page in the browser for installation
+    browseURL("https://www.docker.com/products/docker-desktop")
+  }
+  # Main logic
+  if (inherits(try(check_docker_running(), silent = TRUE), "try-error")) {
+    liftr::install_docker()
+  } else {
+    message("Docker is running.")
+  }
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+unlink("*_cache", recursive=T)
+
+# ----------------------------------------------------------------------
+# 2. Use a single pak::pkg_install() call for most CRAN packages
+# ----------------------------------------------------------------------
+
+paks <-
+  c(#"git", 
+    # To connect to github
+    "gh", #interface for  GitHub API from R
+    #
+    "gitcreds", # manages Git credentials (usernames, passwords, tokens)
+    #
+    "usethis", # simplifies common project setup tasks for R developers
+    # Package to bring packages in development
+    "devtools",
+    # Package administration
+    "renv",
+    # To manipulate data
+    "knitr", "pander", "DT",
+    # Join
+    "fuzzyjoin", "RecordLinkage",
+    # For tables
+    "tidyverse", "janitor",
+    # For contingency tables
+    "kableExtra",
+    # For connections with python
+    "reticulate",
+    # To manipulate big data
+    "polars", "sqldf",
+    # To bring big databases
+    "nanoparquet",
+    # Interface for R and RStudio in R
+    "installr", "rmarkdown", "quarto", "yaml", #"rstudioapi",
+    # Time handling
+    "clock",
+    # Combine plots
+    "ggpubr",
+    # Parallelized iterative processing
+    "furrr",
+    # Work like a tibble with a data.table database
+    "tidytable",
+    # Split database into training and testing
+    "caret",
+    # Impute missing data
+    "missRanger", "mice",
+    # To modularize tasks
+    "job",
+    # For PhantomJS install checks
+    "webshot"
+  )
+
+# dplyr
+# janitor
+# reshape2
+# tidytable
+# arrow
+# boot
+# broom
+# car
+# caret
+# data.table
+# DiagrammeR
+# DiagrammeRsvg
+# dplyr
+# epiR
+# epitools
+# ggplot2
+# glue
+# htmlwidgets
+# knitr
+# lubridate
+# naniar
+# parallel
+# polycor
+# pROC
+# psych
+# readr
+# rio
+# rsvg
+# scales
+# stringr
+# tableone
+# rmarkdown
+# biostat3
+# codebook
+# finalfit
+# Hmisc
+# kableExtra
+# knitr
+# devtools
+# tidyr
+# stringi
+# stringr
+# muhaz
+# sqldf
+# compareGroups
+# survminer
+# lubridate
+# ggfortify
+# car
+# fuzzyjoin
+# compareGroups
+# caret
+# job
+# htmltools
+# nanoparquet
+# ggpubr
+# polars
+# installr
+# clock
+# pander
+# reshape
+# mice
+# missRanger
+# VIM
+# withr
+# biostat3
+# broom
+# glue
+# finalfit
+# purrr
+# sf
+
+
+# pak::pkg_install(paks)
+
+pak::pak_sitrep()
+# pak::sysreqs_check_installed(unique(unlist(paks)))
+#pak::lockfile_create(unique(unlist(paks)),  "dependencies_duplicates24.lock", dependencies=T)
+#pak::lockfile_install("dependencies_duplicates24.lock")
+#https://rdrr.io/cran/pak/man/faq.html
+#pak::cache_delete()
+
+library(tidytable)
+library(ggplot2)
+library(readr)
+library(glmulti)
+library(tableone)
+library(survivalmodels)
+#renv::install("patchwork@1.2.0")
+library(survex)
+library(SemiMarkov)
+library(flexsurv)
+library(rms)
+library(survidm)
+
+# library(shapr)#https://norskregnesentral.github.io/shapr/
+# library(survidm)#https://sci-hub.ee/10.1002/bimj.201700200
+# library(SemiMarkov)#https://www.degruyterbrill.com/document/doi/10.1515/ijb-2020-0083/html?lang=en
+# #https://www.jclinepi.com/article/S0895-4356(24)00142-2/fulltext
+
+# ----------------------------------------------------------------------
+# 3. Activate polars code completion (safe to try even if it fails)
+# ----------------------------------------------------------------------
+#try(polars_code_completion_activate())
+
+# ----------------------------------------------------------------------
+# 4. BPMN from GitHub (not on CRAN, so install via devtools if missing)
+# ----------------------------------------------------------------------
+if (!requireNamespace("bpmn", quietly = TRUE)) {
+  devtools::install_github("bergant/bpmn")
+}
+
+# ----------------------------------------------------------------------
+# 5. PhantomJS Check (use webshot if PhantomJS is missing)
+# ----------------------------------------------------------------------
+# if (!webshot::is_phantomjs_installed()) {
+#   webshot::install_phantomjs()
+# }
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+# NO MORE DEBUGS
+options(error = NULL)        # si antes tenías options(error = recover) o browser)
+options(browserNLdisabled = FALSE)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+pander::panderOptions('big.mark', ',')
+pander::panderOptions('decimal.mark', '.')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: small !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+sum_dates <- function(x){
+  cbind.data.frame(
+    min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+    p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+    p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+    p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+    p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+    p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+    p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+    p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+    p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+    p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+    max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+
+# Custom function for sampling with a seed
+sample_n_with_seed <- function(data, size, seed) {
+  set.seed(seed)
+  dplyr::sample_n(data, size)
+}
+
+# Function to get the most frequent value 
+most_frequent <- function(x) { 
+  uniq_vals <- unique(x)
+  freq_vals <- sapply(uniq_vals, function(val) sum(x == val))
+  most_freq <- uniq_vals[which(freq_vals == max(freq_vals))]
+  
+  if (length(most_freq) == 1) {
+    return(most_freq)
+  } else {
+    return(NA)
+  }
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define the function first
+#joins these values with semicolons and optionally truncates the result if it exceeds a specified width.
+toString2 <- function(x, width = NULL, ...) {
+    string <- paste(x, collapse = "; ")
+    if (missing(width) || is.null(width) || width == 0) 
+        return(string)
+    if (width < 0) 
+        stop("'width' must be positive")
+    if (nchar(string, type = "w") > width) {
+        width <- max(6, width)
+        string <- paste0(substr(string, 1, width - 3), "...")
+    }
+    string
+}
+normalize_txt <- function(x) {
+  x|>
+    stringi::stri_trans_general("Latin-ASCII")|>
+    tolower()|>
+    trimws()
+}
+
+pair_str <- function(main, sub) {
+  main <- as.character(main)
+  sub  <- as.character(sub)
+  both_na <- is.na(main) & is.na(sub)
+
+  out <- paste0(
+    tidytable::coalesce(main, "NA"),
+    "::",
+    tidytable::coalesce(sub,  "NA")
+  )
+
+  out[both_na] <- NA_character_
+  out
+}
+
+# ── Helpers ────────────────────────────────────────────────────────────
+mode_pick_int <- function(x){
+  x <- x[!is.na(x)]
+  if(length(x)==0) return(NA_integer_)
+  tx <- sort(table(x), decreasing = TRUE)
+  as.integer(names(tx)[1L])
+}
+
+subkey_to_label <- function(x){
+  y <- gsub("_"," ", tolower(x))
+  y <- gsub("amphetamine type stimulants","amphetamine-type stimulants", y)
+  y <- gsub("tranquilizers hypnotics","tranquilizers/hypnotics", y)
+  y
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Encryption ────────────────────────────────────────────────────────
+
+# Pack: [24-byte nonce][ciphertext] -> hex
+encrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        ct <- sodium::data_encrypt(charToRaw(as.character(v)), key)
+        nonce <- attr(ct, "nonce")                 # 24 bytes
+        sodium::bin2hex(c(nonce, ct))              # pack nonce + ct
+    }, FUN.VALUE = character(1))
+}
+
+# Unpack: hex -> [nonce|ciphertext], restore attr(nonce), then decrypt
+decrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        buf <- sodium::hex2bin(v)
+        if (length(buf) < 25L) stop("Ciphertext too short or corrupted.")
+        nonce <- buf[1:24]
+        ct    <- buf[-(1:24)]
+        attr(ct, "nonce") <- nonce
+        rawToChar(sodium::data_decrypt(ct, key))
+    }, FUN.VALUE = character(1))
+}
+
+# Function to encrypt a character vector
+encrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item) || item == "") {
+      return(NA_character_)
+    }
+    encrypted_raw <- sodium::data_encrypt(charToRaw(item), key)
+    base64enc::base64encode(encrypted_raw)  # Convert to base64 for storage
+  }, USE.NAMES = FALSE)
+}
+
+decrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item)) return(NA_character_)
+    encrypted_raw <- base64enc::base64decode(item)
+    rawToChar(sodium::data_decrypt(encrypted_raw, key))
+  }, USE.NAMES = FALSE)
+}
+
+
+is_stata_ok <- function(x) {
+  nchar(x) <= 32 & grepl("^[A-Za-z][A-Za-z0-9_]*$", x)
+}
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Tidy RMS ────────────────────────────────────────────────────────
+
+tidy_cph <- function(model) {
+  if (!inherits(model, "cph")) stop("Model must be an rms::cph object")
+  
+  # run summary
+  s <- summary(model)
+  df_s <- as.data.frame(unclass(s))
+  df_s$rown <- rownames(s)
+  
+  # find rows that are "Hazard Ratio"
+  hr_rows <- trimws(df_s$rown) == "Hazard Ratio"
+  
+  # build tidy tibble
+  tibble::tibble(
+    term     = trimws(rownames(s)[which(hr_rows) - 1L]), # previous row = variable name
+    estimate = df_s$Effect[hr_rows],                     # Hazard Ratio
+    conf.low = df_s$`Lower 0.95`[hr_rows],
+    conf.high= df_s$`Upper 0.95`[hr_rows],
+    p.value  = df_s$P[hr_rows]
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- Step 1: Define File Paths ---
+
+# SET THIS to the correct path of your secret text file
+secret_file_path <- "C:/Users/andre/Documents/secret.txt"
+# This locates the user-level .Renviron file automatically
+renviron_path <- file.path(Sys.getenv("HOME"), ".Renviron")
+# --- Step 2: Read the Secret Key from the .txt file ---
+# Read the first line of the file and trim any whitespace
+api_key <- trimws(readLines(secret_file_path, n = 1, warn = FALSE))
+# --- Step 3: Check if the key is already in .Renviron ---
+# Read all existing lines from .Renviron (if it exists)
+if (file.exists(renviron_path)) {
+  existing_lines <- readLines(renviron_path, warn = FALSE)
+} else {
+  existing_lines <- c()
+}
+# Check if a line for OPENAI_API_KEY already exists
+key_exists <- any(grepl("^OPENAI_API_KEY=", existing_lines))
+# --- Step 4: Write to .Renviron if the key isn't already there ---
+if (!key_exists) {
+  # Format the line to be added
+  line_to_add <- sprintf('OPENAI_API_KEY="%s"', api_key)
+  # Append the line to the .Renviron file, adding a newline before it if the file isn't empty
+  cat(line_to_add, "\n", file = renviron_path, append = TRUE)
+  message("✅ Success! OPENAI_API_KEY has been added to your .Renviron file.")
+  message("Please restart your R session for the change to take effect.")
+} else {
+  message("ℹ️ The OPENAI_API_KEY already exists in your .Renviron file. No changes were made.")
+}
+options(.gander_chat = ellmer::chat_openai(model = "o1-mini"))
+```
+</div>
+
+<br>
+
+::: {.callout-note}
+**Data Pre-processing and Feature Engineering**
+
+Outliers in continuous variables will be managed using Tukey's method, where values beyond 1.5 times the interquartile range (IQR) from the first or third quartile are flagged for review.
+
+The analysis will incorporate 14 predictor variables, including three continuous variables. To model non-linear relationships, we will generate transformed variables, including logarithmic (log(x)), quadratic (x^2^), and cubic (x^3) terms. Additionally, some continuous variables may be discretized into categorical features.
+
+If required, continuous predictors will be zero-centered and scaled by a factor to improve the model's computational performance and numerical stability.
+
+**Aims**
+
+- To identify key prognostic and predictive factors associated with the risk of, and time to, the first readmission to treatment among patients aged 18-64 undergoing initial treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+
+- To identify key prognostic and predictive factors associated with the risk of, and time to, all-cause mortality among the same cohort of patients undergoing initial treatment for SUD in Chile.
+
+- To predict the risk and timing of first treatment readmission and all-cause mortality simultaneously, treating these outcomes within a semi-competing risks framework. This will allow for the estimation of cumulative incidence for each event in the presence of the other for patients aged 18-64 who initiated SUD treatment in Chile between 2010 and 2020.
+
+This study has three primary objectives. First, we aim to identify key prognostic and predictive factors associated with the risk and timing of two critical outcomes: (i) first readmission to treatment and (ii) all-cause mortality. Second, using a semi-competing risks framework, we will develop a model to simultaneously predict these two outcomes, accounting for the fact that death precludes the possibility of readmission. Finally, this model will be used to estimate the probability of various patient trajectories over time following initial treatment. The study population includes all patients aged 18-64 who began treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+:::
+
+<br>
+
+## 1. Structure of treatments and rules to collapse continuous entries
+
+<span style="color:darkred">**The variables involved in the analysis are the following:**.</span>
+
+* **Time to first readmission from admission** `readmit_time_from_adm_m` **/ from discharge ** `readmit_time_from_disch_m` **in months**, and **event** (`readmit_event`)
+* **Time to mortality** `death_time_from_adm_m` **/ from discharge ** `death_time_from_disch_m` **in months**, and **event** (`death_event`)
+Predisposing factors:
+* **Admission age** `adm_age_rec3` [log1p(x)=`adm_age_log`, centered= `adm_age_c`,^2=`adm_age_pow2`, ^3=`adm_age_pow3`, three groups= `adm_age_rec3_cat`]
+* **Sex** (often used for biological categorization) `sex_rec`
+* **Housing situation** `tenure_status_household_rec`
+* **Employment status** `occupation_condition_corr24`
+* **Marital status** `marital_status_rec`
+* **Poverty index of the commune of residence** `porc_pobr` [log1p(x)=`porc_pobr_log`, centered= `porc_pobr_c`, six quantile groups= `porc_pobr_c_cat6`]
+* **Urbanization level of the commune of residence** `urbanicity_cat`
+* **Educational attainment** `ed_attainment_corr`
+* **Living arrangement/Cohabitation status** `cohabitation`
+
+Need factors:
+* **Psychiatric comorbidity** `dg_psiq_cie_10_instudy` + `dg_psiq_cie_10_dg`
+* **Severity of Substance Use Disorder (SUD)** `sub_dep_icd10_status`
+* **Primary substance of use** `primary_sub_mod` 
+* **Frequency of primary substance use at admission** `prim_sub_freq` (recoded: `prim_sub_freq_rec`)
+* **Polysubstance use** `polysubstance_strict`
+
+Enabling factors:
+* **Length of stay in treatment (months)** `dit_rec6` [log1p(x)=`treat_log`, ^2=`treat_days_pow2`, ^3=`treat_days_pow3`, <90days=`treat_lt_90`]
+* **Treatment outcome** `tr_outcome`
+* **Admission motive** `adm_motive`
+    
+<span style="color:darkred">**Suitable for a research context:**.</span>
+
+* **Court-referred to drug treatment** `usuario_tribunal_trat_droga` (very unbalanced, ~1% yes)
+* **Type of housing** `tipo_de_vivienda_rec`
+
+<span style="color:darkred">**Stratification variables:**.</span>
+
+* **Treatment modality** `plan_type_corr`
+
+
+First, we flagged all qualifying treatment episodes by filtering for patients aged 18–65 with an admission date between 2010 and 2020. To ensure each patient served as their own baseline, we isolated only the first qualifying treatment for each individual, removing any second or subsequent qualifying treatments from the dataset. Using this first episode as the index event, we then built time-to-event variables in months for our outcomes of interest: death and readmission. We applied an administrative censoring date of December 31, 2020, to all observations. Finally, we constructed our analytical dataset to contain only the first qualifying treatment per patient, carrying forward the time-to-event information and a counter of any discarded prior treatments.
+
+* **What can I do with adm truncated (0.2%), and currently in (0.1%)**
+
+We created a formatted database in wide format for multistate analysis (`SISTRAT23_c1_2010_2024_df_prev1z`).
+
+
+```{r struc1}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# --- Safe helpers (no warnings) ---
+safe_min_where_int  <- function(x, flag) {
+  idx <- which(flag %in% TRUE & !is.na(x))
+  if (length(idx) == 0L) NA_integer_ else as.integer(min(x[idx]))
+}
+safe_min_where_date <- function(x, flag) {
+  idx <- which(flag %in% TRUE & !is.na(x))
+  if (length(idx) == 0L) as.Date(NA) else min(x[idx])
+}
+safe_min_date <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0L) as.Date(NA) else min(x)
+}
+
+# Windows of interest
+.start_date  <- as.Date("2010-01-01")
+.end_date    <- as.Date("2020-12-31")
+.censor_date <- as.Date("2020-12-31")
+
+# 0) Start & canonical order + treatment index
+df0 <- SISTRAT23_c1_2010_2024_df_prev1y|>
+  tidytable::ungroup()|>
+  tidytable::arrange(hash_key, adm_date_rec2, disch_date_rec6)|>
+  tidytable::mutate(treatment = tidytable::row_number(), .by = hash_key)
+
+n0_cases <- nrow(df0)
+n0_runs  <- nrow(tidytable::distinct(df0, hash_key))
+
+message("0. INITIAL database, cases: ", formatC(nrow(df0), big.mark=","), sep = "")
+message("0. INITIAL database, RUNs: " , formatC(nrow(tidytable::distinct(df0, hash_key)), big.mark=","), sep = "")
+
+
+# 1) Qualifying flag (age 18–65 & admission in 2010–2020 inclusive)
+df1 <- df0|>
+  tidytable::mutate(
+    meets_crit = !is.na(adm_age_rec3)  & adm_age_rec3 >= 18 & adm_age_rec3 <= 64 &
+                 !is.na(adm_date_rec2) & adm_date_rec2 >= .start_date & adm_date_rec2 <= .end_date
+  )
+
+# First qualifying treatment per patient + counter of discarded priors (no warnings)
+first_keep_tbl <- df1|>
+  tidytable::summarise(
+    first_keep_treat = safe_min_where_int(treatment, meets_crit),
+    .by = hash_key
+  )|>
+  tidytable::mutate(
+    n_discarded_before = ifelse(is.na(first_keep_treat), NA_integer_,
+                                as.integer(first_keep_treat - 1L))
+  )
+
+n_patients_meet <- first_keep_tbl|> tidytable::filter(!is.na(first_keep_treat))|> nrow()
+message("1. Patients with ≥1 qualifying admission (age 18–64 & 2010–2020): ",
+        formatC(n_patients_meet, big.mark=","), sep = "")
+
+# 2) Keep ONLY qualifying episodes; rank; drop 3rd+
+df_q <- df1|>
+  tidytable::filter(meets_crit)|>
+  tidytable::arrange(hash_key, adm_date_rec2, disch_date_rec6)|>
+  tidytable::mutate(q_rank = tidytable::row_number(), .by = hash_key)|>
+  tidytable::filter(q_rank <= 2L)
+
+n1b_cases <- nrow(df_q)
+n1b_patients <- nrow(tidytable::distinct(df_q, hash_key))
+message("1b. AFTER filtering to qualifying episodes, cases: ",
+        formatC(nrow(df_q), big.mark=","), sep = "")
+message("1b. AFTER filtering to qualifying episodes, RUNs: ",
+        formatC(nrow(tidytable::distinct(df_q, hash_key)), big.mark=","), sep = "")
+
+message("2. AFTER dropping ≥3rd qualifying treatments per patient, cases: ",
+        formatC(nrow(df_q), big.mark=","), sep = "")
+message("2. AFTER dropping ≥3rd qualifying treatments per patient, RUNs: ",
+        formatC(nrow(tidytable::distinct(df_q, hash_key)), big.mark=","), sep = "")
+
+# 3) Anchors per patient (warning-free)
+anchors <- df_q|>
+  tidytable::summarise(
+    first_adm   = safe_min_where_date(adm_date_rec2,   q_rank == 1L),
+    first_disch = safe_min_where_date(disch_date_rec6, q_rank == 1L),
+    second_adm  = safe_min_where_date(adm_date_rec2,   q_rank == 2L),  # NA if no second qualifying
+    .by = hash_key
+  )
+
+# Death date per patient (from full data, not only qualifying rows)
+death_tbl <- df0|>
+  tidytable::summarise(death_date = safe_min_date(def_date), .by = hash_key)
+
+# 4) Build per-person time-to-event (no min() calls here)
+perperson <- df_q|>
+  tidytable::distinct(hash_key)|>
+  tidytable::left_join(anchors,       by = "hash_key")|>
+  tidytable::left_join(death_tbl,     by = "hash_key")|>
+  tidytable::left_join(first_keep_tbl, by = "hash_key")|>
+  tidytable::mutate(
+    # Event indicators with censoring at 2020-12-31
+    readmit_event = as.integer(!is.na(second_adm) & second_adm <= .censor_date),
+    death_event   = as.integer(!is.na(death_date)  & death_date  <= .censor_date),
+
+    # End times for intervals (choose event time or censor date)
+    readmit_end_from_adm   = ifelse(readmit_event == 1L, second_adm, .censor_date),
+    readmit_end_from_disch = ifelse(readmit_event == 1L, second_adm, .censor_date),
+    death_end_from_adm     = ifelse(death_event   == 1L, death_date, .censor_date),
+    death_end_from_disch   = ifelse(death_event   == 1L, death_date, .censor_date),
+
+    # Durations (months) from first qualifying admission/discharge
+    readmit_time_from_adm_m =
+      ifelse(!is.na(first_adm),
+        as.numeric(lubridate::time_length(lubridate::interval(first_adm,   readmit_end_from_adm),   "months")),
+        NA_real_),
+    readmit_time_from_disch_m =
+      ifelse(!is.na(first_disch),
+        as.numeric(lubridate::time_length(lubridate::interval(first_disch, readmit_end_from_disch), "months")),
+        NA_real_),
+    death_time_from_adm_m =
+      ifelse(!is.na(first_adm),
+        as.numeric(lubridate::time_length(lubridate::interval(first_adm,   death_end_from_adm),     "months")),
+        NA_real_),
+    death_time_from_disch_m =
+      ifelse(!is.na(first_disch),
+        as.numeric(lubridate::time_length(lubridate::interval(first_disch, death_end_from_disch),   "months")),
+        NA_real_)
+  )|>
+  # Clamp negatives (dirty dates safeguard)
+  tidytable::mutate(
+    readmit_time_from_adm_m   = ifelse(!is.na(readmit_time_from_adm_m),   pmax(readmit_time_from_adm_m,   0), NA_real_),
+    readmit_time_from_disch_m = ifelse(!is.na(readmit_time_from_disch_m), pmax(readmit_time_from_disch_m, 0), NA_real_),
+    death_time_from_adm_m     = ifelse(!is.na(death_time_from_adm_m),     pmax(death_time_from_adm_m,     0), NA_real_),
+    death_time_from_disch_m   = ifelse(!is.na(death_time_from_disch_m),   pmax(death_time_from_disch_m,   0), NA_real_)
+  )|>
+  tidytable::mutate(discarded_before_flag = as.integer(n_discarded_before > 0L))
+
+# 5) FINAL: keep only the first qualifying treatment row per patient, carry times/counters
+SISTRAT23_c1_2010_2024_df_prev1z <-
+  df_q|>
+  tidytable::filter(q_rank == 1L)|>
+  tidytable::left_join(perperson, by = "hash_key")|>
+  tidytable::select(-meets_crit, -q_rank)|>
+  (\(df){
+  
+    n_cases   <- nrow(df)
+    n_runs    <- tidytable::distinct(df, hash_key) |> nrow()
+    red_cases <- nrow(df0) - n_cases
+    red_runs  <- (tidytable::distinct(df0, hash_key) |> nrow()) - n_runs
+    readmit   <- sum(df$readmit_event)
+  
+    # store (step 3)
+    n_cases   ->> m3_cases
+    n_runs    ->> m3_runs
+    red_cases ->> m3_cases_red
+    red_runs  ->> m3_runs_red
+    list(cases=n_cases, runs=n_runs, readmit=readmit, cases_red=red_cases, runs_red=red_runs) ->> m3
+  
+    message("3. FINAL: first qualifying treatment per patient (with time-to-event), cases: ",
+            formatC(n_cases, big.mark=","), sep = "")
+    message("3. FINAL: RUNs: ", formatC(n_runs, big.mark=","), sep = "")
+    message("   CASES reduction vs initial(prev1y): ", formatC(red_cases, big.mark=","), sep = "")
+    message("   RUNs  reduction vs initial(prev1y): ", formatC(red_runs,  big.mark=","), sep = "")
+  
+    if (n_cases > nrow(df0)) stop("Error: Added treatment episodes in the process")
+    df
+  })() |>
+  tidytable::filter(!tr_compliance_rec7 == "currently in") |>
+  (\(df){
+  
+    n_cases   <- nrow(df)
+    n_runs    <- tidytable::distinct(df, hash_key) |> nrow()
+    red_cases <- nrow(df0) - n_cases
+    red_runs  <- (tidytable::distinct(df0, hash_key) |> nrow()) - n_runs
+  
+    # store (step 4)
+    n_cases   ->> m4_cases
+    n_runs    ->> m4_runs
+    red_cases ->> m4_cases_red
+    red_runs  ->> m4_runs_red
+    list(cases=n_cases, runs=n_runs, cases_red=red_cases, runs_red=red_runs) ->> m4
+  
+    message("4. FINAL: leaving out patients currently in tr., cases: ",
+            formatC(n_cases, big.mark=","), sep = "")
+    message("4. FINAL: RUNs: ", formatC(n_runs, big.mark=","), sep = "")
+    message("   CASES reduction vs initial(prev1y): ", formatC(red_cases, big.mark=","), sep = "")
+    message("   RUNs  reduction vs initial(prev1y): ", formatC(red_runs,  big.mark=","), sep = "")
+  
+    df
+  })()
+  
+#SISTRAT23_c1_2010_2024_df_prev1z |> filter(is.na(dit_m)) |> janitor::tabyl(tr_compliance_rec7, show_na = T)
+SISTRAT23_c1_2010_2024_df_prev1z$porc_pobr_c_cat6<- cut2(SISTRAT23_c1_2010_2024_df_prev1z$porc_pobr_c,g=6)
+
+cat("Remove intermediate databases\n")
+rm(df0); rm(df1); rm(df_q); rm(anchors); rm(death_tbl); rm(first_keep_tbl)
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+
+# --- choose your time origin for the multistate ---
+.use_discharge_origin <- FALSE   # TRUE = origin at first_disch; FALSE = origin at first_adm
+
+# Add origin_date
+if (.use_discharge_origin) {
+  perperson <- tidytable::mutate(SISTRAT23_c1_2010_2024_df_prev1z, origin_date = first_disch)
+} else {
+  perperson <- tidytable::mutate(SISTRAT23_c1_2010_2024_df_prev1z, origin_date = first_adm)
+}
+
+# 1) Drop patients who die before the origin (they never enter the process)
+n_drop_predeath <- tidytable::filter(perperson, !is.na(death_date) & !is.na(origin_date) & death_date < origin_date) |>
+  nrow()
+message("A. Excluding patients who died before origin: ",
+        formatC(n_drop_predeath, big.mark=","), sep = "")
+
+stopifnot(
+nrow(tidytable::filter(perperson, is.na(death_date) | is.na(origin_date) | death_date >= origin_date))== nrow(SISTRAT23_c1_2010_2024_df_prev1z)
+)
+# 2) Keep only those whose origin is observed and within study window (optional but recommended)
+n_before <- nrow(SISTRAT23_c1_2010_2024_df_prev1z)
+perperson2 <- tidytable::filter(perperson, !is.na(origin_date) & origin_date <= .censor_date)
+message("B. Excluding missing/after-censor origins: ",
+        formatC(n_before - nrow(perperson2), big.mark=","), sep = "")
+
+# 3) Ensure monotone times: second_adm must be after origin (else reclassify as 'no readmission')
+# perperson <- tidytable::mutate(perperson,
+#     invalid_readmit = !is.na(second_adm) & second_adm <= origin_date,
+#     second_adm      = ifelse(invalid_readmit, as.Date(NA), second_adm),
+#     readmit_event   = ifelse(invalid_readmit, 0L, readmit_event)
+#   )
+
+rm(perperson); rm(perperson2)
+```
+
+
+```{r}
+#| class-output: center-table
+#| message: true
+#| include: true
+#| warning: true
+#| error: true
+#| label: pre-flowchart
+#| results: "hold"
+#| fig-cap: "Figure 3. Flowchart"
+#| fig-height: 8
+#| fig-align: left
+#For SISTRAT23_c1_2010_2024_df_prev1t
+try(load(paste0(dirname(path),"/SISTRAT_database_sep25_prevt.RData")))
+
+#n_patients_meet;n1b_cases; n1b_patients; m4; m3
+
+df23_ndp_20250824_SISTRAT23_c1_1024<- 
+ readRDS(
+   paste0(dirname(path),"/psu/23_ndp_20250824_SISTRAT23_c1_1024_df2.rds")
+ )
+
+# Labels
+lab_orig <- paste0(
+  "Original C1 Dataset \n(n = ",
+  formatC(nrow(df23_ndp_20250824_SISTRAT23_c1_1024), format = "f", big.mark = ",", digits = 0),
+  "; Patients = ",
+  formatC(dplyr::n_distinct(df23_ndp_20250824_SISTRAT23_c1_1024$hash_key), format = "f", big.mark = ",", digits = 0),
+  ")"
+)
+
+lab_orig_clean <- paste(
+  "Pre-processing & Quality Checks",
+  "&#8226; Remove exact duplicate records",
+  "&#8226; Resolve overlapping episodes (keep longest / merge)",
+  "&#8226; Fix inconsistent admission/discharge dates",
+  "&#8226; Correct implausible birth dates/ages",
+  "&#8226; Remove negative/implausible days in treatment",
+"",
+  sep = "\\l"
+)
+lab_post_orig  <- paste0('C1 Dataset \n(n = ', formatC(nrow(SISTRAT23_c1_2010_2024_df_prev1t), format='f', big.mark=',', digits=0), '; Patients = ',formatC(dplyr::distinct(SISTRAT23_c1_2010_2024_df_prev1t, hash_key)|> nrow(), format='f', big.mark=',', digits=0),')')
+lab_post_orig_clean <- paste("&#8226; Collapse consecutive linked", "treatments (≤45d gap, referral=yes)", sep = "\\l")
+
+
+lab_proc  <- paste0('C1 Cleaned & Collapsed\n(n = ', formatC(nrow(SISTRAT23_c1_2010_2024_df_prev1y), format='f', big.mark=',', digits=0), '; Patients = ',formatC(dplyr::distinct(SISTRAT23_c1_2010_2024_df_prev1y, hash_key)|> nrow(), format='f', big.mark=',', digits=0),')')
+lab_flag  <- "Sorted by Admission Date\n+ First Treatment Flag"
+
+
+lab_discard_first <- paste(
+  "&#8226; Qualifying flag (age 18–64 & admission in 2010–2020 inclusive)",
+  "&#8226; Dropping ≥3rd qualifying treatments per patient",
+  paste0("n= ", formatC(nrow(SISTRAT23_c1_2010_2024_df_prev1y)-n1b_cases, format = "f", digits = 0, big.mark = ","),"; Patients= ", formatC(dplyr::distinct(SISTRAT23_c1_2010_2024_df_prev1t, hash_key)|> nrow()- n1b_patients, format = "f", digits = 0, big.mark = ",")," put aside"),
+"",sep = "\\l")
+##CAMBIAR
+
+lab_after <- paste0("After First-Treatment Rule\nn= ",formatC(m3$readmit+m3$cases, format= "f", big.mark=",", digits=0),"; Patients= ", formatC(m3$cases, format= "f", big.mark=",", digits=0))  # example counts
+#Frpm 3. FINAL: first qualifying treatment per patient (with time-to-event), cases: 
+lab_discard_single <- paste( 
+  "1st qualifying treatment per patient (with time-to-event)",
+  paste0("Patients = ", formatC(m3$cases-nrow(SISTRAT23_c1_2010_2024_df_prev1z), format = "f", big.mark = ",", digits = 0)), sep="\\l")
+
+lab_final <- paste0("Final C1 Dataset\nn = ",
+                    formatC(nrow(SISTRAT23_c1_2010_2024_df_prev1z)+sum(SISTRAT23_c1_2010_2024_df_prev1z$readmit_event), format = "f", digits = 0, big.mark = ","),
+                    "; Patients = ",
+                    formatC(nrow(SISTRAT23_c1_2010_2024_df_prev1z), format = "f", digits = 0, big.mark = ","))
+# Diagram
+gr <- DiagrammeR::grViz(
+    paste0(
+        'digraph flowchart {
+      graph [layout = dot, rankdir = TB]
+
+      node [fontname = "Times", shape = rectangle, fontsize = 33, style = filled, fillcolor = white, ranksep=0.2, nodesep=0.2]
+
+      # New initial box and pre-clean note
+      pre_original   [label = "', lab_orig, '", fillcolor = lightgray, shape = box]
+      pre_clean      [label = "', lab_orig_clean, '", shape = note, fillcolor = white]
+
+      # Intermediate new initial box and pre-clean note
+      pre2_original   [label = "', lab_post_orig, '", fillcolor = white, shape = box]
+      pre2_clean      [label = "', lab_post_orig_clean, '", shape = note, fillcolor = lemonchiffon]
+
+      # Existing boxes
+      original       [label = "', lab_proc, '", fillcolor = lightgray, shape = box]
+      marked         [label = "', lab_flag, '", shape = box]
+      after_rule     [label = "', lab_after, '", shape = box]
+      final_dataset  [label = "', lab_final, '", fillcolor = lightgray, shape = box]
+
+      discard_first   [label = "', lab_discard_first, '", shape = note, fillcolor = mistyrose]
+      discard_single  [label = "', lab_discard_single, '", shape = note, fillcolor = mistyrose]
+
+      # Invisible points for alignment
+      v00 [shape = point, width = 0, style = invis]  # between orig and post orig
+      v0 [shape = point, width = 0, style = invis]  # between pre_original and original      
+      v1 [shape = point, width = 0, style = invis]
+      v2 [shape = point, width = 0, style = invis]
+      v3 [shape = point, width = 0, style = invis]
+
+      # Main flow (add pre_original -> v0 -> original in front)
+      pre_original -> v00 [arrowhead = none]
+      v00 -> pre2_original
+      
+      pre2_original -> v0 [arrowhead = none]
+      v0 -> original      
+
+      original -> v1 [arrowhead = none]
+      v1 -> marked
+      marked -> v2 [arrowhead = none]
+      v2 -> after_rule
+      after_rule -> v3 [arrowhead = none]
+      v3 -> final_dataset
+
+      # Discard / note connections with solid black arrows
+      v00 -> pre_clean     [color = black]     # new pre-processing note
+      v0 -> pre2_clean     [color = black]     # new pre-processing note
+      v2 -> discard_first [color = black]
+      v3 -> discard_single[color = black]
+
+      # Alignment
+      { rank = same; pre_clean; v00 }
+      { rank = same; pre2_clean; v0 }
+      { rank = same; discard_first; v2 }
+      { rank = same; discard_single; v3 }
+    }'
+    ),
+  width = 600, height = 900
+)
+
+gr
+```
+
+```{r}
+#| class-output: center-table
+#| message: true
+#| include: true
+#| warning: true
+#| error: true
+#| label: post-flowchart2-exp
+#| results: "hide"
+#| fig.show: hide
+
+unlink(paste0(gsub("/cons","",getwd()),"/cons/_figs/_flowchart_pred_files"), recursive = TRUE)
+htmlwidgets::saveWidget(gr, paste0(gsub("/cons","",getwd()),"/cons/_figs/_flowchart_pred.html"))
+webshot::webshot(paste0(gsub("/cons","",getwd()),"/cons/_figs/_flowchart_pred.html"), 
+                 paste0(gsub("/cons","",getwd()),"/cons/_figs/_flowchart_pred.png"),
+                 vwidth = 300, vheight = 300*1.5,  zoom=10, expand=100)  # Prueba con diferentes coordenadas top, left, width, and height
+```
+
+
+
+```{r}
+#| class-output: center-table
+#| message: true
+#| include: true
+#| warning: true
+#| error: true
+#| label: km-aj
+#| results: "hide"
+#| fig.show: hide
+#| fig.cap: "Death decomposition: before vs after readmission"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 0) Base y nombres
+df2 <- SISTRAT23_c1_2010_2024_df_prev1z |>
+  dplyr::rename(
+    t_r = readmit_time_from_disch_m,
+    e_r = readmit_event,
+    t_d = death_time_from_disch_m,
+    e_d = death_event
+  ) |>
+  # Sanitiza tipos
+  dplyr::mutate(
+    e_r = as.integer(!!e_r),
+    e_d = as.integer(!!e_d)
+  )
+
+# Chequeo rápido (opcional)
+stopifnot(nrow(df2) > 0)
+# t_d debe existir para todos (muerte o fin de seguimiento)
+stopifnot(all(is.finite(df2$t_d)))
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 1) Definir causas de MUERTE (mutuamente excluyentes) y tiempo de análisis
+#    1 = muere antes/igual que la 1ª readmisión
+#    2 = muere después de la 1ª readmisión
+#    0 = censurado (no muere)
+df3 <- df2 |>
+  dplyr::mutate(
+    cause = dplyr::case_when(
+      e_d == 1L & (e_r == 0L | t_d <= t_r) ~ 1L,   # muerte antes/igual que readmisión
+      e_d == 1L &  e_r == 1L & t_r <  t_d  ~ 2L,   # readmisión primero, luego muerte
+      TRUE ~ 0L                                    # no muere (censura)
+    ),
+    # Tiempo de análisis:
+    #   - muertes: t_d (tiempo a muerte)
+    #   - censura: t_d (tiempo a última observación)
+    ftime2 = t_d
+  )
+
+# Consistencia con tu 2x2
+with(df3, table(cause, e_d))
+# Esperado: cause=1 -> 3203 muertes; cause=2 -> 744 muertes
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 2) CIF de muerte por causa (competing risks)
+ci2 <- cmprsk::cuminc(ftime = df3$ftime2, fstatus = df3$cause, cencode = 0)
+
+# Helper robusto: toma el ÚLTIMO número del nombre (la causa), ignora "Tests"
+get_cif_by_code <- function(ci, code = 1L){
+  keep <- vapply(ci, function(x) !is.null(x$est), logical(1))
+  nm   <- names(ci)[keep]
+  ci   <- ci[keep]
+  codes <- suppressWarnings(as.integer(sub(".*[^0-9]([0-9]+)$", "\\1", nm)))
+  idx   <- which(!is.na(codes) & codes == code)[1]
+  if (!length(idx) || is.na(idx)) return(data.frame(time = numeric(0), est = numeric(0)))
+  data.frame(time = ci[[idx]]$time, est = ci[[idx]]$est)
+}
+
+cif_d_before <- get_cif_by_code(ci2, 1L)  # muerte antes/igual que readmisión
+cif_d_after  <- get_cif_by_code(ci2, 2L)  # muerte después de readmisión
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 3) KM de muerte total (chequeo externo)
+km <- survival::survfit(survival::Surv(time = df3$ftime2, event = df3$e_d) ~ 1)
+km_df <- data.frame(time = km$time, P_dead_total = 1 - km$surv)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 4) Comparación a horizontes fijos (12, 60, 120 y tiempo final observado)
+t_end <- max(df3$ftime2, na.rm = TRUE)
+taus  <- c(12, 60, 120, t_end)
+
+risk_at <- function(fit, tau) 1 - summary(fit, times = tau, extend = TRUE)$surv
+AJ_at   <- function(cif_df, tau){
+  if (!nrow(cif_df)) return(rep(0, length(tau)))
+  # Aproximación por función escalón (respeta naturaleza de AJ)
+  sf <- stepfun(cif_df$time, c(0, cif_df$est))
+  sf(tau)
+}
+
+horiz <- data.frame(
+  tau_m       = taus,
+  KM_death    = sapply(taus, risk_at, fit = km),
+  CIF_before  = AJ_at(cif_d_before, taus),
+  CIF_after   = AJ_at(cif_d_after,  taus)
+) |>
+  dplyr::mutate(total_CIF = CIF_before + CIF_after)
+
+print(horiz)
+# Esperado: KM_death ≈ total_CIF en cada tau (pequeñas diferencias numéricas)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 5) Serie completa para gráfico (con stepfun; evita errores de interpolación)
+sf_km <- stepfun(km_df$time,             c(0, km_df$P_dead_total))
+sf_c1 <- stepfun(cif_d_before$time,      c(0, cif_d_before$est))
+sf_c2 <- stepfun(cif_d_after$time,       c(0, cif_d_after$est))
+
+t_grid <- sort(unique(c(km_df$time, cif_d_before$time, cif_d_after$time)))
+out <- data.frame(
+  time             = t_grid,
+  CIF_death_before = sf_c1(t_grid),
+  CIF_death_after  = sf_c2(t_grid),
+  P_dead_total     = sf_km(t_grid)
+)
+out$sum_cifs <- out$CIF_death_before + out$CIF_death_after
+
+# Chequeo final (debe acercarse al KM final ~ 9%)
+tail(out[, c("time","CIF_death_before","CIF_death_after","sum_cifs","P_dead_total")], 3)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 6) Gráfico: descomposición correcta de la mortalidad total
+ggplot(out, aes(x = time)) +
+  geom_ribbon(aes(ymin = 0, ymax = CIF_death_before,
+                  fill = "Muerte antes de readmisión"), alpha = 0.55) +
+  geom_ribbon(aes(ymin = CIF_death_before, ymax = sum_cifs,
+                  fill = "Muerte después de readmisión"), alpha = 0.55) +
+  geom_step(aes(y = P_dead_total, color = "Mortalidad total (KM)"),
+            linewidth = 0.9) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  scale_fill_manual(values = c("Muerte antes de readmisión"   = "#A17C6C",
+                               "Muerte después de readmisión" = "#5FA9B3")) +
+  scale_color_manual(values = c("Mortalidad total (KM)" = "#660600")) +
+  labs(x = "Meses desde el alta", y = "Probabilidad acumulada",
+       fill = NULL, color = NULL,
+       title = "Mortalidad acumulada: descomposición por relación con readmisión",
+       subtitle = "CIF de muerte antes vs. después de la primera readmisión; línea = KM total") +
+  theme_minimal(base_size = 16) +
+  theme(legend.position = "bottom")
+# ──────────────────────────────────────────────────────────────────────────────
+
+# CIF de "primer evento" (1=readmisión, 2=muerte), con tiempos al primer evento
+ftime_first  <- pmin(df2$t_r, df2$t_d, na.rm = TRUE)
+fstatus_first <- dplyr::case_when(
+    df2$e_r == 1L & (df2$e_d == 0L | df2$t_r <  df2$t_d) ~ 1L, # readmisión primero
+    df2$e_d == 1L & (df2$e_r == 0L | df2$t_d <= df2$t_r) ~ 2L, # muerte primero
+    TRUE ~ 0L
+)
+ci_first <- cmprsk::cuminc(ftime = ftime_first, fstatus = fstatus_first, cencode = 0)
+# readmisión como primer evento a 12m:
+tp_first <- cmprsk::timepoints(ci_first, times = 12)
+tp_first$est[,"12"]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Graficar
+p <- out|>
+    ggplot2::ggplot(ggplot2::aes(x = time)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = 0, ymax = CIF_death_before,
+                                      fill = "Death before readmission"), alpha = 0.5) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = CIF_death_before, ymax = P_dead_total,
+                                      fill = "Death after readmission"), alpha = 0.5) +
+    ggplot2::geom_step(ggplot2::aes(y = P_dead_total, color = "Total death (KM)"),
+                       linewidth = 0.7) +
+    ggplot2::geom_step(ggplot2::aes(y = CIF_death_before, color = "CIF of death before readmission"),
+                       linewidth = 0.7) +
+    ggplot2::scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                                limits = c(0, ymax)) +
+    ggplot2::scale_fill_manual(values = c("Death before readmission"= "#a6cee3",
+                                          "Death after readmission"= "#b2df8a")) +
+    ggplot2::scale_color_manual(values = c("Total death (KM)"= "#1f78b4", "Death before readmission"= "#666666")) +
+    ggplot2::labs(x = "Months since discharge", y = "Cumulative probability",
+                  fill = NULL, color = NULL) +
+    ggplot2::theme_minimal(base_size = 20) +
+    ggplot2::theme(legend.position = "bottom")
+
+print(p)
+ggsave(
+  filename = paste0(gsub("/cons","",getwd()), "/cons/_figs/_death_decomposition.png"),
+   plot = p +
+    labs(x = "Meses desde el egreso", y = "Probabilidad acumulada",
+         fill = NULL, color = NULL)+
+      scale_fill_manual(
+        values = c(
+          "Death before readmission" = "#a6cee3",
+          "Death after readmission" = "#B48448"
+        ),
+        labels = c(
+          "Death before readmission" = "Muerte antes de la readmisión",
+          "Death after readmission" = "Muerte después de la readmisión"
+        )
+      ) +
+      scale_color_manual(
+        values = c(
+          "Total death (KM)" = "#5A0D13",
+          "CIF of death before readmission" = "#666666"
+        ),
+        labels = c(
+          "Total death (KM)" = "Muerte total (KM)",
+          "CIF of death before readmission" = "CIF de muerte antes de la readmisión"
+        )
+      )+ ggplot2::theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    legend.text = ggplot2::element_text(size=16, margin=margin(l=0, r=-3, unit="pt")),
+    legend.title = ggplot2::element_blank(),
+    legend.spacing.x = grid::unit(0.2, "cm"),
+    legend.spacing.y = grid::unit(0.2, "cm"),
+    legend.key.width = grid::unit(1.0, "cm")
+  ) +
+  ggplot2::guides(
+    fill = ggplot2::guide_legend(nrow = 2, byrow = TRUE, keywidth = unit(0.5, "cm")),
+    color = ggplot2::guide_legend(nrow = 2, byrow = TRUE, keywidth = unit(0.5, "cm"))
+  )+ ggplot2::scale_x_continuous(
+  breaks = scales::breaks_width(12),
+  labels = function(m) paste0(m, "m")    # o en años: paste0(m/12, " años")
+),
+    dpi = 600
+)
+```
+
+A total of `r format(sum(table(SISTRAT23_c1_2010_2024_df_prev1z$treatment)[2:3]), big.mark=",")` patients   (`r scales::percent(sum(prop.table(table(SISTRAT23_c1_2010_2024_df_prev1z$treatment))[2:3]),accuracy=.1)`) had valid treatments between 18-64 in their second or third treatment.
+
+To reduce sparsity and improve interpretability, we grouped specific diagnostic labels into four clinically coherent supergroups aligned with ICD-10 logic: (1) Infectious diseases (STIs, viral hepatitis, and infections related to substance use); (2) Organ-system medical diseases (cardiovascular, hepatic, oral, and hematologic conditions); (3) Injuries and sequelae; and (4) Other specified medical conditions (broad/vague descriptors such as “enfermedades somáticas”, “otras enfermedades…”, and pregnancy-related items). We preserved the status values “en estudio” and “sin trastorno” as-is, and left missing values as NA. For multi-response entries (diagnostico_trs_fisico_series), we parsed “||”-separated items, applied the same mapping to each token, deduplicated within-row, and produced both a collapsed supergroup string and one-hot indicators for the supergroups to avoid inflating counts while preventing sparse categories.
+
+```{r struc2}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+icd10_broad <- function(x) {
+x <- tolower(x)
+tidytable::case_when(
+stringr::str_detect(x, "organic|organico|demenc|alzheimer|parkinson|delirium|cerebral") ~ "F0 Organic",
+stringr::str_detect(x, "psicoactiva|alcohol|marihuana|canabis|cannabis|cocain|opio|opiace|benzodiazep|sustancias") ~ "F1 Substance use",
+stringr::str_detect(x, "esquizofren|psicotip|delirant|psicosis") ~ "F2 Psychotic",
+stringr::str_detect(x, "estado de animo|afectiv|depres|bipolar|maniaco|distimia|hipoman") ~ "F3 Mood",
+stringr::str_detect(x, "neurotic|ansiedad|fobi|panico|obsesivo|compulsiv|estres|adaptaci|somatoform|somatiz") ~ "F4 Anxiety/Stress/Somatoform",
+stringr::str_detect(x, "comportamiento.*fisiolog|alimentari|anorex|bulim|sueñ|insomni|disfuncion sexual") ~ "F5 Physio/Eating/Sleep/Sexual",
+stringr::str_detect(x, stringr::regex("personalidad|comportamiento del adulto|antisocial|limite|evitativ|habit|habitos|impuls|control de los impulsos|control\\s+de\\s+impulsos", ignore_case = TRUE)) ~ "F6 Personality/Adult behaviour",
+stringr::str_detect(x, "retraso mental|discapacidad intelectual|intelectual") ~ "F7 Intellectual disability",
+stringr::str_detect(x, "desarrollo psicolog|autism|asperger|lenguaje|aprendizaje|espectro autista|tdah|t\\s*d\\s*a\\s*h") ~ "F8/9 Neurodevelopment/Child",
+TRUE ~ "Other/unspecified"
+)
+}
+
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Create dummied for psychiatric comorbidity\n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Living arrangement/Cohabitation status\n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Domestic violence & Sex abuse\n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Primary subs\n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Tr outcome\n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+
+# Create multi-label dummies using tidytable
+SISTRAT23_c1_2010_2024_df_prev1z <- 
+  SISTRAT23_c1_2010_2024_df_prev1z|>
+  tidytable::mutate(dx_norm = normalize_txt(mod_psiq_cie_10))|>
+  tidytable::mutate(dit_m = readmit_time_from_adm_m-readmit_time_from_disch_m)|>
+  # avoid NAs propagating into str_detect
+  tidytable::mutate(dx_norm_nna = ifelse(is.na(dx_norm), "", dx_norm))|>
+  tidytable::mutate(
+    f0_organic                         = stringr::str_detect(dx_norm_nna, "mentales organicos"),
+    f1_substance_use                   = stringr::str_detect(dx_norm_nna, "sustancias psicoactivas|consumo de sustancias|psicoactiva"),
+    f2_psychotic                       = stringr::str_detect(dx_norm_nna, "esquizofren|esquizotip|ideas? delirant|psicosis"),
+    f3_mood                            = stringr::str_detect(dx_norm_nna, "humor \\(afectivos\\)"),
+    f4_anxiety_stress_somatoform       = stringr::str_detect(dx_norm_nna, "neuroticos|estresantes|somatomorfos"),
+    f5_physio_eating_sleep_sexual      = stringr::str_detect(dx_norm_nna, "conducta alimentaria|disfunciones fisiologicas|factores somaticos"),
+    f6_personality_adult_behaviour     = stringr::str_detect(dx_norm_nna, "personalidad y del comportamiento del adulto|habitos y del control de los impulsos|transformacion persistente de la personalidad"),
+    f7_intellectual_disability         = stringr::str_detect(dx_norm_nna, "retraso mental|discapacidad intelectual"),
+    f8_9_neurodevelopment_child        = stringr::str_detect(dx_norm_nna, "desarrollo psicolog|comienzo habitual en la infancia y adolescencia")
+  )|>
+  tidytable::mutate(marital_status_rec= tidytable::case_when(marital_status== "separated/divorced/annulled"~ "separated/divorced/annulled/widowed", marital_status=="widowed"~"separated/divorced/annulled/widowed", T~ marital_status))|>
+  tidytable::mutate(
+  cqv_norm=con_quien_vive|>stringi::stri_trans_general("Latin-ASCII")|>
+    stringr::str_to_lower()|>stringr::str_squish())|>
+  tidytable::mutate(
+    # 5-level (more granular)
+    con_quien_vive_joel5=dplyr::case_when(
+      # Alone
+      stringr::str_detect(cqv_norm,"^solo$")~"Alone",
+      # Couple/children only (no family-of-origin)
+      stringr::str_detect(cqv_norm,"^unicamente con (la )?pareja( e hijos)?$")|
+        stringr::str_detect(cqv_norm,"^unicamente con pareja$")|
+        stringr::str_detect(cqv_norm,"^unicamente con hijos$")~
+        "Couple/children only",
+      # Couple/children + family-of-origin (extended household)
+      stringr::str_detect(cqv_norm,"(pareja|hijos).*(padres|familia de origen)")|
+        stringr::str_detect(cqv_norm,"^con la pareja,? hijos y padres")~
+        "Couple/children + origin",
+      # Family-of-origin only
+      stringr::str_detect(cqv_norm,"^unicamente con padres|^con padres|familia de origen$")|
+        stringr::str_detect(cqv_norm,"^con la madre \\(sola\\)$")|
+        stringr::str_detect(cqv_norm,"^con abuelos$")|
+        stringr::str_detect(cqv_norm,"^con hermanos$")~
+        "Family of origin",
+      # Others (friends / other non-relatives / other relative)
+      stringr::str_detect(cqv_norm,"con amigos|otro no pariente|otro pariente|^otros$")~
+        "Others",
+      TRUE~"Others"))|>
+  tidytable::mutate(
+    # 4-level (collapsed)
+    cohabitation=dplyr::case_when(
+      con_quien_vive_joel5=="Alone"~"alone",
+      con_quien_vive_joel5 %in% c("Couple/children only","Couple/children + origin")~"with couple/children",
+      con_quien_vive_joel5=="Family of origin"~"family of origin",
+      TRUE~"Others"
+    ))|>
+  tidytable::mutate(
+    tenure_status_household_rec= tidytable::case_when(grepl("illegal|others",tenure_status_household)~"illegal settlement & others", T~tenure_status_household)
+  )|>
+  tidytable::mutate(
+    cohabitation=forcats::fct_relevel(
+      factor(cohabitation),
+      c("alone","with couple/children","family of origin","others")
+    ))|>
+  tidytable::select(-tidytable::any_of(c("cqv_norm", "con_quien_vive_joel5", "dx_norm_nna")))|>
+  tidytable::mutate(dom_violence=factor(tidytable::case_when(
+      grepl("Violencia Intrafamiliar$",otros_probl_at_sm_or, ignore.case=T)~1,
+      is.na(otros_probl_at_sm_or)~NA_real_,
+      T~0),levels=c(0,1),labels=c("No domestic violence","Domestic violence")))|>
+    tidytable::mutate(sex_abuse= factor(tidytable::case_when(
+      grepl("Abuso Sexual",otros_probl_at_sm_or, ignore.case=T)~1,
+      is.na(otros_probl_at_sm_or)~NA_real_,
+      T~0),levels=c(0,1),labels=c("No sexual abuse","Sexual abuse")))|>
+    tidytable::mutate(
+        primary_sub_std = stringr::str_to_lower(stringr::str_squish(primary_sub)),
+        primary_sub_mod = tidytable::case_when(
+            stringr::str_detect(primary_sub_std, "cocaine\\s*(base\\s*)?paste|pasta\\s*base|\\bpaco\\b") ~ "cocaine paste",
+            stringr::str_detect(primary_sub_std, "cocaine\\s*(powder|hydrochloride|hcl)") |
+                stringr::str_detect(primary_sub_std, "clorhidrato\\s*de\\s*coca|clorhidrato|hidrocloruro") ~ "cocaine powder",
+            stringr::str_detect(primary_sub_std, "\\balcohol\\b") ~ "alcohol",
+            stringr::str_detect(primary_sub_std, "marij|cannab|marihu") ~ "marijuana",
+            TRUE ~ "others"
+        ))|>
+    tidytable::mutate(primary_sub_mod = factor(primary_sub_mod,
+                                    levels = c("cocaine paste","cocaine powder","alcohol","marijuana","others")))|>
+  tidytable::select(-tidytable::any_of(c("primary_sub_std", "dx_norm")))|>
+  tidytable::mutate(urbanicity_cat= tidytable::case_when(grepl("Mix",clasificacion)~ "2.Mixed", grepl("Urb",clasificacion)~ "3.Urban", grepl("Rur",clasificacion)~ "1.Rural", T~NA_character_))|>
+  tidytable::mutate(ethnicity= ifelse(!is.na(ethnicity_c1_c6_historic),1,0))|>
+    tidytable::mutate(
+        tr_outcome = tidytable::case_when(
+            tr_compliance_rec7 == "currently in" & is.na(adm_disch_reason) ~ NA_character_,
+            stringr::str_detect(coalesce(tr_compliance_rec7, ""), "dropout") & is.na(adm_disch_reason) ~ "dropout",
+            # explicit non-discharge statuses with NA reason
+            tr_compliance_rec7 == "referral"    & is.na(adm_disch_reason) ~ "referral",
+            tr_compliance_rec7 == "completion"  & is.na(adm_disch_reason) ~ "completion",
+            # discharge branches (note the parentheses)
+            stringr::str_detect(coalesce(tr_compliance_rec7, ""), "discharge") &
+                adm_disch_reason %in% c("agreement_end", "death", "no_local_service") ~ "adm discharge - adm reasons",
+            stringr::str_detect(coalesce(tr_compliance_rec7, ""), "discharge") &
+                (adm_disch_reason == "rule_violation" | is.na(adm_disch_reason)) ~ "adm discharge - rule violation/undet",
+            TRUE ~ "other"
+        ))
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+cat("Recode Type of housing, Admission age, Treatment days, Tr. compliance; Nationallity (Chile); \n")
+cat("#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:\n")
+
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  tipo_de_vivienda_rec <- factor(tidytable::case_when(
+    tipo_de_vivienda %in% c("casa", "departamento") ~ "formal housing",
+    tipo_de_vivienda == "pieza dentro de la vivienda" ~ "shared/secondary unit",
+    tipo_de_vivienda%in% c("caleta o punto de calle", "mediagua movil (carpa, casa rodante o similar)", "hospederia", "residencial, pension, hostal", "choza, rancho, ruca", "informal/rural housing") ~ "homeless/unsheltered/informal/temporary housing/institutional/collective",
+    is.na(tipo_de_vivienda)~ NA_character_,
+    TRUE ~ "other/unknown"  # catches "otro" and NA
+    ),
+  levels = c(
+    "formal housing",
+    "shared/secondary unit",
+    "homeless/unsheltered/informal/temporary housing/institutional/collective",
+    "other/unknown"
+    ))
+})
+
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  prim_sub_freq_rec <- factor(tidytable::case_when(
+    prim_sub_freq %in% c("1. Less than 1 day a week", "2. 1 day a week")~ "1.≤1 day/wk",
+    prim_sub_freq %in% c("3. 2 to 3 days a week", "4. 4 to 6 days a week")~ "2.2–6 days/wk",
+    is.na(prim_sub_freq)~ NA_character_,
+    TRUE ~ "3.Daily"  # catches "otro" and NA
+    ),
+  levels = c(
+    "1.≤1 day/wk",
+    "2.2–6 days/wk",
+    "3.Daily"
+    ))
+})
+
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  tipo_de_vivienda_rec2 <- factor(tidytable::case_when(
+    tipo_de_vivienda %in% c("casa", "departamento") ~ "formal housing",
+    # tipo_de_vivienda == "pieza dentro de la vivienda" ~ "shared/secondary unit",
+    # tipo_de_vivienda%in% c("caleta o punto de calle", "mediagua movil (carpa, casa rodante o similar)", "hospederia", "residencial, pension, hostal", "choza, rancho, ruca", "informal/rural housing") ~ "homeless/unsheltered/informal/temporary housing/institutional/collective",
+    is.na(tipo_de_vivienda)~ NA_character_,
+    TRUE ~ "other/unknown"  # catches "otro" and NA
+    ),
+  levels = c(
+    "formal housing",
+    # "shared/secondary unit",
+    # "homeless/unsheltered/informal/temporary housing/institutional/collective",
+    "other/unknown"
+    ))
+})
+
+#Admission age
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_log <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(adm_age_rec3), NA_real_, log1p(adm_age_rec3)))
+
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_c <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(adm_age_rec3), NA_real_, scale(adm_age_rec3, center = TRUE, scale = FALSE)))
+
+#Warning in log1p(adm_age_rec3) : Se han producido NaNs
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_pow2 <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(adm_age_rec3), NA_real_, adm_age_rec3^2))
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_pow3 <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(adm_age_rec3), NA_real_, adm_age_rec3^3))
+
+# Admission Age categories
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_cat <- with(
+    SISTRAT23_c1_2010_2024_df_prev1z,
+    {
+        res <- rep(NA_character_, length(adm_age_rec3))
+        res[adm_age_rec3 >= 18 & adm_age_rec3 < 30] <- "18-29"
+        res[adm_age_rec3 >= 30 & adm_age_rec3 < 45] <- "30-44"
+        res[adm_age_rec3 >= 45 & adm_age_rec3 < 65] <- "45-64"
+        res
+    }
+)
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_cat <- factor(
+  SISTRAT23_c1_2010_2024_df_prev1z$adm_age_cat,
+  levels = c("18-29", "30-44", "45-64")
+)
+SISTRAT23_c1_2010_2024_df_prev1z$adm_age_c <- scale(SISTRAT23_c1_2010_2024_df_prev1z$adm_age_rec3, center = TRUE, scale = FALSE)
+
+
+invisible("Created the 90 days translated in months by subsetting and taking the average value")
+dit90<- 
+mean(SISTRAT23_c1_2010_2024_df_prev1z$dit_m[which(SISTRAT23_c1_2010_2024_df_prev1z$dit_rec6==90)])
+
+# Treatment duration transformations
+SISTRAT23_c1_2010_2024_df_prev1z$treat_log <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(dit_m), NA_real_, log1p(dit_m)))
+#Warning in log1p(dit_m) : Se han producido NaNs
+SISTRAT23_c1_2010_2024_df_prev1z$treat_days_pow2 <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(dit_m), NA_real_, dit_m^2))
+SISTRAT23_c1_2010_2024_df_prev1z$treat_days_pow3 <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(dit_m), NA_real_, dit_m^3))
+SISTRAT23_c1_2010_2024_df_prev1z$treat_lt_90 <- with(SISTRAT23_c1_2010_2024_df_prev1z, 
+  ifelse(is.na(dit_m), NA_integer_, as.integer(dit_m < dit90)))
+
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  sex_rec <- dplyr::case_when(
+    sex_rec == "mujer" ~ "woman",
+    sex_rec == "hombre" ~ "man",
+    T~ NA_character_
+  )
+  sex_rec <- factor(sex_rec, levels = c(
+    "man",
+    "woman"
+  ))
+})
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  nationality_chile <- dplyr::case_when(
+    nationality_cons== "chile" ~ "chile",
+    !nationality_cons== "chile" ~ "other",
+    T~ NA_character_
+  )
+  nationality_chile <- factor(nationality_chile, levels = c(
+    "chile",
+    "other"
+  ))
+})
+
+SISTRAT23_c1_2010_2024_df_prev1z <- within(SISTRAT23_c1_2010_2024_df_prev1z, {
+  any_violence <- dplyr::case_when(
+    sex_abuse== "Sexual abuse"| dom_violence=="Domestic violence"~ "1.Domestic violence/sex abuse",
+    grepl("No", sex_abuse) & grepl("No", dom_violence)~ "0.No domestic violence/sex abuse",
+    grepl("No", sex_abuse) & is.na(dom_violence)~ "0.No domestic violence/sex abuse",
+    is.na(sex_abuse) & grepl("No", dom_violence)~ "0.No domestic violence/sex abuse",
+    T~ NA_character_
+  )
+  any_violence <- factor(any_violence, levels = c(
+    "1.Domestic violence/sex abuse",
+    "0.No domestic violence/sex abuse"
+  ))
+})
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# 1) Define supergroup sets and a vectorized classifier that keeps NAs as NA
+infectious_set <- c(
+  "ets",
+  "hepatitis b, c, d",
+  "infecciosas relacionadas con uso de sustancias"
+)
+organ_set <- c(
+  "cardiopatias: miocardiopatia dilatada por oh, arritmias, hta",
+  "hepatitis alcoholica subaguda",
+  "hepatitis cronica",
+  "patologia bucal",
+  "anemia: megaloblastica y ferropenica"
+)
+injury_set <- c("traumatismos y secuelas secundarios")
+other_spec_set <- c(
+  "otras enfermedades o condiciones fisicas limitantes",
+  "otras enfermedades o condiciones de riesgo vital",
+  "enfermedades somaticas",
+  "patologia de la gestion y del nino intrauterino"
+)
+supergroups_levels <- c(
+  "en estudio",
+  "sin trastorno",
+  "Infectious diseases (STIs, viral hepatitis, substance-use–related)",
+  "Organ-system medical diseases (cardio, hepatic, oral, hematologic)",
+  "Injuries and sequelae",
+  "Other specified medical conditions"
+)
+classify_dx_vec <- function(x) {
+  x <- stringr::str_squish(x)
+  out <- rep(NA_character_, length(x))
+  # statuses (kept as-is)
+  out[x == "en estudio"] <- "en estudio"
+  out[x == "sin trastorno"] <- "sin trastorno"
+  # infectious
+  out[x %in% infectious_set] <- "Infectious diseases (STIs, viral hepatitis, substance-use–related)"
+  # organ/system
+  out[x %in% organ_set] <- "Organ-system medical diseases (cardio, hepatic, oral, hematologic)"
+  # injuries
+  out[x %in% injury_set] <- "Injuries and sequelae"
+  # other specified (broad/vague)
+  out[x %in% other_spec_set] <- "Other specified medical conditions"
+  # funnel any unforeseen non-NA labels to "Other specified"
+  out[is.na(out) & !is.na(x)] <- "Other specified medical conditions"
+  out
+}
+# 2) Apply to the single-diagnosis field; keep is.na(.) as NA
+SISTRAT23_c1_2010_2024_df_prev1z <- SISTRAT23_c1_2010_2024_df_prev1z|>
+  dplyr::mutate(
+    phys_dx_supergroup = classify_dx_vec(diagnostico_trs_fisico),
+    phys_dx_supergroup = forcats::fct_relevel(
+      factor(phys_dx_supergroup),
+      supergroups_levels))
+# 3) Apply to the multi-response series (split on "||", classify, dedup per row)
+#    - Produce: a collapsed string per row and wide one-hot indicators
+multi_tokens <- SISTRAT23_c1_2010_2024_df_prev1z|>
+  dplyr::mutate(.rowid = dplyr::row_number(),
+                dx_series_raw = diagnostico_trs_fisico_series)|>
+  tidyr::separate_rows(dx_series_raw, sep = "\\|\\|")|>
+  dplyr::mutate(
+    dx_token = stringr::str_squish(dx_series_raw),
+    dx_token = dplyr::na_if(dx_token, ""),
+    dx_token = dplyr::na_if(dx_token, "NA"),
+    supergroup_token = classify_dx_vec(dx_token)
+  )|>
+  dplyr::distinct(.rowid, supergroup_token, .keep_all = TRUE)
+# Collapsed string per row (NA if nothing classifiable present)
+series_collapsed <- multi_tokens|>
+  dplyr::filter(!is.na(supergroup_token))|>
+  dplyr::group_by(.rowid)|>
+  dplyr::summarise(
+    dx_supergroup_series = paste(sort(unique(supergroup_token)), collapse = "||"),
+    .groups = "drop"
+  )
+# One-hot indicators per supergroup (sanitized column names)
+series_dummies <- multi_tokens|>
+  dplyr::filter(!is.na(supergroup_token))|>
+  dplyr::mutate(value = 1L)|>
+  dplyr::distinct(.rowid, supergroup_token, .keep_all = TRUE)|>
+  tidyr::pivot_wider(
+    names_from = supergroup_token,
+    values_from = value,
+    values_fill = list(value = 0)
+  )|>
+  dplyr::rename_with(.fn = base::make.names, .cols = - .rowid)|> 
+  dplyr::select(dplyr::any_of(c(".rowid", "hash_key", "en.estudio", "Other.specified.medical.conditions", "Organ.system.medical.diseases..cardio..hepatic..oral..hematologic.", "sin.trastorno", "Injuries.and.sequelae", "Infectious.diseases..STIs..viral.hepatitis..substance.use.related.")))|> 
+  janitor::clean_names()|>
+  dplyr::rename("phys_dg_org_med_card_hep_oral_hem"="organ_system_medical_diseases_cardio_hepatic_oral_hematologic", "phys_dg_infect_viral_hep_sud_rel"="infectious_diseases_st_is_viral_hepatitis_substance_use_related", "phys_dg_instudy"="en_estudio", "phys_dg_other_med_cond"="other_specified_medical_conditions", "phys_dg_inj_sequelae"="injuries_and_sequelae")|>
+  dplyr::group_by(hash_key)|>
+  dplyr::summarise(
+    phys_dx_instudy = sum(phys_dg_instudy, na.rm = TRUE),
+    phys_dx_other_spec_medical_cond = sum(phys_dg_other_med_cond, na.rm = TRUE),
+    phys_dx_organ_system_med_dis = sum(phys_dg_org_med_card_hep_oral_hem, na.rm = TRUE),
+    phys_dx_injuries_and_sequelae = sum(phys_dg_inj_sequelae, na.rm = TRUE),
+    phys_dx_infectious_diseases = sum(phys_dg_infect_viral_hep_sud_rel, na.rm = TRUE),
+    .groups = "drop"
+  )|>
+  # Optional: Reorder columns for clarity (hash_key first, then dummies)
+  dplyr::select(hash_key, dplyr::everything())
+# 4) Join back to your main data (keeps rows with NA series as NA)
+SISTRAT23_c1_2010_2024_df_prev1z <- SISTRAT23_c1_2010_2024_df_prev1z|>
+  dplyr::mutate(.rowid = dplyr::row_number())|>
+  dplyr::left_join(series_collapsed, by = ".rowid", multiple="first")|>
+  dplyr::left_join(series_dummies,  by = "hash_key", multiple="first")|>
+  dplyr::select(-.rowid)|> 
+  dplyr::mutate(
+    # assuming logical columns like dx_F0, dx_F2, ..., dx_F8_9
+    dx_f2_smi_psychotic   = as.integer(f2_psychotic),
+    dx_f3_mood            = as.integer(f3_mood),
+    dx_f45_anx_stress_phys = as.integer(f4_anxiety_stress_somatoform| f5_physio_eating_sleep_sexual),
+    dx_f6_personality     = as.integer(f6_personality_adult_behaviour),
+    dx_f0789_neurocog_dev    = as.integer(f0_organic | f7_intellectual_disability | f8_9_neurodevelopment_child)
+    # optional: single collapsed factor, with priority
+  )
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+hist(table(round(SISTRAT23_c1_2010_2024_df_prev1z$dit_m,1), exclude=NULL), breaks=120, main= "Histogram: Months in treatment", xlab="Months")
+```
+
+
+### 1.1. Missingness
+
+```{r miss-diag}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# Character vector of the variables
+tot_variables <- c(
+  "readmit_time_from_adm_m", "readmit_time_from_disch_m", "readmit_event",
+  "death_time_from_adm_m", "death_time_from_disch_m", "death_event",
+  "sex_rec", "adm_age_log", "adm_age_pow2", "adm_age_pow3", "adm_age_c", "adm_age_cat", "tenure_status_household", "occupation_condition_corr24",
+  "marital_status_rec", "porc_pobr", "porc_pobr_log", "porc_pobr_c",
+  "ethnicity", "nationality_chile", "urbanicity_cat", "ed_attainment_corr", "cohabitation",
+  "dg_psiq_cie_10_instudy", "dg_psiq_cie_10_dg",  "f0_organic", "f1_substance_use", "f2_psychotic",
+  "f3_mood", "f4_anxiety_stress_somatoform", "f5_physio_eating_sleep_sexual",
+  "f6_personality_adult_behaviour", "f7_intellectual_disability", "f8_9_neurodevelopment_child", 
+  "dx_f2_smi_psychotic", "dx_f3_mood", "dx_f45_anx_stress_phys", "dx_f6_personality", "dx_f0789_neurocog_dev",
+  "sub_dep_icd10_status", "dom_violence", "sex_abuse", "any_violence",
+  "phys_dx_supergroup","phys_dx_instudy", "phys_dx_other_spec_medical_cond", "phys_dx_organ_system_med_dis", 
+  "phys_dx_injuries_and_sequelae", "phys_dx_infectious_diseases",
+  "prim_sub_freq", "prim_sub_freq_rec", "polysubstance_strict", "dit_m", "treat_log",
+  "treat_days_pow2", "treat_days_pow3", "treat_lt_90", "tr_outcome",
+  "adm_motive", "primary_sub", "primary_sub_mod", "usuario_tribunal_trat_droga",
+  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico"
+)
+# Character vector of the variables restricted to factor or character columns
+char_variables <- c(
+  "sex_rec", "tenure_status_household", "occupation_condition_corr24",
+  "marital_status_rec", "ethnicity", "urbanicity_cat", "ed_attainment_corr", "cohabitation",
+  "dg_psiq_cie_10_instudy", "dg_psiq_cie_10_dg", "f0_organic", "f1_substance_use", "f2_psychotic",
+  "f3_mood", "f4_anxiety_stress_somatoform", "f5_physio_eating_sleep_sexual",
+  "f6_personality_adult_behaviour", "f7_intellectual_disability", "f8_9_neurodevelopment_child", 
+  "dx_f2_smi_psychotic", "dx_f3_mood", "dx_f45_anx_stress_phys", "dx_f6_personality", "dx_f0789_neurocog_dev",
+  "sub_dep_icd10_status", "dom_violence", "sex_abuse", "any_violence",
+  "phys_dx_supergroup", "phys_dx_instudy", "phys_dx_other_spec_medical_cond", "phys_dx_organ_system_med_dis", 
+  "phys_dx_injuries_and_sequelae", "phys_dx_infectious_diseases",
+  "prim_sub_freq", "prim_sub_freq_rec", "polysubstance_strict", "treat_lt_90", "tr_outcome",
+  "adm_motive", "primary_sub", "primary_sub_mod", "usuario_tribunal_trat_droga",
+  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico"
+)
+
+paste0( "Percentage of the total that has missing values: ",
+  scales::percent(1- (
+      SISTRAT23_c1_2010_2024_df_prev1z[
+        which(complete.cases(subset(SISTRAT23_c1_2010_2024_df_prev1z, select = tot_variables
+            ))),] %>% nrow() / nrow(SISTRAT23_c1_2010_2024_df_prev1z) 
+    ), accuracy = 0.1),
+  "; total = ", format(nrow(SISTRAT23_c1_2010_2024_df_prev1z), big.mark = ",")
+)
+paste0( "Percentage of the total that has missing values (w/o other variables): ",
+  scales::percent(1- (
+      SISTRAT23_c1_2010_2024_df_prev1z[
+        which(complete.cases(subset(SISTRAT23_c1_2010_2024_df_prev1z, select = setdiff(tot_variables,   c("usuario_tribunal_trat_droga", "dom_violence", "sex_abuse", "any_violence", "ethnicity", "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "phys_dx_supergroup", "phys_dx_instudy", "phys_dx_other_spec_medical_cond", "phys_dx_organ_system_med_dis", "phys_dx_injuries_and_sequelae", "evaluacindelprocesoteraputico"))
+            ))),] %>% nrow() / nrow(SISTRAT23_c1_2010_2024_df_prev1z) 
+    ), accuracy = 0.1),
+  "; total = ", format(nrow(SISTRAT23_c1_2010_2024_df_prev1z), big.mark = ",")
+)
+
+# Variables to check
+vars_check <- c(tot_variables)
+# Compute % missing per variable
+missing_pct <- colMeans(
+  is.na(subset(SISTRAT23_c1_2010_2024_df_prev1z, select = vars_check))
+) * 100
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Named vector of labels (names = variable names)
+labels_map <- c(
+  # Times & events
+  readmit_time_from_adm_m           = "Readmission time from admission (months)",
+  readmit_time_from_disch_m         = "Readmission time from discharge (months)",
+  death_time_from_adm_m             = "Death time from admission (months)",
+  death_time_from_disch_m           = "Death time from discharge (months)",
+  readmit_event                     = "Readmission event",
+  death_event                       = "Death event",
+  # Demographics & status
+  sex_rec                           = "Sex (biological categorization)",
+  tenure_status_household           = "Housing situation",
+  tenure_status_household_rec       = "Housing situation (- ill. settlement)",
+  occupation_condition_corr24       = "Employment status",
+  marital_status_rec                = "Marital status",
+  ed_attainment_corr                = "Educational attainment",
+  ethnicity                         = "Ethnicity(=1)",
+  nationality_chile                 = "Nationallity (Chile)",
+  adm_age_log                       = "Admission age (log)",
+  adm_age_pow2                      = "Admission age ^2",
+  adm_age_pow3                      = "Admission age ^3",
+  adm_age_c                         = "Admission age (centered)",
+  adm_age_cat                       = "Admission age, three groups",
+  # Contextual
+  porc_pobr                         = "Poverty index of commune of residence",
+  porc_pobr_log                     = "Poverty index (log1p)",
+  porc_pobr_c                       = "Poverty index (centered)",
+  porc_pobr_c_cat6                  = "Poverty index (6 quantile groups)",
+  urbanicity_cat                    = "Urbanization level of the commune of residence",
+  # Living arrangement
+  cohabitation                      = "Cohabitation status (harmonized)",
+  # Clinical/behavioral
+  dg_psiq_cie_10_instudy            = "Psychiatric comorbidity (ICD-10, in-study)",
+  dg_psiq_cie_10_dg                 = "Psychiatric comorbidity (ICD-10, diagnosis record)",
+  sub_dep_icd10_status              = "SUD severity (ICD-10)",
+  prim_sub_freq                     = "Primary-substance use frequency at admission",
+  prim_sub_freq_rec                 = "Primary-substance use frequency at admission (simplified)",
+  polysubstance_strict              = "Polysubstance use (strict)",
+  # Treatment exposure
+  dit_m                             = "Length of stay in treatment (months)",
+  treat_log                         = "Length of stay (log1p months)",
+  treat_days_pow2                   = "Length of stay (months)^2",
+  treat_days_pow3                   = "Length of stay (months)^3",
+  treat_lt_90                       = "Treatment length < 90 days (indicator)",
+  tr_outcome                        = "Treatment outcome",
+  adm_motive                        = "Admission motive",
+  primary_sub                       = "Primary substance of use (detailed substances)",
+  primary_sub_mod                   = "Primary substance of use (recoded)",
+  # Research-context extras
+  usuario_tribunal_trat_droga       = "Court-referred to drug treatment (1 = yes)",
+  tipo_de_vivienda_rec              = "Housing type (recoded)",
+  tipo_de_vivienda_rec2             = "Housing type (recoded & simplified)",
+  # Stratification
+  plan_type_corr                    = "Treatment modality (plan type)",
+  prim_sub_licit                    = "Licit primary substance at admission",
+  f0_organic                        = "F0. Organic, including symptomatic, mental disorders",
+  f1_substance_use                  = "F1. Mental and behavioural disorders due to psychoactive substance use",
+  f2_psychotic                      = "F2. Schizophrenia, schizotypal and delusional disorders",
+  f3_mood                           = "F3. Mood [affective] disorders",
+  f4_anxiety_stress_somatoform      = "F4. Neurotic, stress-related and somatoform disorders",
+  f5_physio_eating_sleep_sexual     = "F5. Behavioural syndromes associated with physiological disturbances and physical factors",
+  f6_personality_adult_behaviour    = "F6. Disorders of adult personality and behaviour",
+  f7_intellectual_disability        = "F7. Intellectual Disability",
+  f8_9_neurodevelopment_child       = "F8-9. Disorders of psychological development, and behavioural/emotional disorders with onset in childhood and adolescence",
+  dx_f2_smi_psychotic               = "Psychotic disorders (F2)",
+  dx_f3_mood                        = "Mood disorders (F3)",
+  dx_f45_anx_stress_phys            = "Anxiety & stress-related (F4-F5)",
+  dx_f6_personality                 = "Personality disorders (F6)",
+  dx_f0789_neurocog_dev             = "Neurocog & neurodevelopmental (F0,F7-F9)",
+  # Violence indicators
+  any_violence                      = "Domestic violence/Sexual abuse",
+  dom_violence                      = "Domestic violence",
+  sex_abuse                         = "Sexual abuse",
+  # Physical diagnosis groups
+  phys_dx_supergroup                = "Physical Dx Supergroup (Single)",
+  phys_dx_instudy                   = "Physical Dx: Under Study",
+  phys_dx_other_spec_medical_cond   = "Physical Dx: Other Med Conditions",
+  phys_dx_organ_system_med_dis      = "Physical Dx: Organ-System Diseases",
+  phys_dx_injuries_and_sequelae     = "Physical Dx: Injuries & Sequelae",
+  phys_dx_infectious_diseases       = "Physical Dx: Infectious Diseases",
+  evaluacindelprocesoteraputico     = "Assessment of the therapeutic process"
+)
+
+# Apply labels safely (only to variables that exist)
+for(nm in intersect(names(SISTRAT23_c1_2010_2024_df_prev1z), names(labels_map))){
+  attr(SISTRAT23_c1_2010_2024_df_prev1z[[nm]],"label")<-labels_map[[nm]]
+}
+# Extract labels for each variable, defaulting to NA if not present
+labels_vec <- sapply(names(missing_pct), function(nm) {
+  lbl <- attr(SISTRAT23_c1_2010_2024_df_prev1z[[nm]], "label")
+  if (is.null(lbl)) NA_character_ else lbl
+})
+
+# Round and format into data.frame with labels
+data.frame(
+  Variable = names(missing_pct),
+  Label = labels_vec,
+  Missing_Percent = round(missing_pct, 2))|>
+  # Display as markdown table
+  knitr::kable(format = "markdown",
+    align = c("l", "l", "r"),
+    col.names = c("Variable", "Label", "% Missing"),
+    row.names = FALSE)
+```
+
+
+#### 1.1.5. Currently in
+
+```{r currently-in}
+#| class-output: center-table
+#| message: true
+#| include: true
+#| warning: true
+#| error: true
+#| results: "hold"
+
+SISTRAT23_c1_2010_2024_df_prev1z|> dplyr::filter(tr_outcome=="other")|> 
+    dplyr::select(hash_key, tr_outcome, adm_date_rec2, disch_date_rec6, dit_rec6, adm_year)|>
+    #janitor::tabyl(adm_year)
+     dplyr::mutate(
+     hash_key = gsub(
+         "(?<=^.{8}).{2}",   # lookbehind for first 8 chars, match the next 2
+         "**",               # replace with two asterisks
+         hash_key,
+         perl = TRUE
+     ))
+```
+
+### 1.2. Descriptives
+
+```{r desc-1.1-print-pre}
+#| class-output: center-table
+#| echo: false
+#| results: "hide"
+#| message: false
+#| warning: false
+
+#NO PRINT
+
+## 0) Guard: use only columns that exist
+tot_variables_present<-intersect(tot_variables,names(SISTRAT23_c1_2010_2024_df_prev1z))
+char_variables_present<-intersect(c(char_variables, "readmit_event", "death_event"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+extra_cat<-intersect(c("disch_age_cat"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+extra_num<-intersect(c("disch_age_rec"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+
+categorical_vars<-union(char_variables_present,extra_cat)
+numerical_vars<-setdiff(union(tot_variables_present,union(extra_cat,extra_num)),categorical_vars)
+
+## 1) Create TableOne (coerce character categoricals to factor inline)
+table_one_clean<-tableone::CreateTableOne(
+  vars= setdiff(c(categorical_vars,numerical_vars), "plan_type_corr"),
+  data= tidytable::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+    tidytable::across(tidyselect::all_of(categorical_vars),\(x){if(is.character(x)) factor(x) else x}),
+porc_pobr= porc_pobr*100),
+  factorVars= setdiff(char_variables_present,"plan_type_corr"),
+  strata= "plan_type_corr",
+  addOverall= TRUE,
+  test= TRUE,
+  smd= TRUE#,
+  #labelTranslations=label_map
+)
+
+table_one_clean_print <- print(
+  table_one_clean,
+  nonnormal = numerical_vars,
+  formatOptions = list(big.mark = ","),
+  quote = FALSE,
+  noSpaces = TRUE,
+  showAllLevels = TRUE,
+  missing = TRUE,
+  explain = TRUE,
+  contDigits = 1,
+  catDigits = 1,
+  pDigits = 3,
+  smd = TRUE
+)
+```
+
+```{r desc-1.1-print}
+#| class-output: center-table
+#| message: true
+#| include: true
+#| warning: true
+#| error: true
+#| results: "hold"
+
+## 0) Guard: use only columns that exist
+tot_variables_present<-intersect(tot_variables,names(SISTRAT23_c1_2010_2024_df_prev1z))
+char_variables_present<-intersect(c(char_variables, "readmit_event", "death_event"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+extra_cat<-intersect(c("disch_age_cat"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+extra_num<-intersect(c("disch_age_rec"),names(SISTRAT23_c1_2010_2024_df_prev1z))
+
+categorical_vars<-union(char_variables_present,extra_cat)
+numerical_vars<-setdiff(union(tot_variables_present,union(extra_cat,extra_num)),categorical_vars)
+
+## 1) Create TableOne (coerce character categoricals to factor inline)
+table_one_clean<-tableone::CreateTableOne(
+  vars= setdiff(c(categorical_vars,numerical_vars), "plan_type_corr"),
+  data= tidytable::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+    tidytable::across(tidyselect::all_of(categorical_vars),\(x){if(is.character(x)) factor(x) else x}),
+porc_pobr= porc_pobr*100),
+  factorVars= setdiff(char_variables_present,"plan_type_corr"),
+  strata= "plan_type_corr",
+  addOverall= TRUE,
+  test= TRUE,
+  smd= TRUE#,
+  #labelTranslations=label_map
+)
+
+## 4) Print (treat numeric as non-normal; keep your formatting)
+escape_regex<-function(x) gsub("([][{}()+*^$.|?\\\\])","\\\\\\1",x)
+
+rn<-rownames(table_one_clean_print)
+keys<-names(labels_map)
+keys<-keys[order(nchar(keys),decreasing=TRUE)]  # avoid partial overlaps
+
+for(nm in keys){
+  pat<-paste0("^",escape_regex(nm),"(?=\\s|\\(|:|=|$)")  # start, then space/(...)/: /= or end
+  rn<-sub(pat,labels_map[[nm]],rn,perl=TRUE)            # replace only the prefix; keep the rest
+}
+rownames(table_one_clean_print)<-rn
+
+wdpath<- paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+
+## 5) HTML table
+table_one_clean_print|>
+  knitr::kable("html", caption= "Table 1. Descriptives by baseline treatment setting")|>
+  kableExtra::kable_classic()|>
+  kableExtra::row_spec(0:1, bold = TRUE)|>
+  kableExtra::scroll_box(height = "400px")
+
+write.table(table_one_clean_print, 
+            file= paste0(wdpath,"cons/_out/table_one_prediction_clean.txt"), 
+            sep = "\t", row.names = T)
+```
+
+- General-population settings were mostly male (81–94%). Heavy sex imbalances by setting (1/4= women).
+
+- GP settings mostly lived with couples/kids or family of origin (~51%)
+
+- Dropout rates exceed 50% in all groups; highest in Basic ambulatory (58%); Completion rates highest in General-poulation residential (32%) and Intensive ambulatory (30%)
+
+- Patients in residential treatments were dominated by cocaine base paste as the primary substance (64-62%), daily use (72-76%) and drug dependence (>90%); Basic ambualtory, dominated by alcohol (44%).
+
+- Residential treatments were more single (23% vs. 34% overall)
+
+- Domestic violence and sexual abuse were higher in women-only settings (40–45% and 6–8% vs. 26% and 2% overall, respectively)
+
+- Ambulatory basic received more patients aged 40-65 (25%); women-only programs, less (16%) 
+
+- Also women-only settings showed SUD severity and Depression slightly higher. 
+
+- Women-only residential had diagnoses F6 (Disorders of adult personality and behavior) (47% vs. 28% overall) and more diagnoses in study (24% vs. 18% overall)
+
+- Women-only residential were younger (34 [13–72]), less went to treatment spontaneously (28% vs. 45% overall)
+
+- Residential settings had approx. two times more organ-system diseases (5.3%) and injuries & sequelae (3.9%)
+
+- Formal housing: >90% in intensive ambulatory settings vs. 80% in general-population residential; Homelessness/informal housing: 14% in General-population residential vs. 1–3% elsewhere.
+
+- Employment was lowest in Women-only residential (10%) and General-population residential (18%), with many unemployed (43–65%), while General-population basic ambulatory had the highest employed rate (65%). Education was similar across groups, with most having high school or less (53–57%), but primary school or less was more common in women-only settings (30%).
+
+- Urban residence highest: 88–89% in women-only settings.
+
+-  <span style="color:darkred">**  We did not find patients with sex that was inconsistent with their clinical presentation regarding the Pathology of Gestation and of the Intrauterine Fetus without Disorder. Although this study focuses on pregnancy and fetal outcomes, the male parent's (father's) medical history and genetic contribution were documented as part of the patient data. `r paste0(wdpath,"cons/_out/table_one_prediction_clean.txt")` **.</span>
+
+
+- **Considering these differences, we think that certain predictors may behave differently by settings**
+
+
+```{r desc-1.2-print}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+SISTRAT23_c1_2010_2024_df_prev1z|>
+    janitor::tabyl(readmit_event, death_event)|>
+    janitor::adorn_percentages("all")|>
+    janitor::adorn_pct_formatting(digits = 1)|>
+    janitor::adorn_ns(position = "front")|> 
+    knitr::kable("markdown", caption= "Intersection of Readmission (rows) w/ Mortality (cols)")
+```
+
+
+#### For thesis project
+
+```{r thesisproj}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+
+```
+
+
+## 2. Nonproportionallity
+
+### 2.1. Log-log plots
+
+```{r pre-dg-nonproportionallity-loglog}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+#| fig-align: center
+#| fig-height: 8
+#| fig-width: 10
+#| fig-dpi: 600
+#| fig-cap: "Figure. Log-log plots by treatment plan type"
+
+#Bradburn, M., Clark, T., Love, S. et al. Survival Analysis Part III: Multivariate data analysis – choosing a model and assessing its adequacy and fit. Br J Cancer 89, 605–611 (2003). https://doi.org/10.1038/sj.bjc.6601120
+
+SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr <- factor(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
+
+# Define titles for the four outcomes
+plots <- data.frame(
+  title = c(
+    "Admission to\nReadmission", 
+    "Admission to\nDeath", 
+    "Discharge to\nReadmission", 
+    "Discharge to\nDeath"
+  ),
+  outcome = c(1, 2, 3, 4)  # Just for indexing
+)
+# SIN COVARIABLES: Kaplan-Meier log-log plots stratified by plan_type_corr
+# Layout: 2x2 grid for the four outcomes
+layout(matrix(1:4, nc = 2, byrow = FALSE))
+# Get unique levels for consistent colors/lines across plots
+levels_plan <- levels(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
+n_levels <- length(levels_plan)
+colors <- rainbow(n_levels)  # Simple rainbow; for better colors, load library(RColorBrewer) and use brewer.pal(n_levels, "Set1")
+lty_vec <- c(1, 2, 3, 4, 5)[1:n_levels]  # Line types: 1=solid, 2=dashed, 3=dotted, etc.
+
+for (i in 1:4) {
+  # Define the time and event variables based on outcome
+  if (i == 1) {
+    # Admission to Readmission
+    time_var_name <- "readmit_time_from_adm_m"
+    event_var_name <- "readmit_event"
+    xlab_text <- "log(Months)"
+  } else if (i == 2) {
+    # Admission to Death
+    time_var_name <- "death_time_from_adm_m"
+    event_var_name <- "death_event"
+    xlab_text <- "log(Months)"
+  } else if (i == 3) {
+    # Discharge to Readmission
+    time_var_name <- "readmit_time_from_disch_m"
+    event_var_name <- "readmit_event"
+    xlab_text <- "log(Months)"
+  } else {
+    # Discharge to Death
+    time_var_name <- "death_time_from_disch_m"
+    event_var_name <- "death_event"
+    xlab_text <- "log(Months)"  }
+  # Get the full data subset for this outcome (exclude NA and non-positive times)
+  time_var <- SISTRAT23_c1_2010_2024_df_prev1z[[time_var_name]]
+  event_var <- SISTRAT23_c1_2010_2024_df_prev1z[[event_var_name]]
+  subset_cond <- !is.na(time_var) & !is.na(event_var) & time_var > 0
+  data_subset <- SISTRAT23_c1_2010_2024_df_prev1z[subset_cond, ]
+  
+  if (nrow(data_subset) == 0) {
+    # Skip if no data
+    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
+    next
+  }
+  # Collect all log-log values for dynamic limits
+  all_log_times <- c()
+  all_log_log_surv <- c()
+  # Fit and extract for each level separately (avoids strata subsetting issues)
+  for (j in seq_along(levels_plan)) {
+    data_level <- data_subset[data_subset$plan_type_corr == levels_plan[j], ]
+    if (nrow(data_level) == 0) next
+    # Fit single-group survfit for this level
+    if (i == 1) {
+      level_fit <- survfit(Surv(readmit_time_from_adm_m, readmit_event) ~ 1, data = data_level)
+    } else if (i == 2) {
+      level_fit <- survfit(Surv(death_time_from_adm_m, death_event) ~ 1, data = data_level)
+    } else if (i == 3) {
+      level_fit <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ 1, data = data_level)
+    } else {
+      level_fit <- survfit(Surv(death_time_from_disch_m, death_event) ~ 1, data = data_level)
+    }
+    # Compute log-log only for valid points (time > 0, surv < 1 to avoid log(0) or NaN)
+    valid_idx <- level_fit$surv < 1 & level_fit$time > 0 & !is.na(level_fit$surv)
+    if (sum(valid_idx) > 0) {
+      log_times_j <- log(level_fit$time[valid_idx])
+      log_log_surv_j <- log(-log(level_fit$surv[valid_idx]))
+      valid_log_log <- is.finite(log_times_j) & is.finite(log_log_surv_j)
+      if (sum(valid_log_log) > 0) {
+        all_log_times <- c(all_log_times, log_times_j[valid_log_log])
+        all_log_log_surv <- c(all_log_log_surv, log_log_surv_j[valid_log_log])
+        
+        # Store for plotting later
+        assign(paste0("log_times_", j), log_times_j[valid_log_log])
+        assign(paste0("log_log_surv_", j), log_log_surv_j[valid_log_log])
+      }
+    }
+  }
+  if (length(all_log_times) == 0) {
+    # No valid data for plotting
+    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
+    next
+  }
+  # Dynamic limits
+  x_lim <- range(all_log_times, na.rm = TRUE)
+  y_lim <- range(all_log_log_surv, na.rm = TRUE)
+  if (is.infinite(x_lim[1]) || diff(x_lim) == 0) x_lim <- c(0, 5)  # Fallback
+  if (is.infinite(y_lim[1]) || diff(y_lim) == 0) y_lim <- c(-5, 0)  # Typical fallback for log-log
+  # Initialize empty plot
+  plot(NA, NA, 
+       xlim = x_lim, 
+       ylim = y_lim, 
+       xlab = xlab_text, 
+       ylab = "log(-log(S(t)))", 
+       xaxs = "i", yaxs = "i", las = 1, cex.lab = 0.8, cex.axis = 0.8)
+  # Add lines for each stratum (using stored values)
+  for (j in seq_along(levels_plan)) {
+    log_times_var <- get(paste0("log_times_", j), envir = environment())
+    log_log_surv_var <- get(paste0("log_log_surv_", j), envir = environment())
+    if (exists(paste0("log_times_", j)) && length(log_times_var) > 0) {
+      lines(log_times_var, log_log_surv_var, 
+            col = colors[j], lty = lty_vec[j], lwd = 1.5)
+    }
+  }
+  # Legend
+  legend("bottomright", 
+         legend = levels_plan, 
+         col = colors, lty = lty_vec, lwd = 1.5, 
+         bty = "n", cex = 0.7, inset = 0.02)
+  
+  # Title
+  title(main = plots[i, "title"], cex.main = 1.2)
+}
+# Reset layout to single plot
+layout(1)
+
+# Notes:
+# - This assumes plan_type_corr is a factor. If not, convert: df$plan_type_corr <- factor(df$plan_type_corr)
+# - Subsets exclude NA times/events to avoid errors.
+# - For log-log plots, times > 0; handle zeros/infinites if present (e.g., add small epsilon).
+# - Adjust xlim/ylim based on your data (e.g., inspect range(log(time)) and log(-log(surv))).
+# - If some strata have no events, lines may be missing—check with summary(fit_amb).
+# - Reference: Bradburn et al. (2003) for log-log plots to assess proportional hazards.
+# - Run summary(survfit(...)) first to verify curves before plotting.
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+pdf(paste0(wdpath,"cons/_figs/loglog_plots.pdf"), width=10, height=8)
+
+# SIN COVARIABLES: Kaplan-Meier log-log plots stratified by plan_type_corr
+# Layout: 2x2 grid for the four outcomes
+layout(matrix(1:4, nc = 2, byrow = FALSE))
+# Get unique levels for consistent colors/lines across plots
+levels_plan <- levels(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
+n_levels <- length(levels_plan)
+colors <- rainbow(n_levels)  # Simple rainbow; for better colors, load library(RColorBrewer) and use brewer.pal(n_levels, "Set1")
+lty_vec <- c(1, 2, 3, 4, 5)[1:n_levels]  # Line types: 1=solid, 2=dashed, 3=dotted, etc.
+
+for (i in 1:4) {
+  # Define the time and event variables based on outcome
+  if (i == 1) {
+    # Admission to Readmission
+    time_var_name <- "readmit_time_from_adm_m"
+    event_var_name <- "readmit_event"
+    xlab_text <- "log(Months)"
+  } else if (i == 2) {
+    # Admission to Death
+    time_var_name <- "death_time_from_adm_m"
+    event_var_name <- "death_event"
+    xlab_text <- "log(Months)"
+  } else if (i == 3) {
+    # Discharge to Readmission
+    time_var_name <- "readmit_time_from_disch_m"
+    event_var_name <- "readmit_event"
+    xlab_text <- "log(Months)"
+  } else {
+    # Discharge to Death
+    time_var_name <- "death_time_from_disch_m"
+    event_var_name <- "death_event"
+    xlab_text <- "log(Months)"  }
+  # Get the full data subset for this outcome (exclude NA and non-positive times)
+  time_var <- SISTRAT23_c1_2010_2024_df_prev1z[[time_var_name]]
+  event_var <- SISTRAT23_c1_2010_2024_df_prev1z[[event_var_name]]
+  subset_cond <- !is.na(time_var) & !is.na(event_var) & time_var > 0
+  data_subset <- SISTRAT23_c1_2010_2024_df_prev1z[subset_cond, ]
+  
+  if (nrow(data_subset) == 0) {
+    # Skip if no data
+    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
+    next
+  }
+  # Collect all log-log values for dynamic limits
+  all_log_times <- c()
+  all_log_log_surv <- c()
+  # Fit and extract for each level separately (avoids strata subsetting issues)
+  for (j in seq_along(levels_plan)) {
+    data_level <- data_subset[data_subset$plan_type_corr == levels_plan[j], ]
+    if (nrow(data_level) == 0) next
+    # Fit single-group survfit for this level
+    if (i == 1) {
+      level_fit <- survfit(Surv(readmit_time_from_adm_m, readmit_event) ~ 1, data = data_level)
+    } else if (i == 2) {
+      level_fit <- survfit(Surv(death_time_from_adm_m, death_event) ~ 1, data = data_level)
+    } else if (i == 3) {
+      level_fit <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ 1, data = data_level)
+    } else {
+      level_fit <- survfit(Surv(death_time_from_disch_m, death_event) ~ 1, data = data_level)
+    }
+    # Compute log-log only for valid points (time > 0, surv < 1 to avoid log(0) or NaN)
+    valid_idx <- level_fit$surv < 1 & level_fit$time > 0 & !is.na(level_fit$surv)
+    if (sum(valid_idx) > 0) {
+      log_times_j <- log(level_fit$time[valid_idx])
+      log_log_surv_j <- log(-log(level_fit$surv[valid_idx]))
+      valid_log_log <- is.finite(log_times_j) & is.finite(log_log_surv_j)
+      if (sum(valid_log_log) > 0) {
+        all_log_times <- c(all_log_times, log_times_j[valid_log_log])
+        all_log_log_surv <- c(all_log_log_surv, log_log_surv_j[valid_log_log])
+        
+        # Store for plotting later
+        assign(paste0("log_times_", j), log_times_j[valid_log_log])
+        assign(paste0("log_log_surv_", j), log_log_surv_j[valid_log_log])
+      }
+    }
+  }
+  if (length(all_log_times) == 0) {
+    # No valid data for plotting
+    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
+    next
+  }
+  # Dynamic limits
+  x_lim <- range(all_log_times, na.rm = TRUE)
+  y_lim <- range(all_log_log_surv, na.rm = TRUE)
+  if (is.infinite(x_lim[1]) || diff(x_lim) == 0) x_lim <- c(0, 5)  # Fallback
+  if (is.infinite(y_lim[1]) || diff(y_lim) == 0) y_lim <- c(-5, 0)  # Typical fallback for log-log
+  # Initialize empty plot
+  plot(NA, NA, 
+       xlim = x_lim, 
+       ylim = y_lim, 
+       xlab = xlab_text, 
+       ylab = "log(-log(S(t)))", 
+       xaxs = "i", yaxs = "i", las = 1, cex.lab = 0.8, cex.axis = 0.8)
+  # Add lines for each stratum (using stored values)
+  for (j in seq_along(levels_plan)) {
+    log_times_var <- get(paste0("log_times_", j), envir = environment())
+    log_log_surv_var <- get(paste0("log_log_surv_", j), envir = environment())
+    if (exists(paste0("log_times_", j)) && length(log_times_var) > 0) {
+      lines(log_times_var, log_log_surv_var, 
+            col = colors[j], lty = lty_vec[j], lwd = 1.5)
+    }
+  }
+  # Legend
+  legend("bottomright", 
+         legend = levels_plan, 
+         col = colors, lty = lty_vec, lwd = 1.5, 
+         bty = "n", cex = 0.7, inset = 0.02)
+  
+  # Title
+  title(main = plots[i, "title"], cex.main = 1.2)
+}
+# Reset layout to single plot
+layout(1)
+
+
+dev.off()
+```
+
+
+### 2.2. Coefficients & Collinearity
+
+If we included `porc_pobr_c`, we get the error "X matrix deemed to be singular". If 
+
+```{r schoenfeld-res}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# Create the datadist object from your dataset
+dd <- datadist(dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+      adm_age_cat              = forcats::fct_relevel(factor(adm_age_cat), "18-29"),
+      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
+                                               "owner/transferred dwellings/pays dividends"),
+      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
+      prim_sub_freq_rec        = forcats::fct_relevel(factor(prim_sub_freq_rec), "1.≤1 day/wk"),
+      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
+      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
+      primary_sub_mod          = forcats::fct_relevel(factor(primary_sub_mod), "marijuana"),
+      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
+    ))
+# Register it globally so rms::cph can find it
+options(datadist = "dd")
+
+formula_str_corr2 <- paste("~", paste(c( "adm_age_log", "adm_age_pow2", "adm_age_pow3", "adm_age_c", 
+"adm_age_cat", "tenure_status_household", "occupation_condition_corr24", 
+"marital_status_rec", "porc_pobr", "porc_pobr_log", "ethnicity", "dg_psiq_cie_10_instudy",
+"dx_f2_smi_psychotic", "dx_f3_mood", "dx_f45_anx_stress_phys", "dx_f6_personality", "dx_f0789_neurocog_dev", 
+"sub_dep_icd10_status", "any_violence", "phys_dx_other_spec_medical_cond", 
+"phys_dx_organ_system_med_dis", "phys_dx_injuries_and_sequelae", 
+"phys_dx_infectious_diseases", "prim_sub_freq_rec", "polysubstance_strict", "dit_m", "treat_log", "treat_days_pow2", 
+"treat_days_pow3", "treat_lt_90", "tr_outcome", "adm_motive", "primary_sub_mod", "usuario_tribunal_trat_droga", 
+"tipo_de_vivienda_rec2", "cohabitation", "evaluacindelprocesoteraputico"), collapse = "+ "))
+#"porc_pobr_c"= X matrix deemed to be singular; variable porc_pobr_c 
+
+cox_saturated_readm<-
+rms::cph(
+  as.formula(paste0("Surv(readmit_time_from_disch_m, readmit_event==1) ",
+    formula_str_corr2,
+    " + strat(plan_type_corr)"
+  )),
+  data = dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+      adm_age_cat              = forcats::fct_relevel(factor(adm_age_cat), "18-29"),
+      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
+                                               "owner/transferred dwellings/pays dividends"),
+      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
+      prim_sub_freq_rec        = forcats::fct_relevel(factor(prim_sub_freq_rec), "1.≤1 day/wk"),
+      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
+      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
+      primary_sub_mod          = forcats::fct_relevel(factor(primary_sub_mod), "marijuana"),
+      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
+    ) |>
+  dplyr::mutate(across(where(is.factor), forcats::fct_drop)),
+  x    = TRUE,
+  y    = TRUE,
+  surv = TRUE)
+vif_saturated_readm <- 
+car::vif(coxph(as.formula(paste0("Surv(readmit_time_from_disch_m, readmit_event==1) ",formula_str_corr2,"+ strat(plan_type_corr)")), data = SISTRAT23_c1_2010_2024_df_prev1z)) |> tibble::as_tibble(rownames = "variable")|>
+  dplyr::rename(GVIF_adj = `GVIF^(1/(2*Df))`)
+ 
+invisible("Cox models don’t have an intercept, but VIF still works")
+
+tidy_cph(cox_saturated_readm)|> 
+  dplyr::mutate(var_base = stringr::str_remove(term, "\\s-\\s.*$"))|> 
+  dplyr::left_join(vif_saturated_readm,by=c("var_base"="variable"))|>
+  dplyr::select(-var_base)|> 
+  dplyr::mutate_if(is.numeric, ~round(.,2))|>
+    DT::datatable(filter = 'top',
+        caption = htmltools::tags$caption(
+            style = 'caption-side: top; text-align: left;',
+            htmltools::tags$b('VIF and coefficients from saturated Cox model, Discharge to Readmission')),
+        colnames = c('Term', 'Estimate', 'CI Low', 'CI High',
+            'VIF', 'Df', 'GVIF Adj.'),
+        rownames = FALSE,
+        options = list(
+            pageLength = 20,
+            autoWidth = TRUE,
+            scrollX = TRUE,
+            dom = 't',
+            initComplete = htmlwidgets::JS(
+                "function(settings, json) {
+           $(this.api().tables().body()).css({
+             'font-family': 'Helvetica Neue',
+             'font-size': '75%',
+             'white-space': 'nowrap',
+             'line-height': '1.0em'
+           });
+         }"
+            )))
+#X matrix deemed to be singular; variable porc_pobr_c tr_outcome=adm discharge – adm reasons tr_outcome=adm discharge – rule violation tr_outcome=currently in 
+#  bad_const
+# [1] "primary_sub=dissociatives" "primary_sub=hallucinogens"
+
+# Make sure R uses treatment contrasts with the FIRST level as the baseline
+options(contrasts = c("contr.treatment", "contr.poly"))
+
+cox_saturated_d <- rms::cph(
+  formula = stats::as.formula(paste0(
+    "survival::Surv(death_time_from_disch_m, death_event == 1) ",
+    formula_str_corr2,
+    " + strat(plan_type_corr)"
+  )),
+  data = dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+      adm_age_cat              = forcats::fct_relevel(adm_age_cat, "18-29"),
+      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
+                                               "owner/transferred dwellings/pays dividends"),
+      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
+      prim_sub_freq_rec        = forcats::fct_relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
+      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
+      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
+      primary_sub_mod          = forcats::fct_relevel(primary_sub_mod, "marijuana"),
+      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
+    ),
+  x    = TRUE,
+  y    = TRUE,
+  surv = TRUE)
+vif_saturated_d <- 
+car::vif(coxph(as.formula(paste0("Surv(death_time_from_disch_m, death_event==1) ",formula_str_corr2,"+ strat(plan_type_corr)")), data = SISTRAT23_c1_2010_2024_df_prev1z)) |> tibble::as_tibble(rownames = "variable")|>
+  dplyr::rename(GVIF_adj = `GVIF^(1/(2*Df))`)
+
+tidy_cph(cox_saturated_d)|> 
+    dplyr::mutate(var_base = stringr::str_remove(term, "\\s-\\s.*$"))|> 
+    dplyr::left_join(vif_saturated_d,by=c("var_base"="variable"))|> 
+    dplyr::select(-var_base)|>
+    dplyr::mutate_if(is.numeric, ~round(.,2))|>
+    DT::datatable(filter = 'top',
+        caption = htmltools::tags$caption(
+            style = 'caption-side: top; text-align: left;',
+            htmltools::tags$b('VIF and coefficients from saturated Cox model, Discharge to Mortality')),
+        colnames = c('Term', 'Estimate', 'CI Low', 'CI High',
+            'VIF', 'Df', 'GVIF Adj.'),
+        rownames = FALSE,
+        options = list(
+            pageLength = 20,
+            autoWidth = TRUE,
+            scrollX = TRUE,
+            dom = 't',
+            initComplete = htmlwidgets::JS(
+                "function(settings, json) {
+           $(this.api().tables().body()).css({
+             'font-family': 'Helvetica Neue',
+             'font-size': '75%',
+             'white-space': 'nowrap',
+             'line-height': '1.0em'
+           });
+         }"
+            )))
+```
+
+Due to collinearity and sparsity, it is not yet possible to conduct Schoenfeld residuals; however, some relationships deserve highlighting.
+
+* Polysubstance use ↑ readmission (HR≈1.13); ↓ mortality (HR≈0.71).
+* Treatment <90 days ↑ readm. risk (HR≈1.17); Treatment duration effects on mortality, not robust.
+* Inactive or unemployed ↑ vs employed, readm. risk (HR≈1.19, 1.16); ↑ mortality (HR≈1.49, 1.42).
+* Psychiatric dx (in-study) ↓ readm. risk (HR≈0.94; NS).
+* Psychiatric diagnosis (clinical) ↑ readm. risk (HR≈1.10).
+* Married/cohabiting ↓ vs single, readm. risk (HR≈0.95); ↑ mortality (HR≈1.25).
+* Separated/widowed ↑ readm. risk (HR≈1.58).
+* Not living with partner/children ↓ readm. risk (HR≈0.82–0.91); alone, ↑ mortality (HR≈1.56); with family/others, ↑ mortality (HR≈1.14–1.38).
+* Hazardous use ↓ vs dependence (HR≈0.94); Hazardous use ↓ mortality vs dependence (HR≈0.86).
+* Less than daily use ↓ vs daily, readm. risk (HR≈0.83–0.96); Less than daily use ↓ mortality (HR≈0.51–0.77).
+* Completion ↓ readm. risk (HR≈0.79); Completion ↓ mortality (HR≈0.72).
+* Adm. discharge ↑↑ mortality (HR≈6.16).
+* Discharge for rule violation ↑ readm. risk (HR≈1.17); Rule-violation discharge ↑ mortality (HR≈1.61).
+* Referral at discharge ↑ readm. risk (HR≈1.11).
+* “Other” discharge ↓ readm. risk (HR≈0.34).
+* Vs cocaine paste, alcohol ↓ readm. risk (HR≈0.71); Alcohol as primary drug ↑ mortality (HR≈3.43).
+* Vs cocaine paste, marijuana ↓ readm. risk (HR≈0.64).
+* Vs cocaine paste, cocaine powder ↓ readm. risk (HR≈0.86).
+* Vs cocaine paste, other drugs ↓ readm. risk (HR≈0.65).
+* Mid poverty categories ↓ vs baseline, readm. risk (HR≈0.87–0.90); Poverty categories show ↓ mortality (HR≈0.58–0.84).
+* Rural vs urban: borderline higher readm. risk (HR≈1.06).
+* ≤Primary education ↑ mortality risk (HR≈1.24).
+* Urbanicity: no clear mortality effect.
+
+* Renting ↓ mortality risk vs staying with relatives (HR≈0.80).
+* Housing other/unknown ↑ mortality risk (HR≈1.20).
+
+We performed diagnostics to check if the covariate matrices (or design matrices) are well-conditioned.
+
+
+We verified that the one-hot encoded Cox model and the original factor-based rms::cph fit were identical on the complete-case data: Design matrices agree (TRUE from all.equal); Coefficient vectors align perfectly after matching column names; Linear predictors (type = "lp") coincide for every row used in the fit.
+
+::: {.callout-note collapse=true title="Details of one-hot encoding process, death"}
+```{r onehot-readm}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# --- READMISSION VERSION (parallel to your mortality pipeline) ---
+
+# 0) Common preprocessing (set reference levels)
+prep_df <- dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+    adm_age_cat              = stats::relevel(adm_age_cat, "18-29"),
+    tenure_status_household  = stats::relevel(factor(tenure_status_household),
+                                              "owner/transferred dwellings/pays dividends"),
+    sub_dep_icd10_status     = stats::relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
+    prim_sub_freq_rec        = stats::relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
+    tr_outcome               = stats::relevel(factor(tr_outcome), "completion"),
+    adm_motive               = stats::relevel(factor(adm_motive), "spontaneous consultation"),
+    primary_sub_mod          = stats::relevel(primary_sub_mod, "marijuana"),
+    cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"))
+# Save the stratification factor
+plan_type_corr_all <- prep_df$plan_type_corr
+# 1) Full formula (includes stratification term)
+rhs_str   <- sub("^\\s*~\\s*", "", formula_str_corr2)
+form_full <- stats::as.formula(paste0(
+  "survival::Surv(readmit_time_from_disch_m, readmit_event==1) ~ ",
+  rhs_str,
+  " + strat(plan_type_corr)"
+))
+# 2) Model frame with NA rows retained
+mf_all <- stats::model.frame(
+  formula   = form_full,
+  data      = prep_df,
+  na.action = stats::na.pass)
+# 3) Extract the Surv response as time/status
+Y_all      <- stats::model.response(mf_all)
+time_all   <- Y_all[, 1]
+status_all <- Y_all[, ncol(Y_all)]
+# 4) Build one-hot design (drop stratification term; keep NAs)
+form_nostr <- stats::update(form_full, . ~ . - strat(plan_type_corr))
+Tr_rhs     <- stats::delete.response(stats::terms(form_nostr))
+X_onehot <- stats::model.matrix(
+  object    = Tr_rhs,
+  data      = mf_all,
+  na.action = stats::na.pass)
+# Remove intercept / any stray strata columns; enforce unique names
+keep_cols <- !colnames(X_onehot) %in% "(Intercept)" &
+             !base::grepl("^strat\\(", colnames(X_onehot))
+X_onehot  <- X_onehot[, keep_cols, drop = FALSE]
+colnames(X_onehot) <- base::make.names(colnames(X_onehot), unique = TRUE)
+# Sanity checks
+base::stopifnot(
+  nrow(X_onehot) == length(time_all),
+  length(plan_type_corr_all) == length(time_all))
+# 5) Assemble final analysis data (time, status, one-hot predictors, strata factor)
+cox_onehot_df <- base::cbind.data.frame(
+  time           = time_all,
+  status         = status_all,
+  X_onehot,
+  plan_type_corr = plan_type_corr_all)
+# Rebuild plan_type_corr as factor with observed levels
+plan_type_levels <- unique(as.character(plan_type_corr_all))
+plan_type_levels <- plan_type_levels[!is.na(plan_type_levels)]
+cox_onehot_df$plan_type_corr <- factor(plan_type_corr_all, levels = plan_type_levels)
+# 6) Explicit predictor formula
+predictors      <- paste(colnames(X_onehot), collapse = " + ")
+cox_onehot_form <- stats::as.formula(paste(
+  "survival::Surv(time, status) ~",
+  predictors,
+  "+ strat(plan_type_corr)"))
+# 7) Fit Cox PH on one-hot design (readmission endpoint)
+cox_onehot_fit <- rms::cph(
+  formula = cox_onehot_form,
+  data    = cox_onehot_df,
+  x       = TRUE,
+  y       = TRUE,
+  surv    = TRUE)
+# 8) Factor-based Cox with the same stratification term (for comparison)
+cox_saturated_r <- rms::cph(
+  formula = stats::as.formula(paste0(
+    "survival::Surv(readmit_time_from_disch_m, readmit_event==1) ",
+    formula_str_corr2,
+    " + strat(plan_type_corr)")),
+  data = prep_df,
+  x    = TRUE,
+  y    = TRUE,
+  surv = TRUE)
+# 9) Complete cases actually used by cph
+vars_used <- c("time", "status", colnames(X_onehot), "plan_type_corr")
+keep_idx <- which(stats::complete.cases(cox_onehot_df[, vars_used]))
+# 9a) One-hot matrix equals cph’s stored X
+base::stopifnot(
+  base::all.equal(
+    X_onehot[keep_idx, , drop = FALSE],
+    cox_onehot_fit$x,
+    tolerance        = 1e-10,
+    check.attributes = FALSE))
+# 9b) Coefficients match after aligning names
+coef_onehot <- stats::coef(cox_onehot_fit)
+coef_factor <- stats::coef(cox_saturated_r)
+names(coef_factor) <- colnames(cox_saturated_r$x)
+
+coef_factor_aligned <- coef_factor[names(coef_onehot)]
+coef_onehot_aligned <- coef_onehot[names(coef_factor_aligned)]
+base::stopifnot(
+  base::all.equal(
+    coef_onehot_aligned,
+    coef_factor_aligned,
+    tolerance        = 1e-10,
+    check.attributes = FALSE  ))
+# 9c) Linear predictors match on retained rows
+lp_onehot_used <- stats::predict(
+  cox_onehot_fit,
+  type    = "lp",
+  newdata = cox_onehot_df[keep_idx, , drop = FALSE]
+)
+lp_factor_used <- stats::predict(
+  cox_saturated_r,
+  type    = "lp",
+  newdata = prep_df[keep_idx, , drop = FALSE]
+)
+base::stopifnot(
+  base::all.equal(
+    lp_onehot_used,
+    lp_factor_used,
+    tolerance        = 1e-10,
+    check.attributes = FALSE
+  )
+)
+
+# --- Optional diagnostics ---
+dd <- rms::datadist(cox_onehot_df[keep_idx, ])
+options(datadist = "dd")
+stats::anova(cox_onehot_fit)
+summary(cox_onehot_fit)
+
+# Mapping for easy comparison printout
+coef_factor <- stats::coef(cox_saturated_r)
+coef_factor <- coef_factor[!is.na(coef_factor)]
+comparison_tbl <- base::data.frame(
+  factor_label = names(coef_factor),
+  onehot_name  = base::make.names(names(coef_factor), unique = TRUE),
+  coef_factor  = base::unname(coef_factor),
+  stringsAsFactors = FALSE
+)
+comparison_tbl <- comparison_tbl[
+  comparison_tbl$onehot_name %in% names(coef_onehot),
+]
+comparison_tbl$coef_onehot <- coef_onehot[comparison_tbl$onehot_name]
+comparison_tbl$abs_diff    <- abs(comparison_tbl$coef_onehot - comparison_tbl$coef_factor)
+comparison_tbl$rel_diff    <- comparison_tbl$abs_diff / pmax(abs(comparison_tbl$coef_factor), .Machine$double.eps)
+
+print(comparison_tbl, digits = 6)
+cat(
+  "Max absolute diff:", max(comparison_tbl$abs_diff), "\n",
+  "Max relative diff:", max(comparison_tbl$rel_diff), "\n"
+)
+invisible("Check the new predictor names")
+attr(coefficients(cox_onehot_fit), "names")
+```
+:::
+
+::: {.callout-note collapse=true title="Details of one-hot encoding process, mortality"}
+```{r onehot-death}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# 0) Common preprocessing (set reference levels)
+prep_df <- dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
+    adm_age_cat              = stats::relevel(adm_age_cat, "18-29"),
+    tenure_status_household  = stats::relevel(factor(tenure_status_household),
+                                              "owner/transferred dwellings/pays dividends"),
+    sub_dep_icd10_status     = stats::relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
+    prim_sub_freq_rec        = stats::relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
+    tr_outcome               = stats::relevel(factor(tr_outcome), "completion"),
+    adm_motive               = stats::relevel(factor(adm_motive), "spontaneous consultation"),
+    primary_sub_mod          = stats::relevel(primary_sub_mod, "marijuana"),
+    cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone")
+  )
+# Save the stratification factor for later
+plan_type_corr_all <- prep_df$plan_type_corr
+# 1) Full formula (includes stratification term)
+rhs_str   <- sub("^\\s*~\\s*", "", formula_str_corr2)
+form_full <- stats::as.formula(paste0(
+  "survival::Surv(death_time_from_disch_m, death_event == 1) ~ ",
+  rhs_str,
+  " + strata(plan_type_corr)"
+))
+# 2) Model frame with NA rows retained (mirrors cph handling)
+mf_all <- stats::model.frame(
+  formula   = form_full,
+  data      = prep_df,
+  na.action = stats::na.pass
+)
+# 3) Extract the Surv response as time/status columns
+Y_all      <- stats::model.response(mf_all)
+time_all   <- Y_all[, 1]
+status_all <- Y_all[, ncol(Y_all)]
+# 4) Build the one-hot design matrix (drop stratification term, keep NA rows)
+form_nostr <- stats::update(form_full, . ~ . - strata(plan_type_corr))
+Tr_rhs     <- stats::delete.response(stats::terms(form_nostr))
+X_onehot <- stats::model.matrix(
+  object    = Tr_rhs,
+  data      = mf_all,
+  na.action = stats::na.pass
+)
+# Remove intercept and any stray strata columns; enforce syntactic names
+keep_cols <- !colnames(X_onehot) %in% "(Intercept)" &
+             !base::grepl("^strata\\(", colnames(X_onehot))
+X_onehot  <- X_onehot[, keep_cols, drop = FALSE]
+colnames(X_onehot) <- base::make.names(colnames(X_onehot), unique = TRUE)
+# Sanity check: dimensions must match the response length
+base::stopifnot(
+  nrow(X_onehot) == length(time_all),
+  length(plan_type_corr_all) == length(time_all)
+)
+# 5) Assemble final analysis data (time, status, one-hot predictors, strata factor)
+cox_onehot_df <- base::cbind.data.frame(
+  time           = time_all,
+  status         = status_all,
+  X_onehot,
+  plan_type_corr = plan_type_corr_all
+)
+# Rebuild plan_type_corr as a factor with its observed levels
+plan_type_levels <- plan_type_corr_all |>
+  base::as.character() |>
+  base::unique()
+plan_type_levels <- plan_type_levels[!base::is.na(plan_type_levels)]
+
+cox_onehot_df$plan_type_corr <- base::factor(
+  plan_type_corr_all,
+  levels = plan_type_levels
+)
+# 6) Explicit predictor formula (avoids using '.' which could duplicate the Surv object)
+predictors      <- paste(colnames(X_onehot), collapse = " + ")
+cox_onehot_form <- stats::as.formula(paste(
+  "survival::Surv(time, status) ~",
+  predictors,
+  "+ strat(plan_type_corr)"
+))
+# 7) Fit Cox PH model on the one-hot design
+cox_onehot_fit <- rms::cph(
+  formula = cox_onehot_form,
+  data    = cox_onehot_df,
+  x       = TRUE,
+  y       = TRUE,
+  surv    = TRUE
+)
+# 8) Fit the factor-based Cox model with the same stratification term (for comparison)
+cox_saturated_d <- rms::cph(
+  formula = stats::as.formula(paste0(
+    "survival::Surv(death_time_from_disch_m, death_event == 1) ",
+    formula_str_corr2,
+    " + strat(plan_type_corr)"
+  )),
+  data = prep_df,
+  x    = TRUE,
+  y    = TRUE,
+  surv = TRUE
+)
+# 9) Identify the complete cases actually used by cph (rows without any NA in model variables)
+vars_used <- c("time", "status", colnames(X_onehot), "plan_type_corr")
+keep_idx <- which(stats::complete.cases(cox_onehot_df[, vars_used]))
+# --- Checks confirming both models are identical on the used rows ---
+# 9a) One-hot matrix equals the stored design matrix within cph
+base::stopifnot(
+  base::all.equal(
+    X_onehot[keep_idx, , drop = FALSE],
+    cox_onehot_fit$x,
+    tolerance        = 1e-10,
+    check.attributes = FALSE
+  ))
+# 9b) Coefficients match when names are standardized via cph’s internal design matrix
+coef_onehot <- stats::coef(cox_onehot_fit)
+coef_factor <- stats::coef(cox_saturated_d)
+names(coef_factor) <- colnames(cox_saturated_d$x)
+
+coef_factor_aligned <- coef_factor[names(coef_onehot)]
+coef_onehot_aligned <- coef_onehot[names(coef_factor_aligned)]
+
+base::stopifnot(
+  base::all.equal(
+    coef_onehot_aligned,
+    coef_factor_aligned,
+    tolerance        = 1e-10,
+    check.attributes = FALSE
+  ))
+# 9c) Linear predictors (log partial hazards) are identical on the retained rows
+lp_onehot_used <- stats::predict(
+  cox_onehot_fit,
+  type    = "lp",
+  newdata = cox_onehot_df[keep_idx, , drop = FALSE]
+)
+lp_factor_used <- stats::predict(
+  cox_saturated_d,
+  type    = "lp",
+  newdata = prep_df[keep_idx, , drop = FALSE]
+)
+base::stopifnot(
+  base::all.equal(
+    lp_onehot_used,
+    lp_factor_used,
+    tolerance        = 1e-10,
+    check.attributes = FALSE
+  ))
+# --- Optional diagnostics ---
+# Datadist must be defined on complete cases for rms summaries/anova
+dd <- rms::datadist(cox_onehot_df[keep_idx, ])
+options(datadist = "dd")
+# rms outputs now work without error
+stats::anova(cox_onehot_fit)
+summary(cox_onehot_fit)
+# Extract non-NA coefficients from the factor-based fit
+coef_factor <- stats::coef(cox_saturated_d)
+coef_factor <- coef_factor[!base::is.na(coef_factor)]
+# Map factor-style names to the make.names() versions used by the one-hot design
+comparison_tbl <- base::data.frame(
+  factor_label = names(coef_factor),
+  onehot_name  = base::make.names(names(coef_factor), unique = TRUE),
+  coef_factor  = base::unname(coef_factor),
+  stringsAsFactors = FALSE
+)
+# Keep only columns that exist in the one-hot fit (base levels are absent in both fits)
+comparison_tbl <- comparison_tbl[
+  comparison_tbl$onehot_name %in% names(coef_onehot),
+]
+# Add one-hot coefficients and differences
+comparison_tbl$coef_onehot <- coef_onehot[comparison_tbl$onehot_name]
+comparison_tbl$abs_diff    <- base::abs(comparison_tbl$coef_onehot - comparison_tbl$coef_factor)
+comparison_tbl$rel_diff    <- comparison_tbl$abs_diff / base::pmax(
+  base::abs(comparison_tbl$coef_factor),
+  base::.Machine$double.eps)
+# View the comparison (you can adjust digits/tolerance as needed)
+print(comparison_tbl, digits = 6)
+# Optional: quick summary of the discrepancies
+base::cat(
+  "Max absolute diff:", base::max(comparison_tbl$abs_diff), "\n",
+  "Max relative diff:", base::max(comparison_tbl$rel_diff), "\n")
+invisible("Check the new predictor names")
+attr( coefficients(cox_onehot_fit),"names")
+
+cat("Review of coefficients and differences available in: out/saturated model discharge to mortality.xlsx\n")
+```
+:::
+
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+)|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#|class-output: center-table
+
+reticulate::py_list_packages()|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out", paste0("pred1_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  password <- Sys.getenv("PASSWORD_SECRET")
+} else {
+  if (interactive()) {
+    utils::savehistory(tempfile())
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+    utils::loadhistory()
+  }
+  Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+save.image(paste0(rdata_path,".enc"))
+
+# Encriptar el archivo en el mismo lugar
+httr2::secret_encrypt_file(path = paste0(rdata_path,".enc"), key = "PASSWORD_SECRET")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Copy renv lock into cons folder\n")
+
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup2<-Sys.time()
+
+paste0("Time in markdown: ");time_after_dedup2-time_before_dedup2
+```

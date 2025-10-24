@@ -1,0 +1,3518 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022"
+description: |
+  Load administrative data from SENDAs patient, compare information with previous databases and explore new data. Focus on other agreements
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    fig-cap-location: top  
+editor: source
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+Proceed to load the necessary packages.
+
+<div class="scrollable-content">
+```{r setup}
+#| message: false
+#| include: false
+#| warning: false
+#| results: "hold"
+
+# Define la ruta de la librería
+lib_path <- "import_c2_c6_data_adm_24_files/libs/jquery-3.6.0"
+
+# Elimina la carpeta si ya existe
+if (dir.exists(lib_path)) {
+  unlink(lib_path, recursive = TRUE)
+}
+
+#clean enviroment
+rm(list = ls()); gc()
+file.path(paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))),"data/20241015_out"))
+
+time_before_dedup_pre2<-Sys.time()
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+wdpath
+
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+envpath
+
+cat("quarto version: "); system("quarto --version")
+
+base::load(paste0(wdpath,"data/20241015_out/","12_ndp_2025_09_27.Rdata"))
+```
+
+
+```{r packages-and-fuctions}
+
+unlink("*_files", recursive=T)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+suppressPackageStartupMessages(library(reticulate))
+
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+find_python_rel <- function(start = getwd(),
+                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+    if (file.exists(cand)) return(cand)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+    cur <- parent
+  }
+}
+
+py <- find_python_rel()
+
+if (is.na(py)) {
+  stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+       "Directorio actual: ", getwd())
+}
+
+# Forzar ese intérprete
+Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+Sys.setenv(RETICULATE_PYTHON = py)
+use_python(py, required = TRUE)
+
+py_config()  # verificación
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#check if rstools is installed
+try(installr::install.Rtools(check_r_update=F))
+
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#Package to bring packages in development
+if(!require(devtools)){install.packages("devtools")}
+
+#Package administration
+if(!require(renv)){install.packages("renv")}
+#To manipulate data 
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(janitor)){install.packages("janitor")}
+if(!require(plyr)){install.packages("plyr")}
+#For contingency tables
+if(!require(kableExtra)){install.packages("kableExtra")}
+#For connections with python
+if(!require(reticulate)){install.packages("reticulate")}
+#To manipulate big data
+if(!require(polars)){install.packages("polars", repos = "https://community.r-multiverse.org")}
+#To bring big databases
+if(!require(nanoparquet)){install.packages("nanoparquet")}
+#interface for rstudio in R
+if(!require(rstudioapi)){install.packages("rstudioapi")}
+#time handling
+if(!require(clock)){install.packages("clock")}
+#combine plots
+if(!require(ggpubr)){install.packages("ggpubr")}
+#parallelized iterative processing
+if(!require(furrr)){install.packages("furrr")}
+#work like a tibble with a data.table database
+if(!require(tidytable)){install.packages("tidytable")}
+
+# pacman::p_load(
+#   altair, arrow, biostat3, car, caret, chilemapas, choroplethr, choroplethrAdmin1,
+#   choroplethrMaps, codebook, compareGroups, DiagrammeR, DiagrammeRsvg, DT, epiR, epitools,
+#   factoextra, FactoMineR, finalfit, flexsurv, fmsb, ggfortify, ggiraph, ggiraphExtra,
+#   ggpubr, ggrepel, glca, gridExtra, here, Hmisc, htmlwidgets, installr, janitor, kableExtra,
+#   lsmeans, magick, matrixStats, Metrics, muhaz, naniar, neuralnet, NeuralNetTools, pagedown,
+#   panelr, patchwork, pdp, plotly, plyr, plotly, posterdown, polycor, pROC, psych, radiant,
+#   rateratio.test, reshape, reshape2, reticulate, rio, ROCit, rnaturalearth, rsvg, sf, sjPlot,
+#   sqldf, Statamarkdown, survminer, survMisc, tableone, tidylog, tidyverse, treemapify, VIM,
+#   webshot, xaringanthemer, zoo, install=T
+# )
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#replace columns
+rename_if_present_to_main <- function(df, rename_map, main_names) {
+  # keep only pairs where source exists and target is in the main schema
+  src_in_df   <- rename_map %in% names(df)
+  tgt_in_main <- names(rename_map) %in% main_names
+  present <- rename_map[src_in_df & tgt_in_main]
+  if (length(present)) {
+    df <- df %>% rename(!!!setNames(unname(present), names(present)))
+  }
+  df
+}
+replace_columns_if_any <- function(df, x, y) {
+    if (x %in% names(df)) {
+        names(df)[names(df) == x] <- y
+    }
+    return(df)
+}
+
+
+#WINDOWS do not restrict memory size
+if(.Platform$OS.type == "windows") withAutoprint({
+  memory.size()
+  memory.size(TRUE)
+  memory.limit()
+})
+memory.limit(size=56000)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# NO MORE DEBUGS
+options(error = NULL)        # si antes tenías options(error = recover) o browser)
+options(browserNLdisabled = FALSE)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#ENCODING#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+conv_chars <- data.frame(
+    ANSI = c("Á", "á", "É", "é", "Í", "í", "Ó", "ó", "Ú", "ú", "Ñ", "ñ", "¿", "ó"),
+    UTF_8 = c("Ã", "Ã¡", "Ã‰", "Ã©", "Ã", "Ã­", "Ã“", "Ã³", "Ãš", "Ãº", "Ã‘", "Ã±", "Â¿", "Ã²"),
+    JAVASCRIPT = c("u00c1", "u00e1", "u00c9", "u00e9", "u00cd", "u00ed", "u00d3", "u00f3", "u00da", "u00fa", "u00d1", "u00f1", "u00bf", "0xF2"),
+    HTML = c("&#193;", "&#225;", "&#201;", "&#233;", "&#205;", "&#237;", "&#211;", "&#243;", "&#218;", "&#250;", "&#209;", "&#241;", "&#191;", "")
+)
+
+convert_chars <- function(x) {
+    x <- gsub("ÃƒÂ³", "ó", x)  # ó
+    x <- gsub("ÃƒÂ¡", "á", x)  # á
+    x <- gsub("ÃƒÂ©", "é", x)  # é
+    x <- gsub("ÃƒÂº", "ú", x)  # ú
+    x <- gsub("ÃƒÂ±", "ñ", x)  # ñ
+    x <- gsub("Ãƒâ€˜", "Ñ", x) # Ñ (mayúscula)
+    x <- gsub("ÃƒÂ", "Á", x)   # Á
+    x <- gsub("Ã‚Âº", "º", x)  # º
+    x <- gsub("Ã‚Â°", "°", x)  # °
+    x <- gsub("Ã‚Âª", "ª", x)  # ª
+    x <- gsub("Ã‚Â¡", "¡", x)  # ¡
+    x <- gsub("Ã‚Â¿", "¿", x)  # ¿
+    x <- gsub("ÃƒÂ­", "í", x)  # í
+    x <- gsub("Ãƒâ€œ", "Ó", x)  # Ó
+    x <- gsub("Ãƒâ€š", "Ê", x)  # Ê
+    x <- gsub("Ãƒâ€", "É", x)  # É
+    x <- gsub("ÃƒÂ¼", "ü", x)  # ü
+    x <- gsub("ÃƒÂ¯", "ï", x)  # ï
+    x <- gsub("ÃƒÂ¶", "ö", x)  # ö
+    x <- gsub("Ã‚Â«", "«", x)  # «
+    x <- gsub("Ã‚Â»", "»", x)  # »
+    x <- gsub("Ãƒâ€¡", "Ç", x)  # Ç
+    x <- gsub("ÃƒÂ§", "ç", x)  # ç
+    x <- gsub("Ã‚Â", "", x)    # Otros casos residuales
+    x <- gsub("Ãƒ", "", x)     # Otros casos residuales
+    return(x)
+}
+
+sum_dates <- function(x){
+  
+  cbind.data.frame(
+min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+```
+</div>
+
+<br>
+
+### C2-C6
+
+SENDA has the following treatment programs:
+
+- General Adult Program (covered in Agreement 1 or C1)
+- Specific Women's Program (covered in Agreement 1 or C1)
+- Street Program
+- General Children and Adolescents Program
+- Probation Program
+- Adolescent Offenders Program
+- Adult Offenders Program
+
+*(Source: https://www.senda.gob.cl/wp-content/uploads/2022/05/Cuenta-Publica-SENDA-2022.pdf)*
+
+```{r import-c2-c6}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+#E:\Mi unidad\Alvacast\SISTRAT 2023\data\20231018_original_data
+# Define the directories
+dir_c2_c6_oct <- paste0(gsub("cons", "", 
+                             paste0(getwd(),"cons")
+), "data/20231018_original_data/")
+#matches a string that starts with c
+SISTRAT23_c26<-list.files(path=toString(dir_c2_c6_oct), pattern="^c")
+
+dir_c1_oct <- paste0(gsub("cons", "", 
+                          paste0(getwd(),"/cons")
+                          ), "data/20231018_original_data/")
+
+# Function to simplify pattern matching
+matches_pattern <- function(x, patterns) {
+  any(sapply(patterns, function(p) grepl(p, x)))
+}
+
+# Create a function to process each file
+process_file <- function(dir, x) {
+  # Determine the HASH_KEY index based on file name
+  prefix <- ifelse(matches_pattern(x, "dup1"), "SISTRAT23dup1_", 
+                   ifelse(matches_pattern(x, "dup2"), "SISTRAT23dup2_", "SISTRAT23_"))
+  
+  # Read and process the file
+  dataset<-readr::read_delim(paste0(dir, x),
+                             na = c("", "NA", "null"),
+                             locale = locale(encoding = "windows-1252"),
+                             guess_max = min(1e5, Inf),
+                             skip = 0)
+  colnames(dataset) <- sapply(names(dataset), convert_chars)
+  
+  dataset %>% 
+    janitor::clean_names() %>%
+    dplyr::rename(
+      HASH_KEY = !!names(.[(ncol(.))])) %>%
+    dplyr::mutate(TABLE = rep(x)) %>%
+    dplyr::select(TABLE, HASH_KEY, everything()) %>%
+    assign(paste0(prefix, stringr::str_sub(x, 1, 4)), ., envir = .GlobalEnv)
+}
+
+#Read data and format
+purrr::walk(SISTRAT23_c26, ~process_file(toString(dir_c2_c6_oct), .x))
+
+# Process C2-C6 data
+CONS_C2 <- plyr::rbind.fill(SISTRAT23dup1_c2_o, SISTRAT23dup2_c2_o) %>% 
+  data.table::data.table() %>% 
+  dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+CONS_C3 <- SISTRAT23_c3_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C4 <- SISTRAT23_c4_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C5 <- SISTRAT23_c5_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C6 <- SISTRAT23_c6_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+```
+
+Replicate the analysis for 2023-2024 databases and merged them. We have the doubt of what column `bf` means.
+
+```{r import-c2-c6-25}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+
+dir_c2_c6_oct_25 <- paste0(gsub("cons", "", 
+                          paste0(getwd(),"/cons")
+                          ), "data/20250529_original_data/")
+
+#matches a string that contains _enc.
+SISTRAT23_c26_25<-list.files(dir_c2_c6_oct_25, pattern = "c[2-6]")
+
+
+# Create a function to process each file
+process_file23_c26 <- function(dir, x) {
+  # Determine the HASH_KEY index based on file name
+  # Read and process the file
+  dataset<-readr::read_delim(paste0(dir_c2_c6_oct_25, x),
+                             na = c("", "NA", "null"),
+                             locale = locale(encoding = "windows-1252"),
+                             guess_max = min(1e5, Inf),
+                             skip = 0)
+  colnames(dataset) <- sapply(names(dataset), convert_chars)
+  
+  dataset %>% 
+    janitor::clean_names() %>%
+    dplyr::rename(
+      HASH_KEY = !!names(.[(ncol(.))])) %>%
+    dplyr::mutate(TABLE = 2023) %>%
+    dplyr::select(TABLE, HASH_KEY, everything()) %>%
+    assign(paste0("df_2022_24_", stringr::str_sub(x, 11,12)), ., envir = .GlobalEnv)
+}
+
+#Apply function
+purrr::walk(SISTRAT23_c26_25, ~process_file23_c26(toString(dir_c2_c6_oct), .x))
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Normalize variable names")
+
+rename_if_present <- function(df, rename_map) {
+  present <- rename_map[rename_map %in% names(df)]
+  if (length(present)) {
+    df <- df %>% rename(!!!setNames(unname(present), names(present)))
+  }
+  df
+}
+
+# c2 — needs renaming
+rename_map_c2 <- c(
+  "codigo_identificaci_afn"     = "codigo_identificacion",
+  "regi_afn_centro"             = "region_centro",
+  "n_afomerodehijos"            = "numerodehijos",
+  "a_afos_deserci_afn_escolar"  = "anos_desercion_escolar",
+  "via_administraci_afn"        = "via_administracion",
+  "a_setratadeunamujerembaraza" = "setratadeunamujerembarazad",
+  "orientaci_afn_sexual"        = "orientaci_a2n_sexual",
+  "opci_afndiscapacidad"        = "opciondiscapacidad"
+)
+
+df_2022_24_c2 <- rename_if_present(df_2022_24_c2, rename_map_c2)
+
+# c3–c6 — maps intentionally empty (names already match)
+df_2022_24_c3 <- rename_if_present(df_2022_24_c3, c())
+df_2022_24_c4 <- rename_if_present(df_2022_24_c4, c())
+df_2022_24_c5 <- rename_if_present(df_2022_24_c5, c())
+df_2022_24_c6 <- rename_if_present(df_2022_24_c6, c())
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+#Merge 2024 with 2025
+CONS_C2_25 <- plyr::rbind.fill(CONS_C2, df_2022_24_c2) %>% 
+  data.table::data.table()
+CONS_C3_25 <- plyr::rbind.fill(CONS_C3, df_2022_24_c3) %>% 
+  data.table::data.table()
+CONS_C4_25 <- plyr::rbind.fill(CONS_C4, df_2022_24_c4) %>% 
+  data.table::data.table()
+CONS_C5_25 <- plyr::rbind.fill(CONS_C5, df_2022_24_c5) %>% 
+  data.table::data.table()
+CONS_C6_25 <- plyr::rbind.fill(CONS_C6, df_2022_24_c6) %>% 
+  data.table::data.table()
+
+
+unique_values_list_CONS_C2_25 <- setNames(
+    lapply(setdiff(names(CONS_C2_25),c("HASH_KEY")), function(col_name) {
+        CONS_C2_25 |>
+            select(all_of(col_name)) |>
+            distinct() |>
+            pull()
+    }),
+    setdiff(names(CONS_C2_25),c("HASH_KEY"))
+)
+unique_values_list_CONS_C3_25 <- setNames(
+    lapply(setdiff(names(CONS_C3_25),c("HASH_KEY")), function(col_name) {
+        CONS_C3_25 |>
+            select(all_of(col_name)) |>
+            distinct() |>
+            pull()
+    }),
+    setdiff(names(CONS_C3_25),c("HASH_KEY"))
+)
+unique_values_list_CONS_C4_25 <- setNames(
+    lapply(setdiff(names(CONS_C4_25),c("HASH_KEY")), function(col_name) {
+        CONS_C4_25 |>
+            select(all_of(col_name)) |>
+            distinct() |>
+            pull()
+    }),
+    setdiff(names(CONS_C4_25),c("HASH_KEY"))
+)
+unique_values_list_CONS_C5_25 <- setNames(
+    lapply(setdiff(names(CONS_C5_25),c("HASH_KEY")), function(col_name) {
+        CONS_C5_25 |>
+            select(all_of(col_name)) |>
+            distinct() |>
+            pull()
+    }),
+    setdiff(names(CONS_C5_25),c("HASH_KEY"))
+)
+unique_values_list_CONS_C6_25 <- setNames(
+    lapply(setdiff(names(CONS_C6_25),c("HASH_KEY")), function(col_name) {
+        CONS_C6_25 |>
+            select(all_of(col_name)) |>
+            distinct() |>
+            pull()
+    }),
+    setdiff(names(CONS_C6_25),c("HASH_KEY"))
+)
+distinct_values_dbs_c2c6<- 
+rbind.data.frame(
+cbind.data.frame(df="c2",list_to_df(unique_values_list_CONS_C2_25)),
+cbind.data.frame(df="c3",list_to_df(unique_values_list_CONS_C3_25)),
+cbind.data.frame(df="c4",list_to_df(unique_values_list_CONS_C4_25)),
+cbind.data.frame(df="c5",list_to_df(unique_values_list_CONS_C5_25)),
+cbind.data.frame(df="c6",list_to_df(unique_values_list_CONS_C6_25))
+)
+
+distinct_values_dbs_c2c6|>
+  group_by(df, variable)|>  
+  slice(1:5)|> 
+  rio::export("_out/unique_values_variable_names_db.csv")
+```
+
+#### Normalize variable names & explore data
+
+We normalized the variable names according to the C1 naming convention. We assumed that “commune/municipality” referred to the patient rather than the center. Variable names were formatted in snake case for greater standardization. We also corrected the names according to the information provided by SENDA for fields where only the position name in alphabetical order was available:  [columnas_sin_nombre_REV](https://docs.google.com/spreadsheets/d/1PbQAWB7e14U3L4p15Oxg5twQeOeBjTJg/edit?gid=1312024226#gid=1312024226).
+
+```{r import-c2-c6-25-2}
+MAIN_NAMES <- names(SISTRAT23_c1_2010_2024_df2)
+
+
+map_c2 <- c(
+  "region_del_centro"                                   = "region_centro",
+  "servicio_de_salud"                                   = "servicio_salud",
+  "comuna_residencia"                                   = "comuna_usuario",# supose uers commune
+  "origen_de_ingreso"                                   = "origen_ingreso",
+  "fecha_ingreso_a_tratamiento"                         = "fecha_ingreso_tratamiento",
+  "numero_de_tratamientos_anteriores"                   = "numero_tratamientos_anteriores",
+  "sustancia_de_inicio"                                 = "sustancia_inicial",
+  "edad_inicio_consumo"                                 = "edad_inicio_sustancia_inicial",
+  "frecuencia_de_consumo_sustancia_principal"           = "frecuencia_consumo",
+  "via_administracion_sustancia_principal"              = "via_administracion",
+  "diagnostico_trs_consumo_sustancia"                   = "diagnosticotrsconsumosustanc",
+  "diagnostico_trs_fisico"                              = "diagnosticotrsfisico",
+  "diagnostico_trs_psiquiatrico_dsm_iv"                 = "diagnosticotrsdsm",
+  "diagnostico_trs_psiquiatrico_sub_dsm_iv"             = "diagnosticotrsdsmsub",
+  "x2_diagnostico_trs_psiquiatrico_dsm_iv"              = "diagnosticotrsdsm2",
+  "x2_diagnostico_trs_psiquiatrico_sub_dsm_iv"          = "diagnosticotrsdsmsub2",
+  "x3_diagnostico_trs_psiquiatrico_dsm_iv"              = "diagnosticotrsdsm3",
+  "x3_diagnostico_trs_psiquiatrico_sub_dsm_iv"          = "diagnosticotrsdsmsub3",
+  "diagnostico_trs_psiquiatrico_cie_10"                 = "diagnosticotrscie10",
+  "diagnostico_trs_psiquiatrico_sub_cie_10"             = "diagnosticotrscie10sub",
+  "x2_diagnostico_trs_psiquiatrico_cie_10"              = "diagnosticotrscie102",
+  "x2_diagnostico_trs_psiquiatrico_sub_cie_10"          = "diagnosticotrscie10sub2",
+  "x3_diagnostico_trs_psiquiatrico_cie_10"              = "diagnosticotrscie103",
+  "x3_diagnostico_trs_psiquiatrico_sub_cie_10"          = "diagnosticotrscie10sub3",
+  "compromiso_biopsicosocial"                           = "compromisobiopsicosocial",
+  "se_trata_de_una_mujer_embarazada"                    = "setratadeunamujerembarazad",
+  "fecha_egreso_de_tratamiento"                         = "fecha_egreso",
+  "motivo_de_egreso"                                    = "motivo_egreso",
+  "evaluacion_del_proceso_terapeutico"                  = "evaluacion_proceso_terapeutico_e",
+  "evaluacion_al_egreso_respecto_al_patron_de_consumo"  = "patronde_consumo",
+  "evaluacion_al_egreso_respecto_a_situacion_familiar"  = "situacion_familiar",
+  "evaluacion_al_egreso_respecto_relaciones_interpersonales" = "relacion_interpesonal",
+  "evaluacion_al_egreso_respecto_a_situacion_ocupacional"    = "situacion_ocupacional",
+  "evaluacion_al_egreso_respecto_salud_mental"          = "salud_mental",
+  "evaluacion_al_egreso_respecto_salud_fisica"          = "salud_fisica",
+  "dias_en_tratamiento"                                 = "diasdetratamiento",
+  "n_meses_en_tratamiento"                              = "n_mesesen_tratamiento",
+  "tipo_centro"                                         = "tipode_centro",
+  "id_centro"                                           = "i_dcentro",
+  "identidad_de_genero"                                 = "identidaddegenero",
+  "orientacion_sexual"                                  = "orientaci_a2n_sexual",
+  "opcion_discapacidad"                                 = "opciondiscapacidad",
+  "ha_estado_embarazada_egreso"                         = "haestadoembarazadaegreso"
+)
+CONS_C2_25 <- rename_if_present_to_main(CONS_C2_25, map_c2, MAIN_NAMES)
+CONS_C2_25 <- replace_columns_if_any(
+    df = CONS_C2_25,
+    x = "bi",
+    y = "otros_problemas_de_atencion_de_salud_mental2"
+)
+
+map_c3 <- c(
+  "region_del_centro"                                   = "regiondel_centro",
+  "servicio_de_salud"                                   = "serviciode_salud",
+  "dias_en_tratamiento"                                 = "diasen_tratamiento",
+  "n_meses_en_tratamiento"                              = "n_mesesen_tratamiento",
+  "origen_de_ingreso"                                   = "origende_ingreso",
+  "pais_nacimiento"                                     = "pa_a_s_nacimiento",
+  "numero_de_hijos"                                     = "numerode_hijos",
+  "numero_de_tratamientos_anteriores"                   = "numerode_tratamientos_anteriore",
+  "sustancia_de_inicio"                                 = "sustanciade_inicio",
+  "se_trata_de_una_mujer_embarazada"                    = "setratadeunamujerembarazad",
+  "escolaridad_ultimo_ano_cursado"                      = "escolaridadultimoanocursado",
+  "categoria_ocupacional"                               = "categor_a_a_ocupacional",
+  "rubro_trabaja"                                       = "enquerubrotrabaja",
+  "otras_sustancias_no1"                                = "otras_sustanciasno1",
+  "otras_sustancias_no2"                                = "otras_sustanciasno2",
+  "frecuencia_de_consumo_sustancia_principal"           = "frecuenciade_consumo_sustancia",
+  "via_administracion_sustancia_principal"              = "va_a_administracion_sustancia_pr",
+  "diagnostico_trs_consumo_sustancia"                   = "diagnostico_trs_consumo_sustanc",
+  # "diagnostico_trs_psiquiatrico_cie_10"                 = "diagnostico_trs_psiquiatrico_ci",
+  # "diagnostico_trs_psiquiatrico_sub_cie_10"             = "diagnostico_trs_psiquiatrico_su",
+  # "diagnostico_trs_psiquiatrico_dsm_iv"                 = "diagnostico_trs_psiquiatrico",
+  "diagnostico_trs_fisico"                              = "diagnostico_trs_fa_sico",
+  "otros_problemas_de_atencion_de_salud_mental"         = "otros_problemasde_atencionde_s",
+  "fecha_ingreso_a_tratamiento"                         = "fecha_ingresoa_tratamiento",
+  "fecha_egreso_de_tratamiento"                         = "fecha_egresode_tratamiento",
+  "motivo_de_egreso"                                    = "motivode_egreso",
+  "evaluacion_del_proceso_terapeutico"                  = "evaluaciondel_proceso_terapeuti",
+  "evaluacion_al_egreso_respecto_al_patron_de_consumo"  = "evaluacional_egreso_respectoal",
+  "evaluacion_al_egreso_respecto_a_situacion_familiar"  = "evaluacional_egreso_respectoa",
+  "evaluacion_al_egreso_respecto_relaciones_interpersonales" = "evaluacional_egreso_respecto_re",
+  "evaluacion_al_egreso_respecto_salud_mental"          = "evaluacional_egreso_respecto_sa",
+  "evaluacion_al_egreso_respecto_trasgresion_a_la_norma_social" = "evaluacional_egreso_respecto_tr",
+  "ha_estado_embarazada_egreso"                         = "haestadoembarazadaegreso",
+  "identidad_de_genero"                                 = "identidaddegenero",
+  "opcion_discapacidad"                                 = "opciondiscapacidad"
+)
+CONS_C3_25 <- rename_if_present_to_main(CONS_C3_25, map_c3, MAIN_NAMES)
+# CONS_C3_25[,c("diagnostico_trs_psiquiatrico_ci", "diagnostico_trs_psiquiatrico_su", "diagnostico_trs_psiquiatrico", "ar")]
+CONS_C3_25 <- replace_columns_if_any(
+    df = CONS_C3_25,
+    x = "ar",
+    y = "diagnostico_trs_psiquiatrico_sub_cie_10_2"
+)
+CONS_C3_25 <- replace_columns_if_any(
+    df = CONS_C3_25,
+    x = "aw",
+    y = "otros_problemas_de_atencion_de_salud_mental_2"
+)
+CONS_C3_25 <- replace_columns_if_any(
+    df = CONS_C3_25,
+    x = "bh",
+    y = "evaluacion_al_egreso_respecto_sit_ocup"
+)
+CONS_C3_25 <- replace_columns_if_any(
+    df = CONS_C3_25,
+    x = "bj",
+    y = "evaluacion_al_egreso_respecto_salud_fisica"
+)
+
+
+map_c4 <- c(
+  "codigo_identificacion"                               = "codigoidentificacion",
+  "nombre_centro"                                       = "nombrecentro",
+  "tipo_centro"                                         = "tipocentro",
+  "region_del_centro"                                   = "regiondelcentro",
+  "fecha_nacimiento"                                    = "fechanacimiento",
+  "fecha_ingreso_a_tratamiento"                         = "fechaingresotratamiento",
+  "tipo_de_programa"                                    = "tipoprograma",
+  "tipo_de_plan"                                        = "tipoplan",
+  "origen_de_ingreso"                                   = "origendeingreso",
+  "consentimiento_informado"                            = "consentimientoinformado",
+  "pais_nacimiento"                                     = "paisnacimiento",
+  "estado_conyugal"                                     = "estadoconyugal",
+  "numero_de_hijos"                                     = "numerodehijos",
+  "escolaridad_ultimo_ano_cursado"                      = "escolaridadultimoaa_ocursado",
+  "se_trata_de_una_mujer_embarazada"                    = "setratadeunamujerembarazada",
+  "condicion_ocupacional"                               = "condicionocupacional",
+  "categoria_ocupacional"                               = "categoriaocupacional",
+  "rubro_trabaja"                                       = "enquerubrotrabaja",
+  "con_quien_vive"                                      = "conquienvive",
+  "parentesco_con_el_jefe_de_hogar"                     = "parentescoconeljefedehogar",
+  "tipo_de_vivienda"                                    = "tipovivienda",
+  "tenencia_de_la_vivienda"                             = "tenenciadelavivienda",
+  "numero_de_tratamientos_anteriores"                   = "numerotratamientosanteriores",
+  "fecha_ultimo_tratamiento"                            = "fechaultimotratamiento",
+  "sustancia_principal"                                 = "sustanciaprincipal",
+  "otras_sustancias_no1"                                = "otrasustanci_an1",
+  "otras_sustancias_no2"                                = "otrasustanci_an2",
+  "frecuencia_de_consumo_sustancia_principal"           = "frecuenciadeconsumosustancia",
+  "via_administracion_sustancia_principal"              = "viadeadministracionsustancia",
+  "sustancia_de_inicio"                                 = "sustanciadeinicio",
+  "edad_inicio_consumo"                                 = "edaddeiniciosustanciainicia",
+  "edad_inicio_sustancia_principal"                     = "edaddeinico_sustancia_principa",
+  "diagnostico_trs_consumo_sustancia"                   = "diagnosticotrsconsumosustanc",
+  "diagnostico_trs_psiquiatrico_cie_10"                 = "diagnosticotrspsiquiatricoci",
+  "diagnostico_trs_psiquiatrico_dsm_iv"                 = "diagnosticotrspsiquiatricods",
+  "diagnostico_trs_fisico"                              = "diagnosticotrsfisico",
+  "otros_problemas_de_atencion_de_salud_mental"         = "otrosproblemasdeatenciondes",
+  "compromiso_biopsicosocial"                           = "comprimisobiopsicosocial",
+  "fecha_egreso_de_tratamiento"                         = "fechaegresotratamiento",
+  "motivo_de_egreso"                                    = "motivodeegreso",
+  "evaluacion_del_proceso_terapeutico"                  = "evaluaciondelprocesoterapeuti",
+  "evaluacion_al_egreso_respecto_al_patron_de_consumo"  = "evaluacionalegresorespectoal",
+  "evaluacion_al_egreso_respecto_a_situacion_familiar"  = "evaluacionalegresorespectoa",
+  "evaluacion_al_egreso_respecto_relaciones_interpersonales" = "evaluacionalegresorespectore",
+  "dias_en_tratamiento"                                 = "diasdetratamiento",
+  "ha_estado_embarazada_egreso"                         = "haestadoembarazadaegreso",
+  "identidad_de_genero"                                 = "identidaddegenero",
+  "orientacion_sexual"                                  = "orientacion_sexual",
+  "opcion_discapacidad"                                 = "opciondiscapacidad"
+)
+CONS_C4_25 <- rename_if_present_to_main(CONS_C4_25, map_c4, MAIN_NAMES)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "ao",
+    y = "diagnostico_trs_psiquiatrico_cie_10_2"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "ap",
+    y = "diagnostico_trs_psiquiatrico_cie_10_3"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "ar",
+    y = "diagnostico_trs_psiquiatrico_dsm_iv_2"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "as",
+    y = "diagnostico_trs_psiquiatrico_dsm_iv_3"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "av",
+    y = "otros_problemas_de_atencion_de_salud_mental_2"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "ba",
+    y = "tiempodepermanenciaprivadode_meses"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bb",
+    y = "tiempodepermanenciaprivadode_anos"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bf",
+    y = "diagnostico_trs_psiquiatrico_cie_10_al_egreso"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bj",
+    y = "evaluacion_al_egreso_respecto_a_situacion_ocupacional"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bk",
+    y = "evaluacion_al_egreso_respecto_salud_mental"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bl",
+    y = "evaluacion_al_egreso_respecto_salud_fisica"
+)
+CONS_C4_25 <- replace_columns_if_any(
+    df = CONS_C4_25,
+    x = "bm",
+    y = "evaluacion_al_egreso_respecto_trasgresion_a_la_norma_social"
+)
+
+map_c5 <- c(
+  "codigo_identificacion"                               = "codigo_identificaci_afn",
+  "tipo_centro"                                         = "tipode_centro",
+  "region_del_centro"                                   = "regi_afn_centro",
+  "comuna_residencia"                                   = "comuna_usuario",# suposed commune of user
+  "servicio_de_salud"                                   = "servicio_salud",
+  "tipo_de_plan"                                        = "tipode_plan",
+  "dias_en_tratamiento"                                 = "diasen_tratamiento",
+  "fecha_nacimiento"                                    = "fechanacimiento",
+  "n_meses_en_tratamiento"                              = "n_meses_tratamiento",
+  "fecha_ingreso_a_tratamiento"                         = "fecha_ingreso_tratamiento",
+  "origen_de_ingreso"                                   = "origen_ingreso",
+  "numero_de_hijos"                                     = "n_afomerodehijos",
+  "via_administracion_sustancia_principal"              = "via_administraci_afn",
+  "fecha_egreso_de_tratamiento"                         = "fecha_egreso",
+  "motivo_de_egreso"                                    = "motivo_egreso",
+  "otros_problemas_de_atencion_de_salud_mental"         = "otros_problemasde_atenci_afnde",
+  "evaluacion_del_proceso_terapeutico_e"                = "evaluacion_proceso_terapeutico_e",
+  "evaluacion_al_egreso_respecto_al_patron_de_consumo"  = "patronde_consumo",
+  "evaluacion_al_egreso_respecto_a_situacion_familiar"  = "situacion_familiar",
+  "evaluacion_al_egreso_respecto_relaciones_interpersonales" = "relacion_interpesonal",
+  "evaluacion_al_egreso_respecto_a_situacion_ocupacional"    = "situacion_ocupacional",
+  "evaluacion_al_egreso_respecto_salud_mental"          = "salud_mental",
+  "evaluacion_al_egreso_respecto_salud_fisica"          = "salud_fisica",
+  "diagnostico_trs_consumo_sustancia"                   = "diagn_afstico_trs_consumode_sus",
+  "diagnostico_trs_fisico"                              = "diagn_afstico_trs_f_afsico",
+  "diagnostico_trs_psiquiatrico_dsm_iv"                 = "diagn_afstico_trs_psiqui_aftrico",
+  "diagnostico_trs_psiquiatrico_dsm_iv_2"               = "diagn_afstico_trs_psiqui_aftric",
+  "motivodeegreso_alta_administra"                      = "motivo_de_egreso_alta_administrativa",
+  "orientacion_sexual"                                  = "orientaci_afn_sexual",
+  "opcion_discapacidad"                                 = "opci_afndiscapacidad",
+  "id_centro"                                           = "centro_id",
+  "identidad_de_genero"                                 = "identidaddegenero",
+  "ha_estado_embarazada_egreso"                         = "haestadoembarazadaegreso"
+)
+CONS_C5_25 <- rename_if_present_to_main(CONS_C5_25, map_c5, MAIN_NAMES)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "s",
+    y = "enlo_penal_2"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "be",
+    y = "diagnostico_trs_psiquiatrico_sub_dsm_iv"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bg",
+    y = "diagnostico_trs_psiquiatrico_sub_dsm_iv_2"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bh",
+    y = "diagnostico_trs_psiquiatrico_cie_10"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bi",
+    y = "diagnostico_trs_psiquiatrico_sub_cie_10"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bj",
+    y = "diagnostico_trs_psiquiatrico_cie_10_2"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bk",
+    y = "diagnostico_trs_psiquiatrico_sub_cie_10_2"
+)
+CONS_C5_25 <- replace_columns_if_any(
+    df = CONS_C5_25,
+    x = "bm",
+    y = "otros_problemas_de_atencion_de_salud_mental_2"
+)
+
+map_c6 <- c(
+  "codigo_identificacion"                               = "codigoidentificacion",
+  "nombre_centro"                                       = "nombredelcentro",
+  "tipo_centro"                                         = "tipocentro",
+  "region_del_centro"                                   = "regiondelcentro",
+  "fecha_ingreso_a_tratamiento"                         = "fechaingresotratamiento",
+  "dias_en_tratamiento"                                 = "diasen_tratamiento",
+  "n_meses_en_tratamiento"                              = "n_mesesen_tratamiento",
+  "fecha_nacimiento"                                    = "fechanacimiento",
+  "consentimiento_informado"                            = "consentimientoinformado",
+  "comuna_residencia"                                   = "comuna",# suposed commune of user
+  "origen_de_ingreso"                                   = "origendeingreso",
+  "pais_nacimiento"                                     = "paisnacimiento",
+  "estado_conyugal"                                     = "estadoconyugal",
+  "numero_de_hijos"                                     = "numerodehijos",
+  "escolaridad_ultimo_ano_cursado"                      = "escolaridadultimoaa_ocursado",
+  "se_trata_de_una_mujer_embarazada"                    = "setratadeunamujerembarazada",
+  "condicion_ocupacional"                               = "condicionocupacional",
+  "categoria_ocupacional"                               = "categoriaocupacional",
+  "con_quien_vive"                                      = "conquienviva_a",
+  "parentesco_con_el_jefe_de_hogar"                     = "parentescoconeljefedehogar",
+  "tipo_de_vivienda"                                    = "tipovivienda",
+  "tenencia_de_la_vivienda"                             = "tenenciadelavivienda",
+  "numero_de_tratamientos_anteriores"                   = "numerotratamientosanteriores",
+  "fecha_ultimo_tratamiento"                            = "fechaultimotratamiento",
+  "sustancia_principal"                                 = "sustanciaprincipal",
+  "otras_sustancias_no1"                                = "otrasustanci_an1",
+  "otras_sustancias_no2"                                = "otrasustanci_an2",
+  "frecuencia_de_consumo_sustancia_principal"           = "frecuenciadeconsumosustancia",
+  "edad_inicio_sustancia_principal"                     = "edaddeiniciosustanciaprinci",
+  "via_administracion_sustancia_principal"              = "viadeadministracionsustancia",
+  "sustancia_de_inicio"                                 = "sustanciadeinicio",
+  "edad_inicio_consumo"                                 = "edaddeiniciosustanciainicia",
+  "diagnostico_trs_consumo_sustancia"                   = "diagnosticotrsconsumosustanc",
+  "diagnostico_trs_psiquiatrico_cie_10"                 = "diagnosticotrspsiquiatricoci",
+  "diagnostico_trs_psiquiatrico_dsm_iv"                 = "diagnosticotrspsiquiatricods",
+  "otros_problemas_de_atencion_de_salud_mental"         = "otrosproblemasdeatenciondes",
+  "compromiso_biopsicosocial"                           = "comprimisobiopsicosocial",
+  "fecha_egreso_de_tratamiento"                         = "fechaegresotratamiento",
+  "motivo_de_egreso"                                    = "motivodeegreso",
+  "evaluacion_del_proceso_terapeutico"                  = "evaluaciondelprocesoterapeuti",
+  "evaluacion_al_egreso_respecto_al_patron_de_consumo"  = "evaluacionalegresorespectoal",
+  "evaluacion_al_egreso_respecto_a_situacion_familiar"  = "evaluacionalegresorespectoa",
+  "evaluacion_al_egreso_respecto_relaciones_interpersonales" = "evaluacionalegresorespectore",
+  "motivo_de_egreso_alta_administrativa"                = "motivoaltaadministrativa",
+  "ha_estado_embarazada_egreso"                         = "haestadoembarazadaegreso",
+  "identidad_de_genero"                                 = "identidaddegenero",
+  "orientacion_sexual"                                  = "orientacion_sexual",
+  "opcion_discapacidad"                                 = "opciondiscapacidad"
+)
+CONS_C6_25 <- rename_if_present_to_main(CONS_C6_25, map_c6, MAIN_NAMES)
+
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "an",
+    y = "frecuencia_de_consumo_sustancia_principal_medio_cerrado"
+)
+
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "au",
+    y = "diagnostico_trs_psiquiatrico_cie_10_2"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "av",
+    y = "diagnostico_trs_psiquiatrico_cie_10_3"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "ax",
+    y = "diagnostico_trs_psiquiatrico_dsm_iv_2"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "ay",
+    y = "diagnostico_trs_psiquiatrico_dsm_iv_3"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "ba",
+    y = "otros_problemas_de_atencion_de_salud_mental_2"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "bn",
+    y = "diagnostico_trs_psiquiatrico_cie_10_al_egreso"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "br",
+    y = "evaluacion_al_egreso_respecto_a_situacion_ocupacional"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "bs",
+    y = "evaluacion_al_egreso_respecto_salud_mental"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "bt",
+    y = "evaluacion_al_egreso_respecto_salud_fisica"
+)
+CONS_C6_25 <- replace_columns_if_any(
+    df = CONS_C6_25,
+    x = "bu",
+    y = "evaluacion_al_egreso_respecto_trasgresion_a_la_norma_social"
+)
+
+```
+
+
+<div class="scrollable-content">
+```{r figs-hist-c2-c6, class="scrollable-code"}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| fig.align: "center"
+#| results: "hold"
+#| fig.cap: "Histograms for Age"
+#| eval: true
+#| fig-width: 8
+#| fig-height: 6
+
+CONS_C6_25$edad_ingreso<-
+  lubridate::time_length(
+    interval(
+      as.Date(CONS_C6_25$fechanacimiento, format = "%d/%m/%Y"),
+      as.Date(CONS_C6_25$fecha_ingreso_a_tratamiento, format = "%d/%m/%Y")
+    ),
+    unit = "year"
+  )
+
+# Create the histograms for each dataset
+hist_c2 <- ggplot(CONS_C2_25, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c2")+ theme_bw()+ xlim(0,90)
+
+hist_c3 <- ggplot(CONS_C3_25, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c3")+ theme_bw()+ xlim(0,90)
+
+hist_c4 <- ggplot(CONS_C4_25, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c4")+ theme_bw()+ xlim(0,90)
+
+hist_c5 <- ggplot(CONS_C5_25, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c5")+ theme_bw()+ xlim(0,90)
+
+hist_c6 <- ggplot(CONS_C6_25, aes(x = edad_ingreso)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c6")+ theme_bw()+ xlim(0,90)
+
+# Combine histograms into a single plot
+combined_plot <- ggpubr::ggarrange(hist_c2, hist_c3, hist_c4, hist_c5, hist_c6, ncol = 3, nrow = 2)
+
+# Display the combined plot
+print(combined_plot)
+```
+</div>
+
+::: center-table
+```{r distinct-names}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+
+# Get the column names for each dataset
+names_c2 <- names(CONS_C2_25)
+names_c3 <- names(CONS_C3_25)
+names_c4 <- names(CONS_C4_25)
+names_c5 <- names(CONS_C5_25)
+names_c6 <- names(CONS_C6_25)
+
+df_c2 <- data.frame(Dataset = "CONS_C2", Column_Name = names_c2)
+df_c3 <- data.frame(Dataset = "CONS_C3", Column_Name = names_c3)
+df_c4 <- data.frame(Dataset = "CONS_C4", Column_Name = names_c4)
+df_c5 <- data.frame(Dataset = "CONS_C5", Column_Name = names_c5)
+df_c6 <- data.frame(Dataset = "CONS_C6", Column_Name = names_c6)
+
+dplyr::full_join(df_c2, df_c3, by = "Column_Name") %>%
+    dplyr::full_join(df_c4, by = "Column_Name") %>%
+    dplyr::full_join(df_c5, by = "Column_Name") %>%
+    dplyr::full_join(df_c6, by = "Column_Name") %>%
+    dplyr::arrange(Column_Name) -> joined_df
+
+joined_df %>% 
+  dplyr::select(Column_Name, everything()) %>% 
+  dplyr::arrange(Column_Name) %>% 
+  dplyr::rename("c2"="Dataset.x","c3"="Dataset.y", "c4"="Dataset.x.x", "c5"="Dataset.y.y","c6"="Dataset") %>% 
+  dplyr::mutate_at(.vars = vars(matches("c[0-9]$")),
+                        .funs = ~ ifelse(!is.na(.), "X", "")) %>% 
+  kbl("markdown", caption="Replicated Fields in Databases")
+```
+:::
+
+We can see the following from C2-C6 databases that share different names.
+
+Columns with only 2 letters or less (presumably generated by Excel based on their position) were renamed to follow a sequential format. Each of these 2-letter columns was renamed using the name of the previous column followed by a sequential number. This helps in making the column names more meaningful and maintaining a clear, organized structure, especially when the original names may have been automatically generated or lacked context.
+
+```{r rename-columns}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+rename_short_columns <- function(df) {
+  col_names <- names(df)  # Get column names
+  base_name <- col_names[1]  # Start with the first column name as base
+  counter <- 2               # Start numbering from 2 for additional columns
+  
+  for (i in 2:length(col_names)) {
+    if (nchar(col_names[i]) <= 2) {  # Check if the column name has only 2 characters
+      col_names[i] <- paste0(base_name, "_", counter)  # Use base name + sequential number
+      counter <- counter + 1  # Increment the counter
+    } else {
+      base_name <- col_names[i]  # Update the base name to the current column name
+      counter <- 2               # Reset counter for the next series of short columns
+    }
+  }
+  
+  names(df) <- col_names  # Assign the new column names to the DataFrame
+  return(df)
+}
+# Applying the function
+SISTRAT23_c1_2010_2024_df2 <- rename_short_columns(SISTRAT23_c1_2010_2024_df2)
+CONS_C2_25 <- rename_short_columns(CONS_C2_25)
+CONS_C3_25 <- rename_short_columns(CONS_C3_25)
+CONS_C4_25 <- rename_short_columns(CONS_C4_25)
+CONS_C5_25 <- rename_short_columns(CONS_C5_25)
+CONS_C6_25 <- rename_short_columns(CONS_C6_25)
+
+```
+
+
+::: center-table
+```{r dates-c2-c6}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+rbind(
+  cbind("c2_AdmDate_min",min(readr::parse_date(CONS_C2_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c2_AdmDate_max",max(readr::parse_date(CONS_C2_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c2_DischDate_min",min(readr::parse_date(CONS_C2_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c2_DischDate_max",max(readr::parse_date(CONS_C2_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c2_BirthDate_min",min(readr::parse_date(CONS_C2_25$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c2_BirthDate_max",max(readr::parse_date(CONS_C2_25$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+  
+  cbind("c3_AdmDate_min",min(readr::parse_date(CONS_C3_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c3_AdmDate_max",max(readr::parse_date(CONS_C3_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c3_DischDate_min",min(readr::parse_date(CONS_C3_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c3_DischDate_max",max(readr::parse_date(CONS_C3_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  
+  cbind("c4_AdmDate_min",min(readr::parse_date(CONS_C4_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c4_AdmDate_max",max(readr::parse_date(CONS_C4_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c4_DischDate_min",min(readr::parse_date(CONS_C4_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c4_DischDate_max",max(readr::parse_date(CONS_C4_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c4_BirthDate_min",min(readr::parse_date(CONS_C4_25$fechanacimiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c4_BirthDate_max",max(readr::parse_date(CONS_C4_25$fechanacimiento,"%d/%m/%Y"),na.rm=T)),    
+  
+  cbind("c5_AdmDate_min",min(readr::parse_date(CONS_C5_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c5_AdmDate_max",max(readr::parse_date(CONS_C5_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c5_DischDate_min",min(readr::parse_date(CONS_C5_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c5_DischDate_max",max(readr::parse_date(CONS_C5_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c5_BirthDate_min",min(readr::parse_date(CONS_C5_25$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c5_BirthDate_max",max(readr::parse_date(CONS_C5_25$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),    
+  
+  cbind("c6_AdmDate_min",min(readr::parse_date(CONS_C6_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c6_AdmDate_max",max(readr::parse_date(CONS_C6_25$fecha_ingreso_a_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c6_DischDate_min",min(readr::parse_date(CONS_C6_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c6_DischDate_max",max(readr::parse_date(CONS_C6_25$fecha_egreso_de_tratamiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c6_BirthDate_min",min(readr::parse_date(CONS_C6_25$fechanacimiento,"%d/%m/%Y"),na.rm=T)),
+  cbind("c6_BirthDate_max",max(readr::parse_date(CONS_C6_25$fechanacimiento,"%d/%m/%Y"),na.rm=T))
+) %>% 
+  data.frame() %>% 
+  dplyr::rename("Date"="X2") %>% 
+  tidyr::separate(X1,sep="_", into=c("db","time","value")) %>% 
+  dplyr::mutate(Date=as.Date(as.numeric(Date),origin = "1970-01-01")) %>% 
+  tidyr::pivot_wider(names_from=value, values_from=Date) %>% 
+kbl("markdown", caption= "Range of dates in different databases")
+```
+:::
+
+Next, we standardized column names from `CONS_C2` to `CONS_C6`, by setting specific patterns and replacements for each dataset (`CONS_C2` to `CONS_C6`), tailored to each dataset's needs (e.g., `_afn` to `on` in `CONS_C2`). Then, we applied both specific and general patterns to column names in each dataset, ensuring consistent naming to replace patterns systematically across all column names.
+
+```{r rename-columns2}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+# Define los patrones y reemplazos para cada DataFrame
+patterns_C2 <- c("_afn", "n_afomero", "a_afos")
+replacements_C2 <- c("on", "numero", "anios")
+
+patterns_C3 <- c("pa_a_s", "fa_sico", "categor_a_a")
+replacements_C3 <- c("pais", "fisico", "categoria")
+
+patterns_C4 <- c("aa_o")
+replacements_C4 <- c("anio")
+
+patterns_C5 <- c("psiqui_aftrico", "s_afndromede")
+replacements_C5 <- c("psiquiatrico", "sindrome")
+
+patterns_C6 <- c("aa_o", "viva_a", "sustanci_an", "n_as_mero", "aa_o", "da_as", "aplicacia_n")
+replacements_C6 <- c("anio", "vivia", "sustancia_n", "numero", "anio", "dias", "aplicacion")
+
+patterns <- c(patterns_C2, patterns_C3, patterns_C4, patterns_C5, patterns_C6)
+replacements <-c(replacements_C2, replacements_C3, replacements_C4, replacements_C5, replacements_C6)
+
+for (i in seq_along(patterns)) {
+  colnames(CONS_C2_25) <- sub(patterns[i], replacements[i], colnames(CONS_C2_25))
+  colnames(CONS_C3_25) <- sub(patterns[i], replacements[i], colnames(CONS_C3_25))
+  colnames(CONS_C4_25) <- sub(patterns[i], replacements[i], colnames(CONS_C4_25))
+  colnames(CONS_C5_25) <- sub(patterns[i], replacements[i], colnames(CONS_C5_25))
+  colnames(CONS_C6_25) <- sub(patterns[i], replacements[i], colnames(CONS_C6_25))
+}
+```
+
+<br>
+
+#### Clean C2
+
+::: center-table
+```{r import-c2-clean1}
+#| echo: true
+#| error: false
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Define a named vector with replacements
+replacements <- c(
+  "ÃƒÂ³" = "ó", "ÃƒÂ¡" = "á", "ÃƒÂ©" = "é", "ÃƒÂº" = "ú",
+  "ÃƒÂ±" = "ñ", "Ãƒâ€˜" = "Ñ", "ÃƒÂ" = "Á", "ÃƒÂ¡" = "á",
+  "ÃƒÂ©" = "é", "ÃƒÂº" = "ú", "ÃƒÂ±" = "ñ", "Ãƒâ€˜" = "Ñ",
+  "ÃƒÂ" = "Á", "Ã‚Âº" = "º", "Ã‚Â°" = "°", "Ã‚Âª" = "ª",
+  "Ã‚Â¡" = "¡", "Ã‚Â¿" = "¿", "ÃƒÂ" = "í", "ÃƒÂ­" = "í",
+  "Ãƒâ€œ" = "Ó", "Ãƒâ€š" = "Ê", "Ãƒâ€" = "É", "ÃƒÂ¼" = "ü",
+  "ÃƒÂ¯" = "ï", "ÃƒÂ¶" = "ö", "Ã‚Â«" = "«", "Ã‚Â»" = "»",
+  "Ãƒâ€¡" = "Ç", "ÃƒÂ§" = "ç", "Ã‚Â" = "", "Ãƒ" = "",
+  "\u00AD" = "", "\u00C2\u00AD" = ""
+)
+# Create a function to apply the replacements
+replace_chars <- function(column) {
+  reduce(names(replacements), ~ str_replace_all(.x, .y, replacements[.y]), .init = column)
+}
+CONS_C2_25_df <- CONS_C2_25 %>%
+  tidytable::mutate(tidytable::across(tidytable::everything(), replace_chars))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column")
+
+unique_values_list_c2 <- setNames(
+  lapply(names(CONS_C2_25_df), function(col_name) {
+    # Obtener los valores únicos de la columna
+    unique_values <- unique(CONS_C2_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2_25_df)  # Asignar los nombres de las columnas a la lista
+)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Apply transformations to character columns
+CONS_C2_25_df <- CONS_C2_25_df %>%
+  tidytable::mutate(tidytable::across(tidytable::everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##
+
+replacements <- c(
+  "\u00c2" = "", "viá‘a" = "viña", "reloncavá\u008d" = "reloncavi", 
+  "maráa" = "maría", "á‘uble" = "ñuble", "vánculos" = "vínculos", 
+  "concepciá“n" = "concepción", "aysá‰n" = "aysén", "mánimo" = "mínimo", 
+  "m\\?mo" = "mínimo", "clánica" = "clínica", "prisionizaci\\?" = "prisionalización", 
+  "explotaci\\?omercial" = "explotación comercial", "patología" = "patología", 
+  "cardiopatías" = "cardiopatías", "especáfico" = "específico", 
+  "esquizotápico" = "esquizotípico", "tricotilomanía" = "tricotilomanía", 
+  "hipomanáaco" = "hipomaníaco", "lámite" = "límite", "manáaco" = "maníaco", 
+  "á\u0081nimo" = "ánimo", "cleptomanía" = "cleptomanía", "hipocondría" = "hipocondría", 
+  "raá\u008dces" = "raíces", "raá\\u008dces" = "raíces", "curacavá" = "curacaví", 
+  "raáces" = "raíces", "terapá‰utica" = "terapéutica", "raáces" = "raíces", 
+  "\\?ble" = "ñuble", "báo-báo" = "bío-bío", "iba\\?s" = "ibañez", 
+  "reloncavá" = "reloncaví", "valparaáso" = "valparaíso", "araucanáa" = "araucanía", 
+  "á‘uble" = "ñuble", "especáfico" = "específico", "vi\\? del mar" = "viña del mar", 
+  "do\\?hue" = "doñihue", "huala\\?" = "hualaé", "\\?qu\\?" = "ñiquén", 
+  "cha\\?ral" = "chañaral", "ollag\\?" = "ollagüe", "vicu\\?" = "vicuña", 
+  "ca\\?te" = "cañete", "\\?\\?a" = "ñuñoa", "policáa" = "policía", 
+  "garantáa" = "garantía", "fiscaláa" = "fiscalía", "haitá" = "haití", 
+  "hungráa" = "hungría", "paás bajos" = "países bajos", "atacame\\?" = "atacameño", 
+  "y\\?na" = "yámana", "y\\?gan" = "yagán", "hipn\\?os" = "hipnóticos", 
+  "hero\\?" = "heroína", "code\\?" = "codeína", "analg\\?cos" = "analgésicos", 
+  "barbit\\?os" = "barbitúricos", "alucin\\?os" = "alucinógenos", 
+  "ãƒâ³n" = "ón", "ãƒâ©n" = "én", "ãƒâº" = "ú", "ãƒâºa" = "úa", 
+  "ãƒâos" = "íos", "ãƒâuble" = "ñuble", "ãƒâ³n general" = "ón general", 
+  "ãƒâ" = "í", "ãƒâ³n casa" = "ón casa", "ãƒârbara" = "árbara", 
+  "naãƒâ" = "ñ", "raãƒâces" = "raíces", "baãƒâsico" = "básico", 
+  "ãƒâ©utico" = "éutico", "vaãƒânculos" = "vínculos", "marãƒâa" = "maría", 
+  "inaãƒâ©s" = "inés", "raí\\u008dces" = "raíces", "chiloí©" = "chiloé", 
+  "terapí©utico" = "terapéutico", "bísico" = "básico", "peí±ablanca" = "peñablanca", 
+  "iní©s" = "inés", "infracción" = "infracción", "layantú" = "layantu", 
+  "oriã³n" = "orion", "valparaãso" = "valparaiso", "fãsico" = "fisico", 
+  "ningãún gãénero" = "ningun genero", "viãña" = "viña", 
+  "corporación" = "corporacion", "aysã©n" = "aysen", "\tcodesam" = "codesam", 
+  "corporación" = "corporacion", "concepción" = "concepcion", 
+  "hábitos" = "habitos", "psíquica" = "psiquica", "neuróticos" = "neuroticos", 
+  "fisiológicas" = "fisiologicas", "somáticos" = "somaticos", 
+  "orgánicos" = "organicos", "sintomáticos" = "sintomaticos", 
+  "psicológico" = "psicologico", "mínimo" = "minimo", "sanción" = "sancion", 
+  "terapéutica" = "terapeutica", "término" = "termino", "derivación" = "derivacion", 
+  "prisionalización" = "prisionalizacion", "explotación" = "explotacion", 
+  "estrés" = "estres", "años" = "años", "dãas"="días", "mãnimo"="minimo","ã©"="e"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements), ~ stringr::str_replace_all(.x, .y, replacements[.y]), .init = column)
+}
+
+CONS_C2_25_df <- CONS_C2_25_df %>%
+  tidytable::mutate(tidytable::across(tidytable::everything(), replace_chars))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##
+
+unique_values_list_c21 <- setNames(
+  lapply(names(CONS_C2_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2_25_df)  # assign column names to the list
+)
+
+#1:5
+#unique_values_list_c21[27:37]
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Crear una lista para almacenar las expresiones de reemplazo
+replacements3 <- c(
+  # "\u00AD" = "", "\u00C2\u00AD" = "", "\u00C2" = "",
+  # "ráo negro" = "río negro", "báo-báo" = "bío-bío", 
+  # "pe\\?lolen" = "peñalolén", "pe\\?flor" = "peñaflor", 
+  # "san gregorio de \\?quén" = "san gregorio de ñiquén", 
+  # "\\?o nitroso" = "óxido nitroso", "coca\\?" = "cocaína", 
+  # "nunca estud¡" = "nunca estudió", 
+  # "t\\?ica comercial/industrial/normalista" = "técnica comercial/industrial/normalista", 
+  "profesional \\(4 o m\\?a\\? incompleta" = "profesional (4 o más incompleta)",
+  "profesional \\(4 o m\\?a\\? completa" = "profesional (4 o más completa)",
+  # "t\\?ica profesional˜" = "técnica profesional", 
+   "t\\?ico superior \\(1-3 a\\? completa" = "técnico superior (1-3 años completa)", 
+  # "educaci\\?\\?ca" = "educación básica", 
+   "t\\?ico superior \\(1-3 a\\? incompleta" = "técnico superior (1-3 años incompleta)", 
+  # "cientáficos" = "científicos", "ášnicamente" = "únicamente", 
+  # "hospeder\\?" = "hospedería", "residencial, pensi\\?hostal" = "residencial, pensión, hostal", 
+  # "ocupaci\\?rregular" = "ocupación irregular", "cocaána" = "cocaína", 
+  # "heroána" = "heroína", "codeána" = "codeína", 
+  # "sintomático" = "sintomático", "disfunción" = "disfunción", 
+  # "lesión" = "lesión", "días" = "días", "orientación" = "orientación", 
+  # "especificación" = "especificación", "\\tcodesam" = "codesam", 
+  "cleptomanáa" = "cleptomanía", "tricotilomanáa" = "tricotilomanía", 
+  "cardiopatáas" = "cardiopatías", "patologáa" = "patología",
+  "último" = "últimos", "\\|(\\d+)" = "1", "1o" = "10", 
+  "aná\u0081stasis"= "anástasis",
+  "á‘uá‘oa" = "ñuñoa", "cocaána" = "cocaína", "hospederáa" = "hospedería",
+  "ášnicamente" = "únicamente", "t\\?ico" = "técnico", "nunca estudi" = "nunca estudió",
+  "t\\?ica"= "técnica", "educaci\\?\\?ca" = "educación básica",
+  "dáas" = "días", "dáa" = "día",
+   "lesiones gravásimaslesiones gravásimas" = "lesiones gravísimas",
+  "táas" = "tías", "táos" = "tíos", "crámenes" = "crímenes",
+  "jurádica" = "jurídica", "daá‘o" = "daño", "puchuncavá"= "puchuncaví",
+  "suspención" = "suspensión", "á‘iquen" = "ñiquen", "doá‘ihue" = "doñihue",
+  "caá‘ete" = "cañete", "vicuá‘a" = "vicuña", "á‘uá‘oa"="ñuñoa", 
+  "chaá‘aral"= "chañaral", "quilpuá‰"= "quilpué", 
+  "peá‘alolen" = "peñalolén", "peá‘aflor" = "peñaflor", 
+  "ibaá‘ez" = "ibáñez", "prisionización" = "prisionalización",
+  "piromanáa" = "piromanía", "psicotropas" = "psicotrópicas",
+  "fásico" = "físico", "psáquica" = "psíquica"
+)
+replace_chars <- function(column) {
+  reduce(names(replacements3), ~ stringr::str_replace_all(.x, .y, replacements3[.y]), .init = column)
+}
+
+CONS_C2_25_df <- CONS_C2_25_df %>%
+  tidytable::mutate(tidytable::across(tidytable::everything(), replace_chars))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+
+unique_values_list_c22 <- setNames(
+  lapply(names(CONS_C2_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2_25_df)  # assign column names to the list
+)
+
+#_#_#_#_#_#_
+invisible("See problematic characters")
+
+df_c2_problems <- map_dfr(names(unique_values_list_c22), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c22[[name]])
+}) %>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+```
+::: 
+  
+```{r import-c2-clean2}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C2_25_df <- CONS_C2_25_df%>%
+  tidytable::mutate(tidytable::across(tidytable::everything(), ~ replace_chars4(.)))
+
+
+unique_values_list_c23 <- setNames(
+  lapply(names(CONS_C2_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2_25_df)  # assign column names to the list
+)
+
+
+if(list_to_df(unique_values_list_c23 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c23 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c23 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c23 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value)) |> arrange(variable, value) |> nrow())
+  )
+}
+
+df_c2_problems2 <- map_dfr(names(unique_values_list_c23), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c23[[name]])
+}) %>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+repl_generic <- c(
+  "ÃƒÂ¡"="á","ÃƒÂ©"="é","ÃƒÂ­"="í","ÃƒÂ³"="ó","ÃƒÂº"="ú",
+  "ÃƒÂ±"="ñ","Ãƒâ€˜"="ñ","ÃƒÂ¼"="ü","ÃƒÂœ"="ü",
+  "Ã¡"="á","Ã©"="é","Ã­"="í","Ã³"="ó","Ãº"="ú",
+  "Ã±"="ñ","Ã¼"="ü","Ãœ"="ü",
+  "\u00C2"="", "\u00AD"="", 
+    "\u008d" = "í",   # a veces aparece por 'í'
+  "\u009d" = "í",
+  "\u0091" = "'",   # comillas “raras” de CP1252
+  "\u0092" = "'",
+  "\u2013" = "–",   # normaliza (si prefieres guion simple: "-" )
+  "\u2014" = "–",
+  "\\s*–\\s*" = " – "  # espacios consistentes alrededor del en dash
+)
+repl_domain <- c(
+  "profesional \\(4 o m\\?a\\? incompleta" = "profesional (4 o mas incompleta)",
+  "profesional \\(4 o m\\?a\\? completa"  = "profesional (4 o mas completa)",
+  "t\\?ico superior \\(1-3 a\\? completa" = "tecnico superior (1-3 anos completa)",
+  "t\\?ico superior \\(1-3 a\\? incompleta" = "tecnico superior (1-3 anos incompleta)",
+  "cleptomanáa"="cleptomania","tricotilomanáa"="tricotilomania",
+  "cardiopatáas"="cardiopatias","patologáa"="patologia",
+  "último"="ultimos","1o"="10",
+  "aná\u0081stasis"="anastasis","á‘uá‘oa"="nunoa","cocaána"="cocaina",
+  "hospederáa"="hospederia","ášnicamente"="unicamente",
+  "t\\?ico"="tecnico","nunca estudi"="nunca estudio","t\\?ica"="tecnica",
+  "educaci\\?\\?ca"="educacion basica","dáas"="dias","dáa"="dia",
+  "lesiones gravásimaslesiones gravásimas"="lesiones gravisimas",
+  "táas"="tias","táos"="tios","crámenes"="crimenes","jurádica"="juridica",
+  "daá‘o"="dano","puchuncavá"="puchuncavi","suspención"="suspension",
+  "á‘iquen"="niquen","doá‘ihue"="donihue","caá‘ete"="canete","vicuá‘a"="vicuna",
+  "chaá‘aral"="chanaral","quilpuá‰"="quilpue","peá‘alolen"="penalolen",
+  "peá‘aflor"="penaflor","ibaá‘ez"="ibanez","prisionización"="prisionalizacion",
+  "piromanáa"="piromania","psicotropas"="psicotropicas",
+  "fásico"="fisico","psáquica"="psiquica", "estudioo\\?"="estudio", "educaci\\?n b\\?sica"= "educacion basica", "m\\?s a\\?os"="mas anos", "t\\?cnic"="tecnic", "copiap\\?"="copiapo", "\\?uble"= "nuble", "iba\\?es"= "ibanez", "ays\\?n"= "aysen", "servicio de salud los ra\u008dos \\(valdivia\\)"= "servicio de salud los rios (valdivia)",  "pla - amuykipaa[a‘]+"= "pla - amuykipana", "a\\?os"="anos", "raíos"= "rios"
+)
+repl_domain_post <- c(
+"nocontesta"= "no contesta", "nunca estudioo$"= "nunca estudio", "heroana"="heroina", "ridad
+no sabe o no se aplica"= "no sabe o no aplica", "1 dias - semana"= "1 dia - semana", "miocardiopataa"="miocardiopatia", "admnistrativa"= "administrativa"
+)
+
+fix_text_tt <- function(x) {
+  x <- as.character(x)
+  x <- stringi::stri_trans_tolower(x)
+  x <- stringr::str_replace_all(x, repl_generic)
+  x <- stringr::str_replace_all(x, repl_domain)
+  x <- stringr::str_squish(x)
+  x <- stringr::str_replace_all(x, repl_domain_post)
+  x <- stringr::str_replace_all(x, "\\.-$", "")
+  x
+}
+
+#Apply
+CONS_C2_25_df <- CONS_C2_25_df %>%
+  tidytable::mutate(tidytable::across(tidytable::where(~ is.character(.x) || is.factor(.x)),
+                  ~ fix_text_tt(.x)))
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+invisible("See problematic characters")
+
+unique_values_list_c24 <- setNames(
+  lapply(names(CONS_C2_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2_25_df)  # assign column names to the list
+)
+
+df_c2_problems3 <- map_dfr(names(unique_values_list_c24), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c24[[name]])
+}) %>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+
+if(list_to_df(unique_values_list_c24 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c24 ) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c24)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c24)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+#list_to_df(unique_values_list_c24 ) |> filter(variable!="codigo_identificacion", variable!="HASH_KEY", !grepl("fecha|edad|dias|numero|id|codigo",variable)) |> View()
+```
+
+<br>
+
+#### Clean C3
+
+```{r import-c3-clean1}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C3_25_df <- CONS_C3_25 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c30 <- setNames(
+  lapply(names(CONS_C3_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C3_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C3_25_df)  # assign column names to the list
+)
+
+df_c3_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c30), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c30[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+
+if(list_to_df(unique_values_list_c30) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c30) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c30)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c30)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- generic ASCII/mojibake cleanup (from previous step) ---
+# First pass: Mojibake/corrupted UTF-8 fixes
+  mojibake_fixes <- c(
+    # Common corrupted accented characters
+    "Ã¡"="a", "Ã©"="e", "Ã­"="i", "Ã³"="o", "Ãº"="u", "Ã±"="n",
+    "ãƒâ¡"="a", "ãƒâ©"="e", "ãƒâ­"="i", "ãƒâ³"="o", "ãƒâº"="u", "ãƒâ±"="n",
+    
+    # Specific corrupted words from your data
+    "ãƒâšnicamente"="unicamente",
+    "razãƒâ³n"="razon",
+    "esquizotãƒâ­pico"="esquizotipico",
+    "curicãƒâ"="curico",
+    "bãƒâ­o-bãƒâ­o"="bio-bio",
+    "viãƒâ±a"="vina",
+    "aysãƒâ©n"="aysen",
+    "concepciãƒâ³n"="concepcion",
+    "mãƒâ­nimo"="minimo",
+    "tãƒâ©rmino"="termino",
+    "fãƒâ­sico"="fisico",
+    "otro gãƒâ©nero"="otro genero"
+  )
+  
+  # Second pass: Question mark replacements
+  qmark_fixes <- c(
+    # Communes/regions
+    "cha\\?ral"="chanaral",
+    "vi\\?a del mar"="vina del mar",
+    "vi\\? del mar"="vina del mar",
+    "vicu\\?"="vicuna",
+    "san gregorio de \\?iquen"="san gregorio de niquen",
+    "san gregorio de \\?quen"="san gregorio de niquen",
+    "de \\?ble"="de nuble",
+    "de \\?uble"="de nuble",
+    "iba\\?es"="ibanez",
+    "iba\\?s"="ibanez",
+    
+    # Education terms
+    "educaci\\?n"="educacion",
+    "b\\?sica"="basica",
+    "t\\?cnico"="tecnico",
+    "t\\?cnica"="tecnica",
+    "t\\?ico"="tecnico",
+    "t\\?ica"="tecnica",
+    "nunca estudi\\?"="nunca estudio",
+    
+    # Handle years/time periods
+    "a\\?os"="anos",
+    "a\\?"="anos",
+    "m\\?s"="mas",
+    "m\\?a\\?"="mas",
+    "\\(4 o m\\?s a\\?os\\)"="(4 o mas anos)",
+    "\\(1-3 a\\?os\\)"="(1-3 anos)",
+    "1-3 a\\?"="1-3 anos",
+    
+    # Clinical/psychiatric terms
+    "esquizot\\?pico"="esquizotipico",
+    "esquizot\\?co"="esquizotipico",
+    "h\\?bitos"="habitos",
+    "h\\?tos"="habitos",
+    "psicol\\?gico"="psicologico",
+    "psicol\\?gicos"="psicologicos",
+    "psicol\\?os"="psicologicos",
+    "psicol\\?o"="psicologico",
+    "fisiol\\?gicas"="fisiologicas",
+    "fisiol\\?as"="fisiologicas",
+    "som\\?tico"="somatico",
+    "som\\?ticos"="somaticos",
+    "som\\?ca"="somatica",
+    "som\\?ticas"="somaticas",
+    "psic\\?tico"="psicotico",
+    "psic\\?ticos"="psicoticos",
+    "psic\\?os"="psicoticos",
+    "neur\\?tico"="neurotico",
+    "neur\\?ticos"="neuroticos",
+    "neur\\?os"="neuroticos",
+    "org\\?nico"="organico",
+    "org\\?nicos"="organicos",
+    "org\\?co"="organico",
+    "sintom\\?tico"="sintomatico",
+    "sintom\\?ticos"="sintomaticos",
+    "sintom\\?cos"="sintomaticos",
+    "adaptaci\\?n"="adaptacion",
+    "adaptaci\\?"="adaptacion",
+    "especificaci\\?n"="especificacion",
+    "especificaci\\?"="especificacion",
+    "transformaci\\?n"="transformacion",
+    "transformaci\\?ersistente"="transformacion persistente",
+    "lesi\\?n"="lesion",
+    "lesi\\?"="lesion",
+    "disfunci\\?n"="disfuncion",
+    "disfunci\\?erebral"="disfuncion cerebral",
+    "espec\\?fico"="especifico",
+    "espec\\?ficos"="especificos",
+    
+    # Evaluation/outcomes
+    "logro m\\?nimo"="logro minimo",
+    "logro m\\?mo"="logro minimo",
+    
+    # Substances
+    "coca\\?na"="cocaina",
+    "coca\\?"="cocaina",
+    "analg\\?sicos"="analgesicos",
+    "analg\\?cos"="analgesicos",
+    
+    # Other problematic patterns
+    "explotaci\\?n"="explotacion",
+    "explotaci\\?exual"="explotacion sexual",
+    "discriminaci\\?n"="discriminacion",
+    "discriminaci\\?"="discriminacion",
+    "violaci\\?n"="violacion",
+    "derivaci\\?n"="derivacion",
+    "orientaci\\?exuales"="orientacion sexuales",
+    "estr\\?grave"="estres grave",
+    "estr\\?"="estres",
+    "s\\?rome amn\\?co"="sindrome amnesico"
+  )
+post_fixes <- c("profesional \\(4 o m\\?anos"= "profesional (4 o mas anos)",
+                "org\\?ca"= "organica",
+                "org\\?nica"= "organica",
+                "espec\\?co"= "especifico",
+                "sintom\\?co"= "sintomatico",
+                "som\\?cos"= "somaticos", 
+                "nocontesta"= "no contesta",
+                "admnistrativa"= "administrativa")
+
+post_fixes2 <- c("profesional \\(4 o m\\?anos"= "profesional (4 o mas anos)",
+                "org\\?ca"= "organica",
+                "org\\?nica"= "organica",
+                "espec\\?co"= "especifico",
+                "sintom\\?co"= "sintomatico",
+                "som\\?cos"= "somaticos")
+
+post_fixes3 <- c(
+  # Use Unicode escapes for problematic patterns
+  "rehabilitaci\u00e3\u0192\u00e2n" = "rehabilitacion",
+  "rehabilitaciafa\u00e2n" = "rehabilitacion",
+  "rehabilitaciafan" = "rehabilitacion",
+  "\u00e3\u0192\u00e2'uble" = "nuble",
+  "afa'uble" = "nuble",
+  "afauble" = "nuble",
+  "afa\\'uble" = "nuble",
+  'rehabilitaciafa"n'= "rehabilitacion",
+  'curico\\"'="curico", 
+  "\\bafa['’\"]?uble\\b"          = "nuble",          # e.g., "afa'uble" → "nuble"
+  "\\brehabilitaciafa['’\"]?n\\b" = "rehabilitacion"  # e.g., 'rehabilitaciafa"n' → "rehabilitacion"
+  )
+
+post_fixes4 <- c(
+  r"(rehabilitaciafa"n)" = "rehabilitacion",
+  r"(aƒa'uble)" = "nuble",
+  "afauble"= "nuble"
+)
+  
+fix_text_ascii <- function(x) {
+  x <- as.character(x)
+  x <- stringi::stri_trans_tolower(x)
+  x <- stringr::str_replace_all(x, "[\"'`´‘’‚‛“”„‟‹›«»]", "")
+  # Apply all fixes - CORRECTED THE TYPO
+  x <- stringr::str_replace_all(x, mojibake_fixes)
+  x <- stringr::str_replace_all(x, qmark_fixes)  # <- This was str_replpace_all in your code
+  x <- stringr::str_replace_all(x, post_fixes)  # <- This was str_replpace_all in your code
+  x <- stringr::str_replace_all(x, post_fixes2)  # <- This was str_replpace_all in your code
+  x <- stringr::str_replace_all(x, post_fixes3)  # <- This was str_replpace_all in your code  
+  x <- stringr::str_replace_all(x, post_fixes4)  # <- This was str_replpace_all in your code  
+  # Clean up double 'nn' at word boundaries
+  x <- stringr::str_replace_all(x, "nn\\b", "n")
+  # 3) final ASCII transliteration safeguard (removes any leftover accents)
+  x <- stringi::stri_trans_general(x, "Latin-ASCII")
+  # 4) squash spaces
+  x <- stringr::str_squish(x)
+  x
+}
+# apply to all character/factor columns
+CONS_C3_25_df <- CONS_C3_25_df%>%
+  dplyr::mutate(dplyr::across(dplyr::where(~ is.character(.x) || is.factor(.x)),
+                  ~ fix_text_ascii(.x)))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c31 <- setNames(
+  lapply(names(CONS_C3_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C3_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C3_25_df)  # assign column names to the list
+)
+
+df_c3_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c31), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c31[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+if(list_to_df(unique_values_list_c31) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c31)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c31)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c31)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+
+#list_to_df(unique_values_list_c31) |> filter(variable!="codigo_identificacion", variable!="HASH_KEY", !grepl("fecha|edad|dias|numero|id|codigo",variable)) |> View()
+```
+
+<br>
+
+#### Clean C4
+
+```{r import-c4-clean1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C4_25_df <- CONS_C4_25 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c40 <- setNames(
+  lapply(names(CONS_C4_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4_25_df)  # assign column names to the list
+)
+
+df_c4_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c40), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c40[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+if(list_to_df(unique_values_list_c40) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+    warning(paste0( "Values with sign '?'= ", list_to_df(unique_values_list_c40)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+if(list_to_df(unique_values_list_c40)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+    warning(paste0( "Values with signs '´ “ '= ", list_to_df(unique_values_list_c40)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# 1) Generic ASCII/mojibake cleanup (keeps only plain ASCII, no accents/ñ)
+repl_ascii_generic <- c(
+  "\uFEFF" = "", "\u00C2" = "", "\u00AD" = "", "Ã‚Â" = "", "ã‚â­" = "",
+  "â€˜"="'","â€™"="'","â€œ"="\"","â€�"="\"","Â´"="'","â€²"="'",
+  "â€“" = "-", "â€”" = "-", "\u2013" = "-", "\u2014" = "-",
+  # vowels/ü → plain ASCII
+  "ÃƒÂ¡"="a","Ã¡"="a","ãƒâ¡"="a","á"="a",
+  "ÃƒÂ©"="e","Ã©"="e","ãƒâ©"="e","é"="e",
+  "ÃƒÂ­"="i","Ã­"="i","ãƒâ­"="i","í"="i",
+  "ÃƒÂ³"="o","Ã³"="o","ãƒâ³"="o","ó"="o","Ó"="o",
+  "ÃƒÂº"="u","Ãº"="u","ãƒâº"="u","ú"="u",
+  "ÃƒÂ¼"="u","Ã¼"="u","Ãœ"="u","ÃƒÂœ"="u","ãƒâ¼"="u","ü"="u",
+  # ñ/Ñ → n (ASCII-only requirement)
+  "ÃƒÂ±"="n","Ã±"="n","ãƒâ±"="n","Ãƒâ€˜"="n","Ñ"="n","ñ"="n"
+)
+# 2) Targeted rules for the exact glitches you found (regex on the LEFT)
+repl_c4 <- c(
+  # communes / regions
+  "\\bvi\\?a del mar\\b"             = "vina del mar",
+  "\\bsan gregorio de \\?iquen\\b"   = "san gregorio de niquen",
+  "\\bde \\?uble\\b"                 = "de nuble",
+  "iba\\?es"                          = "ibanez",
+  # occupations / conditions
+  "ocupaci\\?n"                       = "ocupacion",
+  "ocupaci\\?o"                       = "ocupacion",
+  "ocupaci\\?rregular"                = "ocupacion irregular",
+  # law condition phrases
+  "condici\\?e tratamiento"           = "condicion de tratamiento",
+  "condici\\?n de tratamiento"        = "condicion de tratamiento",
+  # crimes/offences
+  "corrupci\\?e menores"              = "corrupcion de menores",
+  "lesiones graves y grav\\?simas"    = "lesiones graves y gravisimas",
+  "lesiones graves y grav\\?mas"      = "lesiones graves y gravisimas",
+  "producci\\?e material pornogr\\?co"= "produccion de material pornografico",
+  "producci\\?n de material pornogr\\?fico" = "produccion de material pornografico",
+  "receptaci\\?"                      = "receptacion",
+  "robo con intimidaci\\?"            = "robo con intimidacion",
+  "\\bviolaci\\?\\b"                  = "violacion",
+  # clinical (physical)
+  "megalobl\\?ica"                    = "megaloblastica",
+  "ferrop\\?ca"                       = "ferropenica",
+  "cardiopat\\?as"                    = "cardiopatias",
+  "cardiopat\\?:"                     = "cardiopatia:",
+  "miocardiopat\\? ?dilatada"         = "miocardiopatia dilatada",
+  "som\\?cas"                         = "somaticas",
+  "som\\?ticas"                       = "somaticas",
+  "alcoh\\?lica"                      = "alcoholica",
+  "alcoh\\?a"                         = "alcoholica",
+  "hepatitis cr\\?a"                  = "hepatitis cronica",
+  "patolog\\?a bucal"                 = "patologia bucal",
+  "patolog\\?bucal"                   = "patologia bucal",
+  "patolog\\? de la gesti\\?n"        = "patologia de la gestion",
+  "patolog\\?de la gesti\\? del ni\\?ntrauterino" = "patologia de la gestion del nin intrauterino",
+  # clinical (psychiatry)
+  "esquizot\\?pico"                   = "esquizotipico",
+  "esquizot\\?co"                     = "esquizotipico",
+  "h\\?bitos"                         = "habitos",
+  "h\\?tos"                           = "habitos",
+  "psicol\\?gic[oa]"                  = "psicologico",
+  "fisiol\\?gic[oa]s?"                = "fisiologicas",
+  "som\\?tic[oa]s?"                   = "somaticos",
+  "psic\\?tic[oa]s?"                  = "psicoticos",
+  "neur\\?tic[oa]s?"                  = "neuroticos",
+  "org\\?nic[oa]s?"                   = "organicos",
+  "sintom\\?tic[oa]s?"                = "sintomaticos",
+  "psic\\?os\\b"                      = "psicoticos",
+  "sue\\?"                            = "sueno",
+  "adaptaci\\?n"                      = "adaptacion",
+  # schooling
+  "educaci\\?n b\\?sica"              = "educacion basica",
+  "\\(4 o m\\?a\\? completa"          = "(4 o mas completa",
+  "\\(4 o m\\?a\\? incompleta"        = "(4 o mas incompleta",
+  "t\\?cnica"                         = "tecnica",
+  "t\\?ico"                           = "tecnico",
+  "t\\?ico superior \\(1-3 a\\? completa"   = "tecnico superior (1-3 anos) completa",
+  "t\\?ico superior \\(1-3 a\\? incompleta" = "tecnico superior (1-3 anos) incompleta",
+  "t\\?cnico superior \\(1-3 a\\?os\\)"     = "tecnico superior (1-3 anos)",
+  "m\\?s a\\?os"                      = "mas anos",
+  # evaluation / outcomes
+  "logro m\\?mo"                      = "logro minimo",
+  "logro m\\?nimo"                    = "logro minimo",
+  # frequency/time
+  "\\b1 d\\? ?- semana\\b"            = "1 dia - semana",
+  "\\b1 d\\?as - semana\\b"           = "1 dias - semana",
+  "d\\?as"                             = "dias",
+  "d\\?a"                              = "dia",
+  "\\?ltimo"                           = "ultimo",
+  "^\\?mo\\b"                          = "ultimo",
+  # substances
+  "coca\\?na"                          = "cocaina",
+  "\\bcoca\\?\\b"                      = "cocaina",
+  "analg\\?sicos"                      = "analgesicos",
+  "analg\\?cos"                        = "analgesicos",
+  "hipn\\?ticos"                       = "hipnoticos",
+  "\\bhipn\\?os\\b"                    = "hipnoticos",
+  "alucin\\?genos"                     = "alucinogenos",
+  "alucin\\?os"                        = "alucinogenos",
+  # “otros problemas …”
+  "explotaci\\?n comercial sexual"     = "explotacion comercial sexual",
+  "explotaci\\?omercial sexual"        = "explotacion comercial sexual",
+  # nationality / country
+  "\\bper\\?\\b"                       = "peru",
+  "rep\\?ca dominicana"                = "republica dominicana",
+  "\\bpais\\b"                         = "pais",  # guard rail
+  # kinship
+  "cu\\?/a"                            = "cunado/a",
+  "c\\?nyuge"                          = "conyuge",
+  "s\\?del"                            = "solo del",
+  "s\\?lo"                             = "solo",
+  # housing / place
+  "hospeder\\?"                        = "hospederia",
+  "pensi\\?hostal"                     = "pension, hostal",
+  # routes of administration
+  "aspiraci\\?n de"                    = "aspiracion de",
+  "aspiraci\\?e"                       = "aspiracion de"
+)
+
+fix_text_ascii <- function(x) {
+  x <- as.character(x)
+  x <- stringi::stri_trans_tolower(x)
+  # 1) generic cleanup (kill mojibake / normalize punctuation)
+  x <- stringr::str_replace_all(x, repl_ascii_generic)
+  # 2) targeted domain repairs for this dataset
+  x <- stringr::str_replace_all(x, repl_c4)
+  # 3) small heuristics for leftover '?'
+  #    - '?n'/'?t' often from 'án'/'át' → 'an'/'at'
+  x <- stringr::str_replace_all(x, "\\?(?=n|t)", "a")
+  #    - 'l?g' → 'log' (fisiol?gicas → fisiologicas)
+  x <- stringr::str_replace_all(x, "l\\?g", "log")
+  #    - between letters, default to 'o' (psicol?gico → psicologico)
+  x <- stringr::str_replace_all(x, "(?<=[a-z])\\?(?=[a-z])", "o")
+  # 4) final ASCII transliteration guard (removes any stray accents)
+  x <- stringi::stri_trans_general(x, "Latin-ASCII")
+  # 5) whitespace normalization
+  x <- stringr::str_squish(x)
+  x
+}
+
+# Apply to CONS_C4_25_df (all character/factor columns)
+CONS_C4_25_df <- CONS_C4_25_df %>%
+  dplyr::mutate(dplyr::across(dplyr::where(~ is.character(.x) || is.factor(.x)),
+                  ~ fix_text_ascii(.x)))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c41 <- setNames(
+  lapply(names(CONS_C4_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4_25_df)  # assign column names to the list
+)
+
+df_c4_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c41), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c41[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+if(list_to_df(unique_values_list_c41) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+    warning(paste0( "Values with sign '?'= ", list_to_df(unique_values_list_c41)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+if(list_to_df(unique_values_list_c41)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+    warning(paste0( "Values with signs '´ “ '= ", list_to_df(unique_values_list_c41)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Extra rules for the exact strings you still have
+repl_more <- c(
+  # communes/regions
+  "\\b\\?\\?a\\b"                = "na",                 # literal "??a" token → best ASCII guess "na"
+  "\\bvi\\? del mar\\b"          = "vina del mar",       # "vi? del mar"
+  "\\bvi\\?a del mar\\b"         = "vina del mar",       # "vi?a del mar" (keep too, just in case)
+  # occupation / condition
+  "raz\\?"                        = "razon",              # "otra raz?" → "otra razon"
+  # crimes/offences
+  "\\bviolaci\\?\\b"             = "violacion",          # "violaci?"
+  "violaci\\?"                    = "violacion",
+  "todos los d\\?"                = "todos los dias",
+  "derivaci\\?"                   = "derivacion",
+  # schooling/time phrases
+  "1-3 a\\?\\s+completa"         = "1-3 anos completa",
+  "1-3 a\\?\\s+incompleta"       = "1-3 anos incompleta",
+  # " 1 a 2 a?" / " 3 a 4 a?" → " 1 a 2 anos"
+  "(?<=\\d)\\s*a\\?\\b"          = " anos",
+  "moa\\?"                        = "mas",                # "5 o moa?" → "5 o mas"
+  # frequency/day tokens
+  "1 dias - semana"               = "1 dia - semana",
+  "2-3 d\\? - semana"             = "2-3 dias - semana",
+  "4-6 d\\? - semana"             = "4-6 dias - semana",
+  "5 o mas$"                      = "5 o mas anos",
+  "3 a 4 a\\?"                    = "3 a 4 anos",
+  "1 a 2 aoos"                    = "1 a 2 anos",
+  "1 a 2 a\\?"                    = "1 a 2 anos",
+  "\\bd\\?\\b"                    = "dia",                # "2-3 d? - semana"
+  "d\\?as"                        = "dias",
+  "d\\?a"                         = "dia",
+  "todos los d\\?"                = "todos los dias",
+  # substances
+  "\\bcoca\\?\\b"                = "cocaina",
+  "coca\\?"                       = "cocaina",
+  "no consumi\\?"                 = "no consumio",
+  # nationality / country
+  "\\bper\\?\\b"                  = "peru",
+  "per\\?"                        = "peru"
+)
+
+
+repl_specific <- c(
+  "fafasico"                                 = "fisico",
+  "orgocos"                                  = "organicos",
+  "orgnaicos"                                = "organicos",
+  "terapoutica"                              = "terapeutica",
+  "terapoica"                                = "terapeutica",
+  "derivacian"                               = "derivacion",
+  "miocardiopatoa"                           = "miocardiopatia",
+  "gestian"                                  = "gestion",
+  "\\bnioo\\b"                                = "nino",
+  "\\bnin\\b"                                 = "nino",
+  "\\bsuenoo\\b"                              = "sueno",
+  "estado de nimo"                           = "estado de animo",
+  "neuroos"                                  = "neurologicos",
+  "enfermedad moca"                          = "enfermedad medica",
+  "nioez"                                    = "ninez",
+  "psicoloo"                                 = "psicologico",
+  "aoos"                                     = "anos",
+  # education phrases
+  "profesional \\(4 o mas completa"          = "profesional (4 o mas anos) completa",
+  "profesional \\(4 o mas incompleta"        = "profesional (4 o mas anos) incompleta",
+  "tecnico superior \\(1-3 anos completa"    = "tecnico superior (1-3 anos) completa",
+  "tecnico superior \\(1-3 anos incompleta"  = "tecnico superior (1-3 anos) incompleta",
+  "\\btoica\\b"                               = "tecnica",
+  "\\bnocontesta\\b"                          = "no contesta"
+)
+
+repl_specific2 <- 
+c("nocontesta"="no contesta", "razan"="razon", "orgocos"= "organicos", "fisioloas"= "fisiologicas", "nioo"= "ninez", "moca"= "morfologica", "nioez"= "ninez", "suenoo"= "sueno", "admnistrativa"= "administrativa",  "terapoutica"= "terapeutica", "derivacian"= "derivacion", "neuroos"= "neurologicos", "psicoloo"= "psicologico", "fisioloas"= "fisiologicas", "somocos"= "somaticos",     "\\bafa['’\"]?uble\\b"          = "nuble",          # e.g., "afa'uble" → "nuble"
+    "\\brehabilitaciafa['’\"]?n\\b" = "rehabilitacion"  # e.g., 'rehabilitaciafa"n' → "rehabilitacion"
+  )
+pat_map_extra <- c(
+  # Mis-spellings of disorders
+  "trastornos mentales organicos, incluidos los sintomocos" = 
+    "trastornos mentales organicos, incluidos los sintomaticos",
+  
+  "trastornos del estado de nimo" = 
+    "trastornos del estado de animo",
+  
+  # Pathology of ...
+  "patologia de la gestion del nin intrauterino" = 
+    "patologia de la gestion y de la ninez intrauterino",
+  
+  "patologoa de la gestian y del ninez intrauterino" = 
+    "patologia de la gestion y de la ninez intrauterino",
+  
+  # Common typos / lexicals
+  "hospederiaa" = "hospederia",
+  "pensian" = "pension",
+  "cuoado/a" = "cunado/a",
+  "tocnicos" = "tecnicos",
+  "cientoficos" = "cientificos",
+  "cientocos" = "cientificos"
+)
+
+
+# Update your fixer to apply these after the generic + previous domain rules
+fix_text_ascii <- function(x) {
+  x <- as.character(x)
+  x <- stringi::stri_trans_tolower(x)
+
+  # 1) generic mojibake → ASCII
+  x <- stringr::str_replace_all(x, repl_ascii_generic)
+
+  # 2) your prior targeted rules (if you have them, keep that call here)
+  # x <- stringr::str_replace_all(x, repl_c4)   # <-- keep if already defined
+
+  # 3) NEW: apply these extra rules
+  x <- stringr::str_replace_all(x, repl_more)
+
+  # 4) light heuristics for any stray '?'
+  x <- stringr::str_replace_all(x, "\\?(?=n|t)", "a")         # án/át → an/at
+  x <- stringr::str_replace_all(x, "l\\?g", "log")            # fisiol?g → fisiolog
+  x <- stringr::str_replace_all(x, "(?<=[a-z])\\?(?=[a-z])", "o") # psicolog?co → psicologico
+  # 5) final ASCII guard + spacing
+  x <- stringi::stri_trans_general(x, "Latin-ASCII")
+  x <- stringr::str_squish(x)
+  # 6) Specific corrections (regex on the left, ASCII on the right)
+  x <- stringr::str_replace_all(x, repl_ascii_generic)
+  x <- stringr::str_replace_all(x, repl_specific2)#pat_map_extra
+  x <- stringr::str_replace_all(x, pat_map_extra)#
+  # x
+}
+
+# Run on CONS_C4_25_df
+CONS_C4_25_df <- CONS_C4_25_df %>%
+  dplyr::mutate(dplyr::across(where(~ is.character(.x) || is.factor(.x)),
+                                        ~ fix_text_ascii(.x)))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c42 <- setNames(
+  lapply(names(CONS_C4_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4_25_df)  # assign column names to the list
+)
+
+df_c4_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c42), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c42[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+if(list_to_df(unique_values_list_c42) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+    warning(paste0( "Values with sign '?'= ", list_to_df(unique_values_list_c42)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+if(list_to_df(unique_values_list_c42)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+    warning(paste0( "Values with signs '´ “ '= ", list_to_df(unique_values_list_c42)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+    )
+}
+#list_to_df(unique_values_list_c42) |> filter(variable!="codigo_identificacion", variable!="HASH_KEY", !grepl("fecha|edad|dias|numero|id|codigo",variable)) |> View()
+```
+
+<br>
+
+#### Clean C5
+
+```{r import-c5-clean1}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+# Comprehensive encoding fix function
+fix_encoding_complete <- function(x) {
+  x <- as.character(x)
+  x <- tolower(x)
+  repl_ascii_generic <- c(
+    "\uFEFF" = "", "\u00C2" = "", "\u00AD" = "", "Ã‚Â" = "", "ã‚â­" = "",
+    "â€˜"="'","â€™"="'","â€œ"="\"","â€�"="\"","Â´"="'","â€²"="'",
+    "â€“" = "-", "â€”" = "-", "\u2013" = "-", "\u2014" = "-",
+    # vowels/ü → plain ASCII
+    "ÃƒÂ¡"="a","Ã¡"="a","ãƒâ¡"="a","á"="a",
+    "ÃƒÂ©"="e","Ã©"="e","ãƒâ©"="e","é"="e",
+    "ÃƒÂ­"="i","Ã­"="i","ãƒâ­"="i","í"="i",
+    "ÃƒÂ³"="o","Ã³"="o","ãƒâ³"="o","ó"="o","Ó"="o",
+    "ÃƒÂº"="u","Ãº"="u","ãƒâº"="u","ú"="u",
+    "ÃƒÂ¼"="u","Ã¼"="u","Ãœ"="u","ÃƒÂœ"="u","ãƒâ¼"="u","ü"="u",
+    # ñ/Ñ → n (ASCII-only requirement)
+    "ÃƒÂ±"="n","Ã±"="n","ãƒâ±"="n","Ãƒâ€˜"="n","Ñ"="n","ñ"="n"
+  )
+  x <- stringr::str_replace_all(x, repl_ascii_generic)
+  # Step 1: Remove generic UTF-8 BOM and control characters
+  x <- gsub("[\uFEFF\u00AD\u200B-\u200F\u202A-\u202E]", "", x, perl = TRUE)
+  # Step 2: Fix mojibake patterns using regex (avoids quote-breaking issues)
+  # Match corruption patterns and remove them, then fix the word
+  # Pattern 1: Remove mojibake sequences (3-4 char UTF-8 corruption)
+  # This catches ãƒâ and similar patterns
+  x <- gsub("[\u00C0-\u00FF][\u0080-\u00BF]{1,3}", "", x, perl = TRUE)
+  # Pattern 2: Fix words that had mojibake removed
+  word_corrections <- c(
+    # After mojibake removal, fix incomplete words
+    "^nicamente$" = "unicamente",
+    "^uble$" = "nuble", 
+    "rehabilitaci.*?n$" = "rehabilitacion",
+    "raz.*?n$" = "razon",
+    "esquizot.*?pico$" = "esquizotipico",
+    "curic.*?$" = "curico",
+    "b.*?o-b.*?o$" = "bio-bio",
+    "vi.*?a$" = "vina",
+    "ays.*?n$" = "aysen",
+    "concepci.*?n$" = "concepcion",
+    "m.*?nimo$" = "minimo",
+    "t.*?rmino$" = "termino",
+    "f.*?sico$" = "fisico",
+    "otro g.*?nero$" = "otro genero"
+  )
+  for(pattern in names(word_corrections)) {
+    x <- gsub(pattern, word_corrections[pattern], x, perl = TRUE)
+  }
+  # Step 3: Handle question mark replacements systematically
+  qmark_replacements <- list(
+    # Communes and regions
+    c("cha\\?ral", "chanaral"),
+    c("vi\\?a del mar", "vina del mar"),
+    c("vi\\? del mar", "vina del mar"),
+    c("vicu\\?", "vicuna"),
+    c("san gregorio de \\?iquen", "san gregorio de niquen"),
+    c("san gregorio de \\?quen", "san gregorio de niquen"),
+    c("de \\?ble", "de nuble"),
+    c("de \\?uble", "de nuble"),
+    c("iba\\?es", "ibanez"),
+    c("iba\\?s", "ibanez"),
+    # Education
+    c("educaci\\?n", "educacion"),
+    c("b\\?sica", "basica"),
+    c("t\\?cnico", "tecnico"),
+    c("t\\?cnica", "tecnica"),
+    c("t\\?ico", "tecnico"),
+    c("t\\?ica", "tecnica"),
+    c("nunca estudi\\?", "nunca estudio"),
+    c("a\\?os", "anos"),
+    c("m\\?s", "mas"),
+    c("\\(4 o m\\?s a\\?os\\)", "(4 o mas anos)"),
+    c("\\(1-3 a\\?os\\)", "(1-3 anos)"),
+    c("1-3 a\\?", "1-3 anos"),
+    # Clinical terms
+    c("esquizot\\?pico", "esquizotipico"),
+    c("esquizot\\?co", "esquizotipico"),
+    c("h\\?bitos", "habitos"),
+    c("h\\?tos", "habitos"),
+    c("psicol\\?gico", "psicologico"),
+    c("psicol\\?gicos", "psicologicos"),
+    c("psicol\\?os", "psicologicos"),
+    c("fisiol\\?gicas", "fisiologicas"),
+    c("fisiol\\?as", "fisiologicas"),
+    c("som\\?tico", "somatico"),
+    c("som\\?ticos", "somaticos"),
+    c("som\\?ca", "somatica"),
+    c("psic\\?tico", "psicotico"),
+    c("psic\\?ticos", "psicoticos"),
+    c("psic\\?os", "psicoticos"),
+    c("neur\\?tico", "neurotico"),
+    c("neur\\?ticos", "neuroticos"),
+    c("neur\\?os", "neuroticos"),
+    c("org\\?nico", "organico"),
+    c("org\\?nicos", "organicos"),
+    c("org\\?co", "organico"),
+    c("sintom\\?tico", "sintomatico"),
+    c("sintom\\?ticos", "sintomaticos"),
+    c("sintom\\?cos", "sintomaticos"),
+    c("adaptaci\\?n", "adaptacion"),
+    c("adaptaci\\?", "adaptacion"),
+    c("especificaci\\?n", "especificacion"),
+    c("especificaci\\?", "especificacion"),
+    c("transformaci\\?n", "transformacion"),
+    c("transformaci\\?ersistente", "transformacion persistente"),
+    c("lesi\\?n", "lesion"),
+    c("lesi\\?", "lesion"),
+    c("disfunci\\?n", "disfuncion"),
+    c("disfunci\\?erebral", "disfuncion cerebral"),
+    c("espec\\?fico", "especifico"),
+    c("espec\\?ficos", "especificos"),
+    # Medical/physical
+    c("megalobl\\?ica", "megaloblastica"),
+    c("ferrop\\?ca", "ferropenica"),
+    c("cardiopat\\?as", "cardiopatias"),
+    c("cardiopat\\?", "cardiopatia"),
+    c("miocardiopat\\?", "miocardiopatia"),
+    c("alcoh\\?lica", "alcoholica"),
+    c("hepatitis cr\\?a", "hepatitis cronica"),
+    c("hepatitis cr\\?nica", "hepatitis cronica"),
+    c("patolog\\?a", "patologia"),
+    c("patolog\\?", "patologia"),
+    c("gesti\\?n", "gestion"),
+    c("ni\\?o", "nino"),
+    c("ni\\?", "nino"),
+    # Evaluation
+    c("logro m\\?nimo", "logro minimo"),
+    c("logro m\\?mo", "logro minimo"),
+    # Substances
+    c("coca\\?na", "cocaina"),
+    c("coca\\?", "cocaina"),
+    c("analg\\?sicos", "analgesicos"),
+    c("analg\\?cos", "analgesicos"),
+    c("hipn\\?ticos", "hipnoticos"),
+    c("hipn\\?os", "hipnoticos"),
+    c("alucin\\?genos", "alucinogenos"),
+    c("alucin\\?os", "alucinogenos"),
+    # Time/frequency
+    c("d\\?as", "dias"),
+    c("d\\?a", "dia"),
+    c("\\?ltimo", "ultimo"),
+    c("\\?ltimos", "ultimos"),
+    c("no consumi\\?", "no consumio"),
+    # Other terms
+    c("explotaci\\?n", "explotacion"),
+    c("explotaci\\?exual", "explotacion sexual"),
+    c("discriminaci\\?n", "discriminacion"),
+    c("discriminaci\\?", "discriminacion"),
+    c("violaci\\?n", "violacion"),
+    c("violaci\\?", "violacion"),
+    c("derivaci\\?n", "derivacion"),
+    c("derivaci\\?", "derivacion"),
+    c("orientaci\\?exuales", "orientacion sexuales"),
+    c("estr\\?grave", "estres grave"),
+    c("estr\\?", "estres"),
+    c("s\\?rome amn\\?co", "sindrome amnesico"),
+    c("per\\?", "peru"),
+    c("rep\\?ca dominicana", "republica dominicana"),
+    c("c\\?nyuge", "conyuge"),
+    c("cu\\?ado", "cunado"),
+    c("hospeder\\?", "hospederia"),
+    c("pensi\\?", "pension"),
+    c("aspiraci\\?n", "aspiracion"),
+    c("aspiraci\\?", "aspiracion"),
+    c("ocupaci\\?n", "ocupacion"),
+    c("ocupaci\\?", "ocupacion"),
+    c("condici\\?n", "condicion"),
+    c("condici\\?", "condicion"),
+    c("corrupci\\?", "corrupcion"),
+    c("producci\\?n", "produccion"),
+    c("producci\\?", "produccion"),
+    c("pornogr\\?fico", "pornografico"),
+    c("pornogr\\?co", "pornografico"),
+    c("receptaci\\?", "receptacion"),
+    c("intimidaci\\?", "intimidacion"),
+    c("sue\\?", "sueno"),
+    c("raz\\?", "razon")
+  )
+  # Apply question mark replacements
+  for(repl in qmark_replacements) {
+    x <- gsub(repl[1], repl[2], x, perl = TRUE)
+  }
+  # Step 4: Fix common typos and specific issues
+  typo_fixes <- c(
+    "orgocos" = "organicos",
+    "orgnaicos" = "organicos",
+    "fafasico" = "fisico",
+    "terapoutica" = "terapeutica",
+    "terapoica" = "terapeutica",
+    "derivacian" = "derivacion",
+    "miocardiopatoa" = "miocardiopatia",
+    "gestian" = "gestion",
+    "\\bnioo\\b" = "nino",
+    "\\bnin\\b" = "nino",
+    "suenoo" = "sueno",
+    "neuroos" = "neurologicos",
+    "psicoloo" = "psicologico",
+    "aoos" = "anos",
+    "nioez" = "ninez",
+    "toica" = "tecnica",
+    "nocontesta" = "no contesta",
+    "razan" = "razon",
+    "fisioloas" = "fisiologicas",
+    "somocos" = "somaticos",
+    "moca" = "morfologica",
+    "admnistrativa" = "administrativa",
+    "hospederiaa" = "hospederia",
+    "pensian" = "pension",
+    "cuoado/a" = "cunado/a",
+    "tocnicos" = "tecnicos",
+    "cientoficos" = "cientificos",
+    "cientocos" = "cientificos"
+  )
+  x <- stringr::str_replace_all(x, typo_fixes)
+  # Step 5: Handle special cases that break R strings
+  # Use regex to match patterns like afa'uble or rehabilitaciafa"n
+  x <- gsub("afa['\"]uble", "nuble", x, perl = TRUE)
+  x <- gsub("rehabilitaciafa['\"]n", "rehabilitacion", x, perl = TRUE)
+  # Step 6: Generic heuristics for remaining question marks
+  # '?n' or '?t' often from 'án' or 'át' -> 'an' or 'at'
+  x <- gsub("\\?(?=n|t)", "a", x, perl = TRUE)
+  # 'l?g' -> 'log' (fisiol?gicas -> fisiologicas)
+  x <- gsub("l\\?g", "log", x, perl = TRUE)
+  # Between letters, default to 'o'
+  x <- gsub("(?<=[a-z])\\?(?=[a-z])", "o", x, perl = TRUE)
+  # Step 7: Remove any remaining accented characters (convert to ASCII)
+  accent_map <- c(
+    "á"="a", "à"="a", "ä"="a", "â"="a", "ã"="a", "å"="a",
+    "é"="e", "è"="e", "ë"="e", "ê"="e",
+    "í"="i", "ì"="i", "ï"="i", "î"="i",
+    "ó"="o", "ò"="o", "ö"="o", "ô"="o", "õ"="o",
+    "ú"="u", "ù"="u", "ü"="u", "û"="u",
+    "ñ"="n", "ç"="c",
+    "Á"="A", "À"="A", "Ä"="A", "Â"="A", "Ã"="A", "Å"="A",
+    "É"="E", "È"="E", "Ë"="E", "Ê"="E",
+    "Í"="I", "Ì"="I", "Ï"="I", "Î"="I",
+    "Ó"="O", "Ò"="O", "Ö"="O", "Ô"="O", "Õ"="O",
+    "Ú"="U", "Ù"="U", "Ü"="U", "Û"="U",
+    "Ñ"="N", "Ç"="C"
+  )
+  x <- stringr::str_replace_all(x, accent_map)
+  # Step 8: Clean up double 'nn' at word boundaries
+  x <- gsub("nn\\b", "n", x, perl = TRUE)
+  # Step 9: Final cleanup - remove any remaining non-ASCII
+  x <- iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT", sub = "")
+  # Step 10: Normalize whitespace
+  x <- str_squish(x)
+  x <- stringr::str_replace_all(x, "\\s*\\.\\s*$", "")  # Remove trailing periods
+  # Regex-based replacements (dictionary)
+  replacements_c5 <- c(
+    "vafanculos" = "vinculos",
+    "araucanafaa" = "araucania",
+    "bafao-bafao" = "bio-bio",
+    "reloncavafa" = "reloncavi",
+    "valparaafaso" = "valparaiso",
+    "afa'uble" = "nuble",
+    "espontoa" = "espontanea",
+    "intervenciantegral" = "intervencion integral",
+    "agresioexual" = "agresion sexual",
+    "proteccioara" = "proteccion para",
+    "intervencioreve" = "intervencion breve",
+    "convina" = "convivencia",
+    "esquizotafapico" = "esquizotipico",
+    "especafafico" = "especifico",
+    "tricotilomanafaa" = "tricotilomania",
+    "especafaficos" = "especificos",
+    "nervina" = "nerviosa",
+    "psicotropas" = "psicotropicas",
+    "sueno-vina" = "sueno-vigilia",
+    "generalizada" = "generalizado",
+    "hipomanafaaco" = "hipomaniaco",
+    "cleptomanafaa" = "cleptomania",
+    "especafafica" = "especifica",
+    "lafamite" = "limite",
+    "manafaaco" = "maniaco",
+    "afnimo" = "animo",
+    "patologafaa" = "patologia",
+    "cocaafana" = "cocaina",
+    "1 dafaas - semana" = "1 dia - semana",
+    "menos de 1 dafaa - semana" = "menos de 1 dia - semana",
+    "2-3 dafaas - semana" = "2-3 dias - semana",
+    "4-6 dafaas - semana" = "4-6 dias - semana",
+    "todos los dafaas" = "todos los dias",
+    "afasnicamente" = "unicamente",
+    "lesiones gravafasimaslesiones gravafasimas" = "lesiones gravisimas",
+    "crafamenes" = "crimenes",
+    "vafafa,actima" = "victima",
+    "fiscalafafa,aa" = "fiscalia",
+    "programa especializados en temoca de nino ninoy/o adolescentes en situacioe calle (pe)" =
+      "programa especializados en tematica de ninos, ninas y/o adolescentes en situacian de calle (pe)",
+    "fiscaloa" = "fiscalia",
+    "proteccian" = "proteccion",
+    "intervencian" = "intervencion",
+    "intervencioamiliar" = "intervencion familiar",
+    "garant\\?" = "garantia",
+    "fiscal\\?" = "fiscalia",
+    "corporacioudicial" = "corporacion judicial",
+    "prevencioomunitaria" = "prevencion comunitaria",
+    "voimas" = "victimas",
+    "corporaciafafa,n" = "corporacion",
+    "representaciafafa,n jurafafa,adica" = "corporacion juridica",
+    "reparaciafafa,n" = "reparacion",
+    "daafafa,o" = "dano",
+    "voctimas" = "victimas",
+    "garantoa" = "garantia",
+    "representacian" = "representacion",
+    "situacian" = "situacion",
+    "educaci\\?\\?ca" = "educacion basica",
+    "cardiopatafaas" = "cardiopatias",
+    "miocardiopatafaa" = "miocardiopatia",
+    "ludopatafaa" = "ludopatia",
+    "prisionizacion" = "prisionalizacion"
+  )
+  # Apply regex replacements
+  x <- stringr::str_replace_all(x, replacements_c5)
+  # Literal (fixed) replacements for problematic patterns with '(' and '?'
+  replacements_c5_problematic <- c(
+    "profesional (4 o moa? incompleta" = "profesional (4 o mas) incompleta",
+    "profesional (4 o moa? completa"   = "profesional (4 o mas) completa"
+  )
+  x <- stringi::stri_replace_all_fixed(
+    x,
+    names(replacements_c5_problematic),
+    unname(replacements_c5_problematic),
+    vectorize_all = FALSE
+  )
+  return(x)
+}
+
+# Apply the comprehensive fix to your dataframe
+CONS_C5_25_df <- CONS_C5_25 %>%
+  mutate(across(where(~ is.character(.x) | is.factor(.x)), 
+                ~ fix_encoding_complete(.x)))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+unique_values_list_c53 <- setNames(
+  lapply(names(CONS_C5_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C5_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C5_25_df)  # assign column names to the list
+)
+if(list_to_df(unique_values_list_c53) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c53)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c53)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c53)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+dict_fixed <- c(
+  "vafanculos" = "vinculos",
+  "araucanafaa" = "araucania",
+  "bafao-bafao" = "bio-bio",
+  "reloncavafa" = "reloncavi",
+  "valparaafaso" = "valparaiso",
+  "afa'uble" = "nuble",
+  "espontoa" = "espontanea",
+  "intervenciantegral" = "intervencion integral",
+  "agresioexual" = "agresion sexual",
+  "proteccioara" = "proteccion para",
+  "intervencioreve" = "intervencion breve",
+  "convina" = "convivencia",
+  "esquizotafapico" = "esquizotipico",
+  "especafafico" = "especifico",
+  "tricotilomanafaa" = "tricotilomania",
+  "especafaficos" = "especificos",
+  "nervina" = "nerviosa",
+  "psicotropas" = "psicotropicas",
+  "sueno-vina" = "sueno-vigilia",
+  "generalizada" = "generalizado",
+  "hipomanafaaco" = "hipomaniaco",
+  "cleptomanafaa" = "cleptomania",
+  "especafafica" = "especifica",
+  "lafamite" = "limite",
+  "manafaaco" = "maniaco",
+  "afnimo" = "animo",
+  "patologafaa" = "patologia",
+  "cocaafana" = "cocaina",
+  "1 dafaas - semana" = "1 dia - semana",
+  "menos de 1 dafaa - semana" = "menos de 1 dia - semana",
+  "2-3 dafaas - semana" = "2-3 dias - semana",
+  "4-6 dafaas - semana" = "4-6 dias - semana",
+  "todos los dafaas" = "todos los dias",
+  "afasnicamente" = "unicamente",
+  "lesiones gravafasimaslesiones gravafasimas" = "lesiones gravisimas",
+  "crafamenes" = "crimenes",
+  "vafafa,actima" = "victima",
+  "fiscalafafa,aa" = "fiscalia",
+  # keep these exactly as written (with parentheses and ?), they are **literal** here:
+  "programa especializados en temoca de nino ninoy/o adolescentes en situacioe calle (pe)" =
+    "programa especializados en tematica de ninos, ninas y/o adolescentes en situacian de calle (pe)",
+  "fiscaloa" = "fiscalia",
+  "proteccian" = "proteccion",
+  "intervencian" = "intervencion",
+  "intervencioamiliar" = "intervencion familiar",
+  "garant?" = "garantia",
+  "fiscal?" = "fiscalia",
+  "corporacioudicial" = "corporacion judicial",
+  "prevencioomunitaria" = "prevencion comunitaria",
+  "voimas" = "victimas",
+  "corporaciafafa,n" = "corporacion",
+  "representaciafafa,n jurafafa,adica" = "corporacion juridica",
+  "reparaciafafa,n" = "reparacion",
+  "daafafa,o" = "dano",
+  "voctimas" = "victimas",
+  "garantoa" = "garantia",
+  "representacian" = "representacion",
+  "situacian" = "situacion",
+  "educaci??ca" = "educacion basica",
+  # the problematic ones (with unmatched '('): fixed mode handles them safely
+  "profesional (4 o moa? incompleta" = "profesional (4 o mas) incompleta",
+  "profesional (4 o moa? completa"  = "profesional (4 o mas) completa",
+  "cardiopatafaas" = "cardiopatias",
+  "miocardiopatafaa" = "miocardiopatia",
+  "ludopatafaa" = "ludopatia",
+  "prisionizacion" = "prisionalizacion"
+)
+# 2) Literal multi-replace (no regex). Works on full vectors efficiently.
+fixed_replace_all <- function(x, dict) {
+  x <- as.character(x)
+  pat <- names(dict)
+  rep <- unname(dict)
+  stringi::stri_replace_all_fixed(x, pat, rep, vectorize_all = FALSE)
+}
+
+# 3) Apply to all character/factor columns (no regex errors anymore)
+CONS_C5_25_df <- CONS_C5_25_df %>%
+  mutate(across(where(~ is.character(.x) || is.factor(.x)),
+                ~ fixed_replace_all(.x, dict_fixed)))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+unique_values_list_c54 <- setNames(
+  lapply(names(CONS_C5_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C5_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C5_25_df)  # assign column names to the list
+)
+if(list_to_df(unique_values_list_c54) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c54)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c54)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c54)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+#list_to_df(unique_values_list_c54) |> filter(variable!="codigo_identificacion", variable!="HASH_KEY", !grepl("fecha|edad|dias|numero|id|codigo|n_",variable)) |> View()
+```
+
+<br>
+
+#### Clean C6
+
+```{r import-c6-clean1}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C6_25_df <- CONS_C6_25 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+unique_values_list_c60 <- setNames(
+  lapply(names(CONS_C6_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6_25_df)  # assign column names to the list
+)
+df_c6_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c60), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c60[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  replacements_c6_1 <- c(
+    "ãƒâ±" = "ñ", "ãƒâ³" = "ó", "ãƒâ­" = "í",
+    "ãƒâ©" = "é", "ãƒâ¡" = "á", "ãƒâº" = "ú"
+  )
+replace_chars <- function(column) {
+  reduce(names(replacements_c6_1), ~ stringr::str_replace_all(.x, .y, replacements_c6_1[.y]), .init = column)
+}
+
+CONS_C6_25_df <- CONS_C6_25_df %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c61 <- setNames(
+  lapply(names(CONS_C6_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6_25_df)  # assign column names to the list
+)
+df_c6_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c61), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c61[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  replacements_c6_2 <- c(
+    "iba\\?s" = "ibáñez",
+    "ibaãƒâ‘es" = "ibáñez",
+    "ãƒâ‘uble" = "ñuble",
+    "peãƒâ‘alolen" = "peñalolén",
+    "viãƒâ‘a" = "viña",
+    "peãƒâ‘aflor" = "peñaflor",
+    "ãƒâ‘uãƒâ‘oa" = "ñuñoa",
+    "vicuãƒâ‘a" = "vicuña",
+    "chaãƒâ‘aral" = "chañaral",
+    "doãƒâ‘ihue" = "doñihue",
+    "hualaãƒâ‘e" = "hualañé",
+    "ãƒâ‘iquen" = "ñiquén",
+    "gendarmeríã‚â­a" = "gendarmería",
+    "intimidaci\\?" = "intimidación",
+    "grav\\?mas" = "gravísimas",
+    "receptaci\\?" = "receptación",
+    "tr\\?co de estupefacientes" = "tráfico de estupefacientes",
+    "t\\?ico" = "técnico",
+    "\\(1-3 años completa" = "(1-3 años completa)",
+    "\\(1-3 años incompleta" = "(1-3 años incompleta)",  
+    "otra raz\\?" = "otra razón",
+    "ãƒâšnicamente" = "únicamente",
+    "pensi\\?hostal" = "pensión, hostal",
+    "hospeder\\?" = "hospedería",
+    "ocupaci\\?rregular" = "ocupación irregular",
+    "1 a 2 a\\?" = "1 a 2 años", 
+    "3 a 4 a\\?" = "3 a 4 años", 
+    "5 o m\\?a" = "5 o más años",   
+    "\\?mo 12 meses" = "últimos 12 meses",
+    "\\?mo 6 meses" = "últimos 6 meses",
+    "coca\\?" = "cocaína",
+    "sintom\\?cos" = "sintomáticos",
+    "psicol\\?o" = "psicológico",
+    "ãƒânimo"= "ánimo",
+    "explotaci\\?omercial" = "explotación comercial",
+    "logro m\\?mo" = "logro mínimo",
+    "org\\?cos" = "orgánicos",
+    "h\\?tos" = "hábitos",
+    "fisiol\\?as" = "fisiológicas",
+    "som\\?cos" = "somáticos",
+    "esquizot\\?co" = "esquizotípico",
+    "neur\\?os" = "neuróticos"
+  )
+replace_chars <- function(column) {
+  reduce(names(replacements_c6_2), ~ stringr::str_replace_all(.x, .y, replacements_c6_2[.y]), .init = column)
+}
+
+CONS_C6_25_df <- CONS_C6_25_df %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+unique_values_list_c62 <- setNames(
+  lapply(names(CONS_C6_25_df), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6_25_df[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6_25_df)  # assign column names to the list
+)
+df_c6_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c62), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c62[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C6_25_df <- CONS_C6_25_df %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Comprehensive encoding fix function
+fix_encoding_complete <- function(x) {
+  x <- as.character(x)
+  x <- tolower(x)
+  # Step 1: Remove generic UTF-8 BOM and control characters
+  x <- gsub("[\uFEFF\u00AD\u200B-\u200F\u202A-\u202E]", "", x, perl = TRUE)
+  # Step 2: Fix mojibake patterns using regex (avoids quote-breaking issues)
+  # Match corruption patterns and remove them, then fix the word
+  #----
+  # Pattern 1: Remove mojibake sequences (3-4 char UTF-8 corruption)
+  # This catches ãƒâ and similar patterns
+  x <- gsub("[\u00C0-\u00FF][\u0080-\u00BF]{1,3}", "", x, perl = TRUE)
+  # Pattern 2: Fix words that had mojibake removed
+  word_corrections <- c(
+    # After mojibake removal, fix incomplete words
+    "^nicamente$" = "unicamente",
+    "^uble$" = "nuble",
+    "rehabilitaci.*?n$" = "rehabilitacion",
+    "raz.*?n$" = "razon",
+    "esquizot.*?pico$" = "esquizotipico",
+    "curic.*?$" = "curico",
+    "b.*?o-b.*?o$" = "bio-bio",
+    "vi.*?a$" = "vina",
+    "ays.*?n$" = "aysen",
+    "concepci.*?n$" = "concepcion",
+    "m.*?nimo$" = "minimo",
+    "t.*?rmino$" = "termino",
+    "f.*?sico$" = "fisico",
+    "otro g.*?nero$" = "otro genero"
+  )
+  for(pattern in names(word_corrections)) {
+    x <- gsub(pattern, word_corrections[pattern], x, perl = TRUE)
+  }
+  # Step 3: Handle question mark replacements systematically
+  qmark_replacements <- list(
+    # Communes and regions (including specific cases from data)
+    c("cha\\?ral", "chanaral"),
+    c("vi\\?a del mar", "vina del mar"),
+    c("vi\\? del mar", "vina del mar"),
+    c("vicu\\?", "vicuna"),
+    c("san gregorio de \\?iquen", "san gregorio de niquen"),
+    c("san gregorio de \\?quen", "san gregorio de niquen"),
+    c("de \\?ble", "de nuble"),
+    c("de \\?uble", "de nuble"),
+    c("iba\\?es", "ibanez"),
+    c("iba\\?s", "ibanez"),
+    # Education
+    c("educaci\\?n", "educacion"),
+    c("b\\?sica", "basica"),
+    c("t\\?cnico", "tecnico"),
+    c("t\\?cnica", "tecnica"),
+    c("t\\?ico", "tecnico"),
+    c("t\\?ica", "tecnica"),
+    c("nunca estudi\\?", "nunca estudio"),
+    c("a\\?os", "anos"),
+    c("m\\?s", "mas"),
+    c("\\(4 o m\\?s a\\?os\\)", "(4 o mas anos)"),
+    c("\\(1-3 a\\?os\\)", "(1-3 anos)"),
+    c("1-3 a\\?", "1-3 anos"),
+    # Clinical terms
+    c("esquizot\\?pico", "esquizotipico"),
+    c("esquizot\\?co", "esquizotipico"),
+    c("h\\?bitos", "habitos"),
+    c("h\\?tos", "habitos"),
+    c("psicol\\?gico", "psicologico"),
+    c("psicol\\?gicos", "psicologicos"),
+    c("psicol\\?os", "psicologicos"),
+    c("fisiol\\?gicas", "fisiologicas"),
+    c("fisiol\\?as", "fisiologicas"),
+    c("som\\?tico", "somatico"),
+    c("som\\?ticos", "somaticos"),
+    c("som\\?ca", "somatica"),
+    c("psic\\?tico", "psicotico"),
+    c("psic\\?ticos", "psicoticos"),
+    c("psic\\?os", "psicoticos"),
+    c("neur\\?tico", "neurotico"),
+    c("neur\\?ticos", "neuroticos"),
+    c("neur\\?os", "neuroticos"),
+    c("org\\?nico", "organico"),
+    c("org\\?nicos", "organicos"),
+    c("org\\?co", "organico"),
+    c("sintom\\?tico", "sintomatico"),
+    c("sintom\\?ticos", "sintomaticos"),
+    c("sintom\\?cos", "sintomaticos"),
+    c("adaptaci\\?n", "adaptacion"),
+    c("adaptaci\\?", "adaptacion"),
+    c("especificaci\\?n", "especificacion"),
+    c("especificaci\\?", "especificacion"),
+    c("transformaci\\?n", "transformacion"),
+    c("transformaci\\?ersistente", "transformacion persistente"),
+    c("lesi\\?n", "lesion"),
+    c("lesi\\?", "lesion"),
+    c("disfunci\\?n", "disfuncion"),
+    c("disfunci\\?erebral", "disfuncion cerebral"),
+    c("espec\\?fico", "especifico"),
+    c("espec\\?ficos", "especificos"),
+    # Medical/physical
+    c("megalobl\\?ica", "megaloblastica"),
+    c("ferrop\\?ca", "ferropenica"),
+    c("cardiopat\\?as", "cardiopatias"),
+    c("cardiopat\\?", "cardiopatia"),
+    c("miocardiopat\\?", "miocardiopatia"),
+    c("alcoh\\?lica", "alcoholica"),
+    c("hepatitis cr\\?a", "hepatitis cronica"),
+    c("hepatitis cr\\?nica", "hepatitis cronica"),
+    c("patolog\\?a", "patologia"),
+    c("patolog\\?", "patologia"),
+    c("gesti\\?n", "gestion"),
+    c("ni\\?o", "nino"),
+    c("ni\\?", "nino"),
+    # Evaluation
+    c("logro m\\?nimo", "logro minimo"),
+    c("logro m\\?mo", "logro minimo"),
+    # Substances
+    c("coca\\?na", "cocaina"),
+    c("coca\\?", "cocaina"),
+    c("analg\\?sicos", "analgesicos"),
+    c("analg\\?cos", "analgesicos"),
+    c("hipn\\?ticos", "hipnoticos"),
+    c("hipn\\?os", "hipnoticos"),
+    c("alucin\\?genos", "alucinogenos"),
+    c("alucin\\?os", "alucinogenos"),
+    # Time/frequency
+    c("d\\?as", "dias"),
+    c("d\\?a", "dia"),
+    c("\\?ltimo", "ultimo"),
+    c("\\?ltimos", "ultimos"),
+    c("no consumi\\?", "no consumio"),
+    # Other terms
+    c("explotaci\\?n", "explotacion"),
+    c("explotaci\\?exual", "explotacion sexual"),
+    c("discriminaci\\?n", "discriminacion"),
+    c("discriminaci\\?", "discriminacion"),
+    c("violaci\\?n", "violacion"),
+    c("violaci\\?", "violacion"),
+    c("derivaci\\?n", "derivacion"),
+    c("derivaci\\?", "derivacion"),
+    c("orientaci\\?exuales", "orientacion sexuales"),
+    c("estr\\?grave", "estres grave"),
+    c("estr\\?", "estres"),
+    c("s\\?rome amn\\?co", "sindrome amnesico"),
+    c("per\\?", "peru"),
+    c("rep\\?ca dominicana", "republica dominicana"),
+    c("c\\?nyuge", "conyuge"),
+    c("cu\\?ado", "cunado"),
+    c("hospeder\\?", "hospederia"),
+    c("pensi\\?", "pension"),
+    c("aspiraci\\?n", "aspiracion"),
+    c("aspiraci\\?", "aspiracion"),
+    c("ocupaci\\?n", "ocupacion"),
+    c("ocupaci\\?", "ocupacion"),
+    c("condici\\?n", "condicion"),
+    c("condici\\?", "condicion"),
+    c("corrupci\\?", "corrupcion"),
+    c("producci\\?n", "produccion"),
+    c("producci\\?", "produccion"),
+    c("pornogr\\?fico", "pornografico"),
+    c("pornogr\\?co", "pornografico"),
+    c("receptaci\\?", "receptacion"),
+    c("intimidaci\\?", "intimidacion"),
+    c("sue\\?", "sueno"),
+    c("raz\\?", "razon"),
+    # Additional patterns from data
+    c("tr\\?fico", "trafico"),
+    c("grav\\?simas", "gravisimas"),
+    c("lesiones graves y grav\\?simas", "lesiones graves y gravisimas"),
+    c("pensi\\?n", "pension"),
+    c("residencial, pensi\\?n, hostal", "residencial, pension, hostal"),
+    c("ocupaci\\?n irregular", "ocupacion irregular"),
+    c("carlos iba\\?es del campo", "carlos ibanez del campo"),
+    c("logro m\\?nimo", "logro minimo"),
+    c("explotaci\\?n comercial sexual", "explotacion comercial sexual")
+  )
+  # Apply question mark replacements
+  for(repl in qmark_replacements) {
+    x <- gsub(repl[1], repl[2], x, perl = TRUE)
+  }
+  # Step 4: Fix common typos and specific issues
+  typo_fixes <- c(
+    "orgocos" = "organicos",
+    "orgnaicos" = "organicos",
+    "fafasico" = "fisico",
+    "terapoutica" = "terapeutica",
+    "terapoica" = "terapeutica",
+    "derivacian" = "derivacion",
+    "miocardiopatoa" = "miocardiopatia",
+    "gestian" = "gestion",
+    "\\bnioo\\b" = "nino",
+    "\\bnin\\b" = "nino",
+    "suenoo" = "sueno",
+    "neuroos" = "neurologicos",
+    "psicoloo" = "psicologico",
+    "aoos" = "anos",
+    "nioez" = "ninez",
+    "toica" = "tecnica",
+    "nocontesta" = "no contesta",
+    "razan" = "razon",
+    "fisioloas" = "fisiologicas",
+    "somocos" = "somaticos",
+    "moca" = "morfologica",
+    "admnistrativa" = "administrativa",
+    "hospederiaa" = "hospederia",
+    "pensian" = "pension",
+    "cuoado/a" = "cunado/a",
+    "tocnicos" = "tecnicos",
+    "cientoficos" = "cientificos",
+    "cientocos" = "cientificos",
+    # Fix double letter issues from data
+    "intimidacionn" = "intimidacion",
+    "receptacionn" = "receptacion",
+    "otra razonn" = "otra razon",
+    "cocainana" = "cocaina",
+    "terapeuticaa" = "terapeutica",
+    "alta admnistrativaa" = "alta administrativa",
+    # Fix region/place names
+    "valparaiso" = "valparaiso",  # Already handled by accent removal
+    "ibanez" = "ibanez",
+    "aysen" = "aysen",
+    # Fix double n at end of words (more general)
+    "\\bintimidacionn\\b" = "intimidacion",
+    "\\breceptacionn\\b" = "receptacion",
+    "\\brazonn\\b" = "razon",
+    "\\bcondicionn\\b" = "condicion"
+  )
+  x <- str_replace_all(x, typo_fixes)
+  # Step 5: Handle special cases that break R strings
+  # Use regex to match patterns like afa'uble or rehabilitaciafa"n
+  x <- gsub("afa['\"]uble", "nuble", x, perl = TRUE)
+  x <- gsub("rehabilitaciafa['\"]n", "rehabilitacion", x, perl = TRUE)
+  # Step 5b: Fix trailing double letters (nn, aa, etc.)
+  # This handles cases like "intimidacionn" -> "intimidacion"
+  x <- gsub("([aeiou])nn\\b", "\\1n", x, perl = TRUE)
+  x <- gsub("([aeiou])aa\\b", "\\1a", x, perl = TRUE)
+  x <- gsub("([aeiou])ss\\b", "\\1s", x, perl = TRUE)
+  # Step 6: Generic heuristics for remaining question marks
+  # '?n' or '?t' often from 'án' or 'át' -> 'an' or 'at'
+  x <- gsub("\\?(?=n|t)", "a", x, perl = TRUE)
+  # 'l?g' -> 'log' (fisiol?gicas -> fisiologicas)
+  x <- gsub("l\\?g", "log", x, perl = TRUE)
+  # Between letters, default to 'o'
+  x <- gsub("(?<=[a-z])\\?(?=[a-z])", "o", x, perl = TRUE)
+  # Step 7: Remove any remaining accented characters (convert to ASCII)
+  accent_map <- c(
+    "á"="a", "à"="a", "ä"="a", "â"="a", "ã"="a", "å"="a",
+    "é"="e", "è"="e", "ë"="e", "ê"="e",
+    "í"="i", "ì"="i", "ï"="i", "î"="i",
+    "ó"="o", "ò"="o", "ö"="o", "ô"="o", "õ"="o",
+    "ú"="u", "ù"="u", "ü"="u", "û"="u",
+    "ñ"="n", "ç"="c",
+    "Á"="A", "À"="A", "Ä"="A", "Â"="A", "Ã"="A", "Å"="A",
+    "É"="E", "È"="E", "Ë"="E", "Ê"="E",
+    "Í"="I", "Ì"="I", "Ï"="I", "Î"="I",
+    "Ó"="O", "Ò"="O", "Ö"="O", "Ô"="O", "Õ"="O",
+    "Ú"="U", "Ù"="U", "Ü"="U", "Û"="U",
+    "Ñ"="N", "Ç"="C"
+  )
+  x <- str_replace_all(x, accent_map)
+  # Step 8: Clean up double letters at word boundaries
+  x <- gsub("nn\\b", "n", x, perl = TRUE)
+  x <- gsub("aa\\b", "a", x, perl = TRUE)
+  x <- gsub("ss\\b", "s", x, perl = TRUE)
+  # Step 9: Final cleanup - remove any remaining non-ASCII
+  # Use both iconv and additional cleanup for safety
+  x <- iconv(x, from = "UTF-8", to = "ASCII//TRANSLIT", sub = "")
+  x <- gsub("[^[:ascii:]]", "", x, perl = TRUE)  # Remove any remaining non-ASCII
+  # Step 10: Normalize whitespace
+  x <- str_squish(x)
+  x <- str_replace_all(x, "\\s*\\.\\s*$", "")  # Remove trailing periods
+  x <- str_replace_all(x, c("bolivina"= "boliviana", "robo con vina"= "robo con violencia", "5 o mas anos\\?"="5 o mas anos"))
+  return(x)
+}
+
+# Apply the comprehensive fix to your dataframe
+CONS_C6_25_df <- CONS_C6_25_df %>%
+  mutate(across(where(~ is.character(.x) | is.factor(.x)),
+                ~ fix_encoding_complete(.x)))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+unique_values_list_c63 <- setNames(
+   lapply(names(CONS_C6_25_df), function(col_name) {
+     # obtain unique values
+     unique_values <- unique(CONS_C6_25_df[[col_name]])
+     return(unique_values)
+   }),
+   names(CONS_C6_25_df)  # assign column names to the list
+ )
+
+if(list_to_df(unique_values_list_c63) |> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value)) |> arrange(variable, value) |> nrow()>0){
+warning(paste0( "Values with sign '?'= ",
+list_to_df(unique_values_list_c63)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[\\?]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+if(list_to_df(unique_values_list_c63)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow()>0){
+warning(paste0( "Values with signs '´ “ '= ",
+list_to_df(unique_values_list_c63)|> filter(variable!="codigo_identificacion", variable!="comentario", grepl("[^\x20-\x7E]",value))|> arrange(variable, value)|> nrow())
+  )
+}
+#list_to_df(unique_values_list_c63) |> filter(variable!="codigo_identificacion", variable!="HASH_KEY", !grepl("fecha|edad|dias|numero|id|codigo|n_meses|tiempo",variable)) |> View()
+```
+
+```{=html}
+<!---
+ #https://github.com/kosukeimai/fastLink
+ 
+#"aquellos registros que terminaron por ejemplo, con una sentencia absolutoria o en que no se pudo acreditar un hecho delictual". No tengo la bbdd para revisar si esto aplica a nosotros, pero prefiero dejarlo acá para que no se me olvide.
+#  
+  
+#https://rpolars.github.io/r-polarssql/
+#para descriptive (paso 1)
+ --->
+```
+
+To close the project, we erase polars objects.
+
+```{r erase-polar-objs}
+rm(list = ls()[grepl("_pl$", ls())])
+rm(list = ls()[grepl("_pl_", ls())])
+```
+
+<br>
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+) %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#|class-output: center-table
+
+reticulate::py_list_packages() %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out", paste0("22_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  password <- Sys.getenv("PASSWORD_SECRET")
+} else {
+  if (interactive()) {
+    utils::savehistory(tempfile())
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+    utils::loadhistory()
+  }
+  Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+save.image(paste0(rdata_path,".enc"))
+
+# Encriptar el archivo en el mismo lugar
+httr2::secret_encrypt_file(path = paste0(rdata_path,".enc"), key = "PASSWORD_SECRET")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Copy renv lock into cons folder\n")
+
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup_pre2<-Sys.time()
+
+paste0("Time in markdown: ");time_after_dedup_pre2-time_before_dedup_pre2
+
+```

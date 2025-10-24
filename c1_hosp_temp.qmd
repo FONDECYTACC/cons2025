@@ -1,0 +1,57 @@
+---
+title: "Untitled"
+format: pdf
+---
+
+# Exploratoty analysis 
+
+##  Total de pacientes que estan/estuvieron en un tratamiento para la rehabiltacion de de abuso de drogas y tuvieron una hospitalizacion entre 2005 y 2022.
+
+```{r table1}
+
+```
+
+```{r fig1}
+
+```
+
+```{r fig2}
+
+```
+
+```{r fig3}
+
+```
+
+```{r table2}
+
+```
+
+```{r fig4}
+
+```
+
+## Diferencia de dias entre el egreso hospitalario y el ingreso a tratamiento rehabilitador de abusos de drogas en un mismo ano.
+
+```{r table4}
+
+```
+
+```{r fig6}
+
+```
+
+## Hospitalization due to ICD-10 V00-Y99 External causes of morbidity.
+
+```{r table3}
+
+```
+
+```{r fig5}
+#| fig-width: 15
+#| fig-height: 10 
+#| fig-cap: "a"
+#| fig-align: center
+fig5
+```
+
