@@ -1,5 +1,5 @@
 ---
-title: "nDP Repository (2025)"
+title: "Workflow of data management and analysis - Chilean substance use treatment administrative data"
 subtitle: "Consolidation of Agreement 1 Databases from 2010 to 2024"
 author:
   - name: Álvaro Castillo-Carniglia
