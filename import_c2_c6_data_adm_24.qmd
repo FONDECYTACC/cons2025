@@ -1,0 +1,1918 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022"
+description: |
+  Load administrative data from SENDAs patient, compare information with previous databases and explore new data. Focus on other agreements
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    fig-cap-location: top  
+editor: source
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+Proceed to load the necessary packages.
+
+<div class="scrollable-content">
+```{r setup}
+#| message: false
+#| include: false
+#| warning: false
+#| results: "hold"
+
+# Define la ruta de la librería
+lib_path <- "import_c2_c6_data_adm_24_files/libs/jquery-3.6.0"
+
+# Elimina la carpeta si ya existe
+if (dir.exists(lib_path)) {
+  unlink(lib_path, recursive = TRUE)
+}
+
+#clean enviroment
+rm(list = ls()); gc()
+file.path(paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))),"data/20241015_out"))
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+wdpath
+
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+envpath
+
+cat("quarto version: "); system("quarto --version")
+
+base::load(paste0(envpath,"data/20241015_out/","1_ndp_2025_03_08.Rdata"))
+```
+
+
+```{r packages-and-fuctions}
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#check if rstools is installed
+try(installr::install.Rtools(check_r_update=F))
+
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.0") { stop("Requires R version 4.4.0; Actual: ", getRversion()) }
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+unlink("*_cache", recursive=T)
+
+#Package to bring packages in development
+if(!require(devtools)){install.packages("devtools")}
+
+#Package administration
+if(!require(renv)){install.packages("renv")}
+#To manipulate data 
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(janitor)){install.packages("janitor")}
+if(!require(plyr)){install.packages("plyr")}
+#For contingency tables
+if(!require(kableExtra)){install.packages("kableExtra")}
+#For connections with python
+if(!require(reticulate)){install.packages("reticulate")}
+#To manipulate big data
+if(!require(polars)){install.packages("polars", repos = "https://community.r-multiverse.org")}
+#To bring big databases
+if(!require(nanoparquet)){install.packages("nanoparquet")}
+#interface for rstudio in R
+if(!require(rstudioapi)){install.packages("rstudioapi")}
+#time handling
+if(!require(clock)){install.packages("clock")}
+#combine plots
+if(!require(ggpubr)){install.packages("ggpubr")}
+#parallelized iterative processing
+if(!require(furrr)){install.packages("furrr")}
+#work like a tibble with a data.table database
+if(!require(tidytable)){install.packages("tidytable")}
+
+# pacman::p_load(
+#   altair, arrow, biostat3, car, caret, chilemapas, choroplethr, choroplethrAdmin1,
+#   choroplethrMaps, codebook, compareGroups, DiagrammeR, DiagrammeRsvg, DT, epiR, epitools,
+#   factoextra, FactoMineR, finalfit, flexsurv, fmsb, ggfortify, ggiraph, ggiraphExtra,
+#   ggpubr, ggrepel, glca, gridExtra, here, Hmisc, htmlwidgets, installr, janitor, kableExtra,
+#   lsmeans, magick, matrixStats, Metrics, muhaz, naniar, neuralnet, NeuralNetTools, pagedown,
+#   panelr, patchwork, pdp, plotly, plyr, plotly, posterdown, polycor, pROC, psych, radiant,
+#   rateratio.test, reshape, reshape2, reticulate, rio, ROCit, rnaturalearth, rsvg, sf, sjPlot,
+#   sqldf, Statamarkdown, survminer, survMisc, tableone, tidylog, tidyverse, treemapify, VIM,
+#   webshot, xaringanthemer, zoo, install=T
+# )
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+copiar_nombres <- function(x,row.names=FALSE,col.names=TRUE,dec=",",...) {
+  if(class(try(dplyr::ungroup(x)))[1]=="tbl_df"){
+    if(options()$OutDec=="."){
+      options(OutDec = dec)
+      write.table(format(data.frame(x)),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ".")
+      return(x)
+    } else {
+      options(OutDec = ",")
+      write.table(format(data.frame(x)),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ",")
+      return(x)    
+    }
+  } else {
+    if(options()$OutDec=="."){
+      options(OutDec = dec)
+      write.table(format(x),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ".")
+      return(x)
+    } else {
+      options(OutDec = ",")
+      write.table(format(x),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ",")
+      return(x)       
+    }
+  }
+}  
+
+#WINDOWS do not restrict memory size
+if(.Platform$OS.type == "windows") withAutoprint({
+  memory.size()
+  memory.size(TRUE)
+  memory.limit()
+})
+memory.limit(size=56000)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: 0.7rem !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#ENCODING#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+conv_chars <- data.frame(
+    ANSI = c("Á", "á", "É", "é", "Í", "í", "Ó", "ó", "Ú", "ú", "Ñ", "ñ", "¿", "ó"),
+    UTF_8 = c("Ã", "Ã¡", "Ã‰", "Ã©", "Ã", "Ã­", "Ã“", "Ã³", "Ãš", "Ãº", "Ã‘", "Ã±", "Â¿", "Ã²"),
+    JAVASCRIPT = c("u00c1", "u00e1", "u00c9", "u00e9", "u00cd", "u00ed", "u00d3", "u00f3", "u00da", "u00fa", "u00d1", "u00f1", "u00bf", "0xF2"),
+    HTML = c("&#193;", "&#225;", "&#201;", "&#233;", "&#205;", "&#237;", "&#211;", "&#243;", "&#218;", "&#250;", "&#209;", "&#241;", "&#191;", "")
+)
+
+convert_chars <- function(x) {
+    x <- gsub("ÃƒÂ³", "ó", x)  # ó
+    x <- gsub("ÃƒÂ¡", "á", x)  # á
+    x <- gsub("ÃƒÂ©", "é", x)  # é
+    x <- gsub("ÃƒÂº", "ú", x)  # ú
+    x <- gsub("ÃƒÂ±", "ñ", x)  # ñ
+    x <- gsub("Ãƒâ€˜", "Ñ", x) # Ñ (mayúscula)
+    x <- gsub("ÃƒÂ", "Á", x)   # Á
+    x <- gsub("Ã‚Âº", "º", x)  # º
+    x <- gsub("Ã‚Â°", "°", x)  # °
+    x <- gsub("Ã‚Âª", "ª", x)  # ª
+    x <- gsub("Ã‚Â¡", "¡", x)  # ¡
+    x <- gsub("Ã‚Â¿", "¿", x)  # ¿
+    x <- gsub("ÃƒÂ­", "í", x)  # í
+    x <- gsub("Ãƒâ€œ", "Ó", x)  # Ó
+    x <- gsub("Ãƒâ€š", "Ê", x)  # Ê
+    x <- gsub("Ãƒâ€", "É", x)  # É
+    x <- gsub("ÃƒÂ¼", "ü", x)  # ü
+    x <- gsub("ÃƒÂ¯", "ï", x)  # ï
+    x <- gsub("ÃƒÂ¶", "ö", x)  # ö
+    x <- gsub("Ã‚Â«", "«", x)  # «
+    x <- gsub("Ã‚Â»", "»", x)  # »
+    x <- gsub("Ãƒâ€¡", "Ç", x)  # Ç
+    x <- gsub("ÃƒÂ§", "ç", x)  # ç
+    x <- gsub("Ã‚Â", "", x)    # Otros casos residuales
+    x <- gsub("Ãƒ", "", x)     # Otros casos residuales
+    return(x)
+}
+
+sum_dates <- function(x){
+  
+  cbind.data.frame(
+min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+```
+</div>
+
+<br>
+
+### C2-C6
+
+SENDA has the following treatment programs:
+
+- General Adult Program (covered in Agreement 1 or C1)
+- Specific Women's Program (covered in Agreement 1 or C1)
+- Street Program
+- General Children and Adolescents Program
+- Probation Program
+- Adolescent Offenders Program
+- Adult Offenders Program
+
+*(Source: https://www.senda.gob.cl/wp-content/uploads/2022/05/Cuenta-Publica-SENDA-2022.pdf)*
+
+```{r import-c2-c6}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| results: "hold"
+#E:\Mi unidad\Alvacast\SISTRAT 2023\data\20231018_original_data
+dir_c2_c6<-paste0(gsub("22","19",path),"/Encriptados c2 a c6/")
+
+# Define the directories
+dir_c2_c6_oct <- paste0(gsub("cons", "", 
+                             paste0(getwd(),"cons")
+), "data/20231018_original_data/")
+
+#matches a string that starts with c
+SISTRAT23_c26<-list.files(path=toString(dir_c2_c6_oct), pattern="^c")
+
+
+# Function to simplify pattern matching
+matches_pattern <- function(x, patterns) {
+  any(sapply(patterns, function(p) grepl(p, x)))
+}
+
+# Create a function to process each file
+process_file <- function(dir, x) {
+  # Determine the HASH_KEY index based on file name
+  prefix <- ifelse(matches_pattern(x, "dup1"), "SISTRAT23dup1_", 
+                   ifelse(matches_pattern(x, "dup2"), "SISTRAT23dup2_", "SISTRAT23_"))
+  
+  # Read and process the file
+  dataset<-readr::read_delim(paste0(dir, x),
+                             na = c("", "NA", "null"),
+                             locale = locale(encoding = "windows-1252"),
+                             guess_max = min(1e5, Inf),
+                             skip = 0)
+  colnames(dataset) <- sapply(names(dataset), convert_chars)
+  
+  dataset %>% 
+    janitor::clean_names() %>%
+    dplyr::rename(
+      HASH_KEY = !!names(.[(ncol(.))])) %>%
+    dplyr::mutate(TABLE = rep(x)) %>%
+    dplyr::select(TABLE, HASH_KEY, everything()) %>%
+    assign(paste0(prefix, stringr::str_sub(x, 1, 4)), ., envir = .GlobalEnv)
+}
+
+#Read data and format
+purrr::walk(SISTRAT23_c26, ~process_file(toString(dir_c2_c6_oct), .x))
+
+# Process C2-C6 data
+CONS_C2 <- plyr::rbind.fill(SISTRAT23dup1_c2_o, SISTRAT23dup2_c2_o) %>% 
+  data.table::data.table() %>% 
+  dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+CONS_C3 <- SISTRAT23_c3_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C4 <- SISTRAT23_c4_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C5 <- SISTRAT23_c5_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C6 <- SISTRAT23_c6_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+```
+
+<div class="scrollable-content">
+```{r figs-hist-c2-c6, class="scrollable-code"}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| fig.align: "center"
+#| results: "hold"
+#| fig.cap: "Histograms for Age"
+#| eval: true
+
+CONS_C6$edad_ingreso<-
+as.numeric(round((parse_date(CONS_C6$fechaingresotratamiento,"%d/%m/%Y")-parse_date(CONS_C6$fechanacimiento,"%d/%m/%Y"))/365.25,3))
+
+
+# Create the histograms for each dataset
+hist_c2 <- ggplot(CONS_C2, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c2")+ theme_bw()+ xlim(0,90)
+
+hist_c3 <- ggplot(CONS_C3, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c3")+ theme_bw()+ xlim(0,90)
+
+hist_c4 <- ggplot(CONS_C4, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c4")+ theme_bw()+ xlim(0,90)
+
+hist_c5 <- ggplot(CONS_C5, aes(x = edad)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c5")+ theme_bw()+ xlim(0,90)
+
+hist_c6 <- ggplot(CONS_C6, aes(x = edad_ingreso)) +
+  geom_histogram(fill = "gray70", color = "black", bins = 30) +
+  ggtitle("c6")+ theme_bw()+ xlim(0,90)
+
+# Combine histograms into a single plot
+combined_plot <- ggpubr::ggarrange(hist_c2, hist_c3, hist_c4, hist_c5, hist_c6, ncol = 3, nrow = 2)
+
+# Display the combined plot
+print(combined_plot)
+```
+</div>
+
+::: center-table
+```{r distinct-names}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+# Get the column names for each dataset
+names_c2 <- names(CONS_C2)
+names_c3 <- names(CONS_C3)
+names_c4 <- names(CONS_C4)
+names_c5 <- names(CONS_C5)
+names_c6 <- names(CONS_C6)
+
+df_c2 <- data.frame(Dataset = "CONS_C2", Column_Name = names_c2)
+df_c3 <- data.frame(Dataset = "CONS_C3", Column_Name = names_c3)
+df_c4 <- data.frame(Dataset = "CONS_C4", Column_Name = names_c4)
+df_c5 <- data.frame(Dataset = "CONS_C5", Column_Name = names_c5)
+df_c6 <- data.frame(Dataset = "CONS_C6", Column_Name = names_c6)
+
+dplyr::full_join(df_c2, df_c3, by = "Column_Name") %>%
+    dplyr::full_join(df_c4, by = "Column_Name") %>%
+    dplyr::full_join(df_c5, by = "Column_Name") %>%
+    dplyr::full_join(df_c6, by = "Column_Name") %>%
+    dplyr::arrange(Column_Name) -> joined_df
+
+joined_df %>% 
+  dplyr::select(Column_Name, everything()) %>% 
+  dplyr::arrange(Column_Name) %>% 
+  dplyr::rename("c2"="Dataset.x","c3"="Dataset.y", "c4"="Dataset.x.x", "c5"="Dataset.y.y","c6"="Dataset") %>% 
+  dplyr::mutate_at(.vars = vars(matches("c[0-9]$")),
+                        .funs = ~ ifelse(!is.na(.), "X", "")) %>% 
+  kbl("markdown", caption="Replicated Fields in Databases")
+```
+:::
+
+We can see the following from C2-C6 databases that share different names.
+
+Columns with only 2 letters or less (presumably generated by Excel based on their position) were renamed to follow a sequential format. Each of these 2-letter columns was renamed using the name of the previous column followed by a sequential number. This helps in making the column names more meaningful and maintaining a clear, organized structure, especially when the original names may have been automatically generated or lacked context.
+
+```{r rename-columns}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+rename_short_columns <- function(df) {
+  col_names <- names(df)  # Get column names
+  base_name <- col_names[1]  # Start with the first column name as base
+  counter <- 2               # Start numbering from 2 for additional columns
+  
+  for (i in 2:length(col_names)) {
+    if (nchar(col_names[i]) <= 2) {  # Check if the column name has only 2 characters
+      col_names[i] <- paste0(base_name, "_", counter)  # Use base name + sequential number
+      counter <- counter + 1  # Increment the counter
+    } else {
+      base_name <- col_names[i]  # Update the base name to the current column name
+      counter <- 2               # Reset counter for the next series of short columns
+    }
+  }
+  
+  names(df) <- col_names  # Assign the new column names to the DataFrame
+  return(df)
+}
+# Applying the function
+SISTRAT23_c1_2010_2022_df2 <- rename_short_columns(SISTRAT23_c1_2010_2022_df2)
+CONS_C2 <- rename_short_columns(CONS_C2)
+CONS_C3 <- rename_short_columns(CONS_C3)
+CONS_C4 <- rename_short_columns(CONS_C4)
+CONS_C5 <- rename_short_columns(CONS_C5)
+CONS_C6 <- rename_short_columns(CONS_C6)
+
+```
+
+
+::: center-table
+```{r dates-c2-c6}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+rbind(
+    cbind("c2_AdmDate_min",min(readr::parse_date(CONS_C2$fecha_ingreso_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c2_AdmDate_max",max(readr::parse_date(CONS_C2$fecha_ingreso_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c2_DischDate_min",min(readr::parse_date(CONS_C2$fecha_egreso,"%d/%m/%Y"),na.rm=T)),
+    cbind("c2_DischDate_max",max(readr::parse_date(CONS_C2$fecha_egreso,"%d/%m/%Y"),na.rm=T)),
+    cbind("c2_BirthDate_min",min(readr::parse_date(CONS_C2$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c2_BirthDate_max",max(readr::parse_date(CONS_C2$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+    
+    cbind("c3_AdmDate_min",min(readr::parse_date(CONS_C3$fecha_ingresoa_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c3_AdmDate_max",max(readr::parse_date(CONS_C3$fecha_ingresoa_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c3_DischDate_min",min(readr::parse_date(CONS_C3$fecha_ingresoa_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c3_DischDate_max",max(readr::parse_date(CONS_C3$fecha_ingresoa_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    
+    cbind("c4_AdmDate_min",min(readr::parse_date(CONS_C4$fechaingresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c4_AdmDate_max",max(readr::parse_date(CONS_C4$fechaingresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c4_DischDate_min",min(readr::parse_date(CONS_C4$fechaegresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c4_DischDate_max",max(readr::parse_date(CONS_C4$fechaegresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c4_BirthDate_min",min(readr::parse_date(CONS_C4$fechanacimiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c4_BirthDate_max",max(readr::parse_date(CONS_C4$fechanacimiento,"%d/%m/%Y"),na.rm=T)),    
+    
+    cbind("c5_AdmDate_min",min(readr::parse_date(CONS_C5$fecha_ingreso_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c5_AdmDate_max",max(readr::parse_date(CONS_C5$fecha_ingreso_tratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c5_DischDate_min",min(readr::parse_date(CONS_C5$fecha_egreso,"%d/%m/%Y"),na.rm=T)),
+    cbind("c5_DischDate_max",max(readr::parse_date(CONS_C5$fecha_egreso,"%d/%m/%Y"),na.rm=T)),
+    cbind("c5_BirthDate_min",min(readr::parse_date(CONS_C5$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c5_BirthDate_max",max(readr::parse_date(CONS_C5$fecha_nacimiento,"%d/%m/%Y"),na.rm=T)),    
+    
+    cbind("c6_AdmDate_min",min(readr::parse_date(CONS_C6$fechaingresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c6_AdmDate_max",max(readr::parse_date(CONS_C6$fechaingresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c6_DischDate_min",min(readr::parse_date(CONS_C6$fechaegresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c6_DischDate_max",max(readr::parse_date(CONS_C6$fechaegresotratamiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c6_BirthDate_min",min(readr::parse_date(CONS_C6$fechanacimiento,"%d/%m/%Y"),na.rm=T)),
+    cbind("c6_BirthDate_max",max(readr::parse_date(CONS_C6$fechanacimiento,"%d/%m/%Y"),na.rm=T))
+) %>% 
+    data.frame() %>% 
+    dplyr::rename("Date"="X2") %>% 
+    tidyr::separate(X1,sep="_", into=c("db","time","value")) %>% 
+    dplyr::mutate(Date=as.Date(as.numeric(Date),origin = "1970-01-01")) %>% 
+    tidyr::pivot_wider(names_from=value, values_from=Date) %>% 
+  kbl("markdown", caption= "Range of dates in different databases")
+```
+:::
+
+Next, we standardized column names from `CONS_C2` to `CONS_C6`, by setting specific patterns and replacements for each dataset (`CONS_C2` to `CONS_C6`), tailored to each dataset's needs (e.g., `_afn` to `on` in `CONS_C2`). Then, we applied both specific and general patterns to column names in each dataset, ensuring consistent naming to replace patterns systematically across all column names.
+
+```{r rename-columns2}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| results: "hold"
+# Define los patrones y reemplazos para cada DataFrame
+patterns_C2 <- c("_afn", "n_afomero", "a_afos")
+replacements_C2 <- c("on", "numero", "anios")
+
+patterns_C3 <- c("pa_a_s", "fa_sico", "categor_a_a")
+replacements_C3 <- c("pais", "fisico", "categoria")
+
+patterns_C4 <- c("aa_o")
+replacements_C4 <- c("anio")
+
+patterns_C5 <- c("psiqui_aftrico", "s_afndromede")
+replacements_C5 <- c("psiquiatrico", "sindrome")
+
+patterns_C6 <- c("aa_o", "viva_a", "sustanci_an", "n_as_mero", "aa_o", "da_as", "aplicacia_n")
+replacements_C6 <- c("anio", "vivia", "sustancia_n", "numero", "anio", "dias", "aplicacion")
+
+patterns <- c(patterns_C2, patterns_C3, patterns_C4, patterns_C5, patterns_C6)
+replacements <-c(replacements_C2, replacements_C3, replacements_C4, replacements_C5, replacements_C6)
+
+for (i in seq_along(patterns)) {
+  colnames(CONS_C2) <- sub(patterns[i], replacements[i], colnames(CONS_C2))
+  colnames(CONS_C3) <- sub(patterns[i], replacements[i], colnames(CONS_C3))
+  colnames(CONS_C4) <- sub(patterns[i], replacements[i], colnames(CONS_C4))
+  colnames(CONS_C5) <- sub(patterns[i], replacements[i], colnames(CONS_C5))
+  colnames(CONS_C6) <- sub(patterns[i], replacements[i], colnames(CONS_C6))
+}
+```
+
+<br>
+
+##### Clean C2
+
+::: center-table
+```{r import-c2-clean1}
+#| echo: true
+#| error: false
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Define a named vector with replacements
+replacements <- c(
+  "ÃƒÂ³" = "ó", "ÃƒÂ¡" = "á", "ÃƒÂ©" = "é", "ÃƒÂº" = "ú",
+  "ÃƒÂ±" = "ñ", "Ãƒâ€˜" = "Ñ", "ÃƒÂ" = "Á", "ÃƒÂ¡" = "á",
+  "ÃƒÂ©" = "é", "ÃƒÂº" = "ú", "ÃƒÂ±" = "ñ", "Ãƒâ€˜" = "Ñ",
+  "ÃƒÂ" = "Á", "Ã‚Âº" = "º", "Ã‚Â°" = "°", "Ã‚Âª" = "ª",
+  "Ã‚Â¡" = "¡", "Ã‚Â¿" = "¿", "ÃƒÂ" = "í", "ÃƒÂ­" = "í",
+  "Ãƒâ€œ" = "Ó", "Ãƒâ€š" = "Ê", "Ãƒâ€" = "É", "ÃƒÂ¼" = "ü",
+  "ÃƒÂ¯" = "ï", "ÃƒÂ¶" = "ö", "Ã‚Â«" = "«", "Ã‚Â»" = "»",
+  "Ãƒâ€¡" = "Ç", "ÃƒÂ§" = "ç", "Ã‚Â" = "", "Ãƒ" = "",
+  "\u00AD" = "", "\u00C2\u00AD" = ""
+)
+# Create a function to apply the replacements
+replace_chars <- function(column) {
+  reduce(names(replacements), ~ str_replace_all(.x, .y, replacements[.y]), .init = column)
+}
+CONS_C2 <- CONS_C2 %>%
+  mutate(across(everything(), replace_chars))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column")
+
+unique_values_list_c2 <- setNames(
+  lapply(names(CONS_C2), function(col_name) {
+    # Obtener los valores únicos de la columna
+    unique_values <- unique(CONS_C2[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2)  # Asignar los nombres de las columnas a la lista
+)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Apply transformations to character columns
+CONS_C2 <- CONS_C2 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##
+
+replacements <- c(
+  "\u00c2" = "", "viá‘a" = "viña", "reloncavá\u008d" = "reloncavi", 
+  "maráa" = "maría", "á‘uble" = "ñuble", "vánculos" = "vínculos", 
+  "concepciá“n" = "concepción", "aysá‰n" = "aysén", "mánimo" = "mínimo", 
+  "m\\?mo" = "mínimo", "clánica" = "clínica", "prisionizaci\\?" = "prisionalización", 
+  "explotaci\\?omercial" = "explotación comercial", "patología" = "patología", 
+  "cardiopatías" = "cardiopatías", "especáfico" = "específico", 
+  "esquizotápico" = "esquizotípico", "tricotilomanía" = "tricotilomanía", 
+  "hipomanáaco" = "hipomaníaco", "lámite" = "límite", "manáaco" = "maníaco", 
+  "á\u0081nimo" = "ánimo", "cleptomanía" = "cleptomanía", "hipocondría" = "hipocondría", 
+  "raá\u008dces" = "raíces", "raá\\u008dces" = "raíces", "curacavá" = "curacaví", 
+  "raáces" = "raíces", "terapá‰utica" = "terapéutica", "raáces" = "raíces", 
+  "\\?ble" = "ñuble", "báo-báo" = "bío-bío", "iba\\?s" = "ibañez", 
+  "reloncavá" = "reloncaví", "valparaáso" = "valparaíso", "araucanáa" = "araucanía", 
+  "á‘uble" = "ñuble", "especáfico" = "específico", "vi\\? del mar" = "viña del mar", 
+  "do\\?hue" = "doñihue", "huala\\?" = "hualaé", "\\?qu\\?" = "ñiquén", 
+  "cha\\?ral" = "chañaral", "ollag\\?" = "ollagüe", "vicu\\?" = "vicuña", 
+  "ca\\?te" = "cañete", "\\?\\?a" = "ñuñoa", "policáa" = "policía", 
+  "garantáa" = "garantía", "fiscaláa" = "fiscalía", "haitá" = "haití", 
+  "hungráa" = "hungría", "paás bajos" = "países bajos", "atacame\\?" = "atacameño", 
+  "y\\?na" = "yámana", "y\\?gan" = "yagán", "hipn\\?os" = "hipnóticos", 
+  "hero\\?" = "heroína", "code\\?" = "codeína", "analg\\?cos" = "analgésicos", 
+  "barbit\\?os" = "barbitúricos", "alucin\\?os" = "alucinógenos", 
+  "ãƒâ³n" = "ón", "ãƒâ©n" = "én", "ãƒâº" = "ú", "ãƒâºa" = "úa", 
+  "ãƒâos" = "íos", "ãƒâuble" = "ñuble", "ãƒâ³n general" = "ón general", 
+  "ãƒâ" = "í", "ãƒâ³n casa" = "ón casa", "ãƒârbara" = "árbara", 
+  "naãƒâ" = "ñ", "raãƒâces" = "raíces", "baãƒâsico" = "básico", 
+  "ãƒâ©utico" = "éutico", "vaãƒânculos" = "vínculos", "marãƒâa" = "maría", 
+  "inaãƒâ©s" = "inés", "raí\\u008dces" = "raíces", "chiloí©" = "chiloé", 
+  "terapí©utico" = "terapéutico", "bísico" = "básico", "peí±ablanca" = "peñablanca", 
+  "iní©s" = "inés", "infracción" = "infracción", "layantú" = "layantu", 
+  "oriã³n" = "orion", "valparaãso" = "valparaiso", "fãsico" = "fisico", 
+  "ningãún gãénero" = "ningun genero", "viãña" = "viña", 
+  "corporación" = "corporacion", "aysã©n" = "aysen", "\tcodesam" = "codesam", 
+  "corporación" = "corporacion", "concepción" = "concepcion", 
+  "hábitos" = "habitos", "psíquica" = "psiquica", "neuróticos" = "neuroticos", 
+  "fisiológicas" = "fisiologicas", "somáticos" = "somaticos", 
+  "orgánicos" = "organicos", "sintomáticos" = "sintomaticos", 
+  "psicológico" = "psicologico", "mínimo" = "minimo", "sanción" = "sancion", 
+  "terapéutica" = "terapeutica", "término" = "termino", "derivación" = "derivacion", 
+  "prisionalización" = "prisionalizacion", "explotación" = "explotacion", 
+  "estrés" = "estres", "años" = "años", "dãas"="días", "mãnimo"="minimo","ã©"="e"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements), ~ stringr::str_replace_all(.x, .y, replacements[.y]), .init = column)
+}
+
+CONS_C2 <- CONS_C2 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##
+
+unique_values_list_c21 <- setNames(
+  lapply(names(CONS_C2), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2)  # assign column names to the list
+)
+
+#1:5
+#unique_values_list_c21[27:37]
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Crear una lista para almacenar las expresiones de reemplazo
+replacements3 <- c(
+  # "\u00AD" = "", "\u00C2\u00AD" = "", "\u00C2" = "",
+  # "ráo negro" = "río negro", "báo-báo" = "bío-bío", 
+  # "pe\\?lolen" = "peñalolén", "pe\\?flor" = "peñaflor", 
+  # "san gregorio de \\?quén" = "san gregorio de ñiquén", 
+  # "\\?o nitroso" = "óxido nitroso", "coca\\?" = "cocaína", 
+  # "nunca estud¡" = "nunca estudió", 
+  # "t\\?ica comercial/industrial/normalista" = "técnica comercial/industrial/normalista", 
+  "profesional \\(4 o m\\?a\\? incompleta" = "profesional (4 o más incompleta)",
+  "profesional \\(4 o m\\?a\\? completa" = "profesional (4 o más completa)",
+  # "t\\?ica profesional˜" = "técnica profesional", 
+   "t\\?ico superior \\(1-3 a\\? completa" = "técnico superior (1-3 años completa)", 
+  # "educaci\\?\\?ca" = "educación básica", 
+   "t\\?ico superior \\(1-3 a\\? incompleta" = "técnico superior (1-3 años incompleta)", 
+  # "cientáficos" = "científicos", "ášnicamente" = "únicamente", 
+  # "hospeder\\?" = "hospedería", "residencial, pensi\\?hostal" = "residencial, pensión, hostal", 
+  # "ocupaci\\?rregular" = "ocupación irregular", "cocaána" = "cocaína", 
+  # "heroána" = "heroína", "codeána" = "codeína", 
+  # "sintomático" = "sintomático", "disfunción" = "disfunción", 
+  # "lesión" = "lesión", "días" = "días", "orientación" = "orientación", 
+  # "especificación" = "especificación", "\\tcodesam" = "codesam", 
+  "cleptomanáa" = "cleptomanía", "tricotilomanáa" = "tricotilomanía", 
+  "cardiopatáas" = "cardiopatías", "patologáa" = "patología",
+  "último" = "últimos", "\\|(\\d+)" = "1", "1o" = "10", 
+  "aná\u0081stasis"= "anástasis",
+  "á‘uá‘oa" = "ñuñoa", "cocaána" = "cocaína", "hospederáa" = "hospedería",
+  "ášnicamente" = "únicamente", "t\\?ico" = "técnico", "nunca estudi" = "nunca estudió",
+  "t\\?ica"= "técnica", "educaci\\?\\?ca" = "educación básica",
+  "dáas" = "días", "dáa" = "día",
+   "lesiones gravásimaslesiones gravásimas" = "lesiones gravísimas",
+  "táas" = "tías", "táos" = "tíos", "crámenes" = "crímenes",
+  "jurádica" = "jurídica", "daá‘o" = "daño", "puchuncavá"= "puchuncaví",
+  "suspención" = "suspensión", "á‘iquen" = "ñiquen", "doá‘ihue" = "doñihue",
+  "caá‘ete" = "cañete", "vicuá‘a" = "vicuña", "á‘uá‘oa"="ñuñoa", 
+  "chaá‘aral"= "chañaral", "quilpuá‰"= "quilpué", 
+  "peá‘alolen" = "peñalolén", "peá‘aflor" = "peñaflor", 
+  "ibaá‘ez" = "ibáñez", "prisionización" = "prisionalización",
+  "piromanáa" = "piromanía", "psicotropas" = "psicotrópicas",
+  "fásico" = "físico", "psáquica" = "psíquica"
+)
+replace_chars <- function(column) {
+  reduce(names(replacements3), ~ stringr::str_replace_all(.x, .y, replacements3[.y]), .init = column)
+}
+
+CONS_C2 <- CONS_C2 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+
+unique_values_list_c22 <- setNames(
+  lapply(names(CONS_C2), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2)  # assign column names to the list
+)
+
+#_#_#_#_#_#_
+invisible("See problematic characters")
+
+df_c2_problems <- map_dfr(names(unique_values_list_c22), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c22[[name]])
+}) %>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+df_c2_problems %>% rio::export("_out/wrong_words.csv")
+iconv(df_c2_problems$subelement, from = "latin1", to = "UTF-8")%>% data.frame() %>% rio::export("_out/wrong_words2.csv")
+```
+::: 
+  
+```{r import-c2-clean2}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C2 <- CONS_C2 %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+# #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# CONS_C2_pl<- polars::as_polars_df(CONS_C2)
+# 
+# CONS_C2_pl <- CONS_C2_pl$with_columns(
+#   lapply(CONS_C2_pl$columns, function(col_name) {
+#     pl$col(col_name)$map_elements(replace_chars4)$alias(col_name)
+#   })
+# )
+# CONS_C2_df <- CONS_C2_pl$to_data_frame()
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c23 <- setNames(
+  lapply(names(CONS_C2), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C2[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C2)  # assign column names to the list
+)
+
+#_#_#_#_#_#_
+invisible("See problematic characters")
+
+df_c2_problems2 <- map_dfr(names(unique_values_list_c23), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c23[[name]])
+}) %>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+df_c2_problems2 %>% rio::export("_out/wrong_words3.csv")
+iconv(df_c2_problems$subelement, from = "latin1", to = "UTF-8")%>% data.frame() %>% rio::export("_out/wrong_words4.csv")
+```
+
+<br>
+
+##### Clean C3
+
+```{r import-c3-clean1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C3 <- CONS_C3 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c30 <- setNames(
+  lapply(names(CONS_C3), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C3[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C3)  # assign column names to the list
+)
+
+df_c3_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c30), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c30[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c3_1 <- c(
+  "ãƒâ±" = "ñ", "ãƒâ³" = "ó", "ãƒâ­" = "í",
+  "ãƒâ©" = "é", "ãƒâ¡" = "á", "ãƒâº" = "ú"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c3_1), ~ stringr::str_replace_all(.x, .y, replacements_c3_1[.y]), .init = column)
+}
+
+CONS_C3 <- CONS_C3 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c31 <- setNames(
+  lapply(names(CONS_C3), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C3[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C3)  # assign column names to the list
+)
+
+df_c3_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c31), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c31[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+
+# "m?mo"
+# "explotaci?exual"
+# "discriminaci?"
+# "psic?os"
+# "org?cos"
+# "especificaci?"
+# "psicol?os"
+# "lesi?"
+# "disfunci?erebral"
+# "neur?os"
+# "curicãƒâ“"
+# "ãƒâ‘uble"
+# "último"
+# "analg?cos"
+# "estudi?"
+# "estudi@"
+# "cientíã‚â­ficos"
+# "psicol?o"
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c3_2 <- c(
+  "rehabilitaciãƒâ“n" = "rehabilitación",
+  "curicãƒâ“" = "curacaví",
+  "de \\?ble" = "de ñuble",
+  "iba\\?s" = "ibáñez",
+  "ãƒâ‘uble" = "ñuble",
+  "vi\\? del mar" = "viña del mar",
+  "vicu\\?" = "vicuña", 
+  "cha\\?ral" = "chañaral",
+  "san gregorio de \\?quen" = "san gregorio de ñiquén",
+  "último" = "últimos",
+  "coca\\?" = "cocaína",
+  "analg\\?cos" = "analgésicos",
+  "t\\?ica comercial/industrial/normalista" = "técnica comercial/industrial/normalista",
+  "t\\?ico superior \\(1-3 a\\? incompleta" = "técnico superior (1-3 años incompleta)",
+  "t\\?ico superior \\(1-3 a\\? completa" = "técnico superior (1-3 años completa)",
+  "profesional \\(4 o m\\?a\\? incompleta" = "profesional (4 o más incompleta)",
+  "profesional \\(4 o m\\?a\\? completa" = "profesional (4 o más completa)",  
+  "nunca estudi\\?" = "nunca estudió",
+  "nunca estudi@" = "nunca estudió",
+  "cientíã‚â­ficos" = "científicos",
+  "ãƒâšnicamente" = "únicamente",
+  "psicol\\?o" = "psicológico",
+  "esquizot\\?co" = "esquizotípico",
+  "org\\?c" = "orgánic",
+  "sintom\\?co" = "sintomático",
+  "neur\\?o" = "neurótico",
+  "fisiol\\?a" = "fisiológica",
+  "som\\?c" = "somátic",
+  "psic\\?o" = "psicológico",
+  "espec\\?co" = "específico",
+  "especificaci\\?" = "especificación",
+  "amn\\?co" = "amnésico",
+  "s\\?rome" = "síndrome",
+  "h\\?to" = "hábito",
+  "esquizot\\?co" = "esquizotípico",
+  "estr\\?grave" = "estrés grave",
+  "adaptaci\\?" = "adaptación",
+  "lesi\\?" = "lesión",
+  "disfunci\\?erebral" = "disfunción cerebral",
+  "espec\\?cos" = "específicos",
+  "psic\\?os" = "psicológicos",
+  "transformaci\\?ersistente" = "transformación persistente",
+  "explotaci\\?exual" = "explotación sexual",
+  "discriminaci\\?" = "discriminación",
+  "logro m\\?mo" = "logro mínimo"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c3_2), ~ stringr::str_replace_all(.x, .y, replacements_c3_2[.y]), .init = column)
+}
+
+CONS_C3 <- CONS_C3 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c32 <- setNames(
+  lapply(names(CONS_C3), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C3[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C3)  # assign column names to the list
+)
+
+df_c3_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c32), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c32[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C3 <- CONS_C3 %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+```
+
+<br>
+
+##### Clean C4
+
+```{r import-c4-clean1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C4 <- CONS_C4 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c40 <- setNames(
+  lapply(names(CONS_C4), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4)  # assign column names to the list
+)
+
+df_c4_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c40), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c40[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c4_1 <- c(
+  "ãƒâ±" = "ñ", "ãƒâ³" = "ó", "ãƒâ­" = "í",
+  "ãƒâ©" = "é", "ãƒâ¡" = "á", "ãƒâº" = "ú"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c4_1), ~ stringr::str_replace_all(.x, .y, replacements_c4_1[.y]), .init = column)
+}
+
+CONS_C4 <- CONS_C4 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c41 <- setNames(
+  lapply(names(CONS_C4), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4)  # assign column names to the list
+)
+
+df_c4_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c41), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c41[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c4_2 <- c(
+  "\\?\\?a" = "ñuñoa",
+  "vi\\?" = "viña",
+  "violaci\\?" = "violación",
+  "condici\\?e" = "condición de",
+  "intimidaci\\?" = "intimidación",
+  "receptaci\\?" = "receptación",
+  "grav\\?mas" = "gravísimas",
+  "corrupci\\?e" = "corrupción de",
+  "producci\\?e" = "producción de",
+  "rep\\?ca" = "república", 
+  "per\\?" = "perú",
+  "m\\?a\\?" = "más",
+  "1-3 a\\?" = "1-3 años",
+  "t\\?ico superior" = "técnico superior",
+  "t\\?ica profesional" = "técnica profesional",
+  "raz\\?" = "razón",
+  "ocupaci?o" = "ocupación no",
+  "t\\?icos" = "técnicos",
+  "mec\\?ca" = "mecánica",
+  "cient\\?cos" = "científicos",
+  "ocupaci\\?rregular" = "ocupación irregular",
+  "hijo/a s\\?del/a jefe/a de familia" = "hijo/as del jefe/a de familia",
+  "c\\?ge" = "cónyuge",
+  "cu\\?/a" =  "cuñado/a",
+  "hospeder\\?" = "hospedería",
+  "pensi\\?hostal" = "pensión, hostal",
+  "ocupaci\\?rregular" = "ocupación irregular",
+  "^\\?mo" = "últimos",
+  "3 a 4 a\\?" = "3 a 4 años",
+  "5 o m\\?a\\?" = "5 o más años",
+  "1 a 2 a\\?" = "1 a 2 años",
+  "coca\\?" = "cocaína",
+  "analg\\?cos" = "analgésicos",
+  "hipn\\?os" = "hipnóticos",
+  "todos los d\\?" = "todos los días",
+  "2-3 d\\?" = "2-3 días",
+  "4-6 d\\?" = "4-6 días",
+  "1 d\\?" = "1 día",
+  "no consumi\\?" = "no consumió", 
+  "aspiraci\\?e" = "aspiración de",
+  "neur\\?o" = "neurótico",
+  "h\\?to" = "hábito",
+  "org\\?co" = "orgánico",
+  "psicol\\?o" = "psicológico",
+  "esquizot\\?co" = "esquizotípico",
+  "fisiol\\?a" = "fisiológica",
+  "som\\?cos" = "somáticos",
+  "ni\\?o" = "niñez o",
+  "m\\?ca" = "médica",
+  "sue\\?" = "sueño",
+  "psic\\?os" = "psicóticos",
+  "patolog\\?bucal" = "patología bucal",
+  "cardiopat\\?" = "cardiopatía",
+  "miocardiopat\\?dilatada" = "miocardiopatía dilatada",
+  "megalobl\\?ica" = "megaloblástica",
+  "ferrop\\?ca" = "ferropénica",
+  "cr\\?a" = "crónica",
+  "patolog\\?de" = "patología de",
+  "gesti\\?" = "gestión",
+  "ni\\?ntrauterino" = "niño intrauterino",
+  "alcoh\\?a" = "alcohólica",
+  "explotaci\\?omercial" = "explotación comercial",
+  "derivaci\\?" = "derivación",
+  "terap\\?ic" = "terapéutic",
+  "logro m\\?mo" = "logro mínimo",
+  "sintom\\?co" = "sintomático"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c4_2), ~ stringr::str_replace_all(.x, .y, replacements_c4_2[.y]), .init = column)
+}
+
+CONS_C4 <- CONS_C4 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c42 <- setNames(
+  lapply(names(CONS_C4), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C4[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C4)  # assign column names to the list
+)
+
+df_c4_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c42), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c42[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C4 <- CONS_C4 %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+```
+
+<br>
+
+##### Clean C5
+
+```{r import-c5-clean1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C5 <- CONS_C5 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c50 <- setNames(
+  lapply(names(CONS_C5), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C5[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C5)  # assign column names to the list
+)
+
+df_c5_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c50), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c50[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c5_1 <- c(
+  "ãƒâ±" = "ñ", "ãƒâ³" = "ó", "ãƒâ­" = "í",
+  "ãƒâ©" = "é", "ãƒâ¡" = "á", "ãƒâº" = "ú"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c5_1), ~ stringr::str_replace_all(.x, .y, replacements_c5_1[.y]), .init = column)
+}
+
+CONS_C5 <- CONS_C5 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c51 <- setNames(
+  lapply(names(CONS_C5), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C5[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C5)  # assign column names to the list
+)
+
+df_c5_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c51), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c51[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c5_2 <- c(
+  "aysãƒâ‰n" = "aysén",
+  "carlos iba\\?s del campo" = "carlos ibáñez del campo",
+  "de \\?ble" = "de ñuble",
+  "peãƒâ‘alolen" = "peñalolén",
+  "viãƒâ‘a" = "viña",
+  "peãƒâ‘aflor" = "peñaflor",
+  "ãƒâ‘uãƒâ‘oa" = "ñuñoa",
+  "vicuãƒâ‘a" = "vicuña",
+  "chaãƒâ‘aral" = "chañaral",
+  "doãƒâ‘ihue" = "doñihue",
+  "hualaãƒâ‘e" = "hualañé",
+  "ãƒâ‘iquen" = "ñiquén",
+  "ãƒâ‘uble" = "ñuble",
+  "espont\\?a" = "espontánea",
+  "intervenci\\?ntegral" = "intervención integral",
+  "agresi\\?exual" = "agresión sexual",
+  "protecci\\?e" = "protección de",
+  "protecci\\?ara" = "protección para",
+  "diagn\\?co" = "diagnóstico",
+  "intervenci\\?reve" = "intervención breve",
+  "prevenci\\?ocalizada" = "prevención focalizada",
+  "explotaci\\?exual" = "explotación sexual",
+  "lesiones gravísimaslesiones gravísimas" = "lesiones gravísimas",
+  "tem\\?ca" = "temática",
+  "ni\\?y/o" = "niñez y/o",
+  "v\\?imas" = "víctimas",
+  "prevenci\\?omunitaria" = "prevención comunitaria",
+  "fiscal\\?" = "fiscalía",
+  "corporaci\\?udicial" = "corporación judicial",
+  "garant\\?" = "garantía",
+  "intervenci\\?amiliar" = "intervención familiar",
+  "representaci\\?ur\\?ica" = "representación jurídica",
+  "intervenciãƒâƒã‚â³n" = "intervención",
+  "reparaciãƒâƒã‚â³n" = "reparación",
+  "daãƒâƒã‚â±o" = "daño",
+  "corporaciãƒâƒã‚â³n" = "corporación",
+  "representaciãƒâƒã‚â³n" = "representación",
+  "jurãƒâƒã‚â­dica" = "jurídica",
+  "fiscalãƒâƒã‚â­a" = "fiscalía",
+  "vãƒâƒã‚â­ctima" = "víctima",
+  "t\\?ica" = "técnica",
+  "educaci\\?\\?ca" = "educación cívica",
+  "t\\?ico" = "técnico",
+  "1-3 a\\?" = "1-3 años",
+  "4 o m\\?a\\?" = "4 o más años",
+  "ãƒâšnicamente" = "únicamente",
+  "^último" = "últimos",
+  "ãƒânimo" = "ánimo",
+  "prisionización" = "prisionalización"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c5_2), ~ stringr::str_replace_all(.x, .y, replacements_c5_2[.y]), .init = column)
+}
+
+CONS_C5 <- CONS_C5 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c52 <- setNames(
+  lapply(names(CONS_C5), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C5[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C5)  # assign column names to the list
+)
+
+df_c5_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c52), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c52[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C5 <- CONS_C5 %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+```
+
+<br>
+
+##### Clean C6
+
+```{r import-c6-clean1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# Apply transformations to character columns
+CONS_C6 <- CONS_C6 %>%
+  dplyr::mutate(across(everything(), ~ {
+    .x %>%
+      stringr::str_to_lower() %>%  # Convert to lowercase
+      stringr::str_trim() %>%  # Trim leading and trailing whitespace
+      stringr::str_replace_all("\\s+", " ") %>%  # Replace multiple spaces with a single space
+      stringr::str_replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (and spaces before)
+  }))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c60 <- setNames(
+  lapply(names(CONS_C6), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6)  # assign column names to the list
+)
+
+df_c6_problems0 <- 
+purrr::map_dfr(names(unique_values_list_c60), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c60[[name]])
+})%>% 
+  dplyr::filter(stringr::str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c6_1 <- c(
+  "ãƒâ±" = "ñ", "ãƒâ³" = "ó", "ãƒâ­" = "í",
+  "ãƒâ©" = "é", "ãƒâ¡" = "á", "ãƒâº" = "ú"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c6_1), ~ stringr::str_replace_all(.x, .y, replacements_c6_1[.y]), .init = column)
+}
+
+CONS_C6 <- CONS_C6 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c61 <- setNames(
+  lapply(names(CONS_C6), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6)  # assign column names to the list
+)
+
+df_c6_problems1 <- 
+purrr::map_dfr(names(unique_values_list_c61), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c61[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements_c6_2 <- c(
+  "iba\\?s" = "ibáñez",
+  "ibaãƒâ‘es" = "ibáñez",
+  "ãƒâ‘uble" = "ñuble",
+  "peãƒâ‘alolen" = "peñalolén",
+  "viãƒâ‘a" = "viña",
+  "peãƒâ‘aflor" = "peñaflor",
+  "ãƒâ‘uãƒâ‘oa" = "ñuñoa",
+  "vicuãƒâ‘a" = "vicuña",
+  "chaãƒâ‘aral" = "chañaral",
+  "doãƒâ‘ihue" = "doñihue",
+  "hualaãƒâ‘e" = "hualañé",
+  "ãƒâ‘iquen" = "ñiquén",
+  "gendarmeríã‚â­a" = "gendarmería",
+  "intimidaci\\?" = "intimidación",
+  "grav\\?mas" = "gravísimas",
+  "receptaci\\?" = "receptación",
+  "tr\\?co de estupefacientes" = "tráfico de estupefacientes",
+  "t\\?ico" = "técnico",
+  "\\(1-3 años completa" = "(1-3 años completa)",
+  "\\(1-3 años incompleta" = "(1-3 años incompleta)",  
+  "otra raz\\?" = "otra razón",
+  "ãƒâšnicamente" = "únicamente",
+  "pensi\\?hostal" = "pensión, hostal",
+  "hospeder\\?" = "hospedería",
+  "ocupaci\\?rregular" = "ocupación irregular",
+  "1 a 2 a\\?" = "1 a 2 años", 
+  "3 a 4 a\\?" = "3 a 4 años", 
+  "5 o m\\?a" = "5 o más años",   
+  "\\?mo 12 meses" = "últimos 12 meses",
+  "\\?mo 6 meses" = "últimos 6 meses",
+  "coca\\?" = "cocaína",
+  "sintom\\?cos" = "sintomáticos",
+  "psicol\\?o" = "psicológico",
+  "ãƒânimo"= "ánimo",
+  "explotaci\\?omercial" = "explotación comercial",
+  "logro m\\?mo" = "logro mínimo",
+  "org\\?cos" = "orgánicos",
+  "h\\?tos" = "hábitos",
+  "fisiol\\?as" = "fisiológicas",
+  "som\\?cos" = "somáticos",
+  "esquizot\\?co" = "esquizotípico",
+  "neur\\?os" = "neuróticos"
+)
+
+replace_chars <- function(column) {
+  reduce(names(replacements_c6_2), ~ stringr::str_replace_all(.x, .y, replacements_c6_2[.y]), .init = column)
+}
+
+CONS_C6 <- CONS_C6 %>%
+  dplyr::mutate(across(everything(), replace_chars))
+
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+unique_values_list_c62 <- setNames(
+  lapply(names(CONS_C6), function(col_name) {
+    # obtain unique values
+    unique_values <- unique(CONS_C6[[col_name]])
+    return(unique_values)
+  }),
+  names(CONS_C6)  # assign column names to the list
+)
+
+df_c6_problems2 <- 
+purrr::map_dfr(names(unique_values_list_c62), function(name) {
+  tibble(element_name = name, subelement = unique_values_list_c62[[name]])
+})%>% 
+  dplyr::filter(str_detect(subelement, "[^[:ascii:]]|Ã|Â|ã|â|\\?|\\\\|í|ì|î|ï|é|è|ê|ë|ó|ò|ô|õ|ö|ú|ù|û|ü|ñ|Ñ|Ã±|Â¿|â€™|â€œ|â€|ã³|ã©|ã­|ãº|ã¼|ã²|ã¼|ã³|ã³|ã±|[@#$%^&*<>~`{}\\[\\]]"))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+replacements4 <- c(
+  "á" = "a", "é" = "e", "í" = "i", "ó" = "o", "ú" = "u", "ñ" = "n",
+  "Á" = "A", "É" = "E", "Í" = "I", "Ó" = "O", "Ú" = "U", "Ñ" = "N"
+)
+replace_chars4 <- function(column) {
+  for (pattern in names(replacements4)) {
+    column <- gsub(pattern, replacements4[pattern], column, fixed = TRUE)
+  }
+  return(column)
+}
+CONS_C6 <- CONS_C6 %>%
+  dplyr::mutate(across(everything(), ~ replace_chars4(.)))
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+```
+
+```{=html}
+<!---
+ #https://github.com/kosukeimai/fastLink
+ 
+#"aquellos registros que terminaron por ejemplo, con una sentencia absolutoria o en que no se pudo acreditar un hecho delictual". No tengo la bbdd para revisar si esto aplica a nosotros, pero prefiero dejarlo acá para que no se me olvide.
+#  
+  
+#https://rpolars.github.io/r-polarssql/
+#para descriptive (paso 1)
+ --->
+```
+
+To close the project, we erase polars objects.
+
+```{r erase-polar-objs}
+rm(list = ls()[grepl("_pl$", ls())])
+
+```
+
+<br>
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+) %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#| class-output: center-table
+
+reticulate::py_list_packages() %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+
+wdpath
+
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+envpath
+
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save and check if path exists
+  save.image(paste0(envpath,"data/20241015_out/", paste0("2_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata")))
+  cat("Saved in:",
+      paste0(envpath,"data/20241015_out/", paste0("2_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata")))
+
+
+cat("Copy renv lock into cons folder\n")
+
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+
+```

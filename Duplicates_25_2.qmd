@@ -1,0 +1,4312 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022 (step 2)"
+description: |
+  Second step of deduplication process. Resolve temporal inconsistencies, specifically treatment episodes w/ overlaps for the same patient (identified by hash_key), and handling missing or implausible discharge dates. We aim to transform a dataset with potentially messy, overlaps, and incomplete temporal records into a clean, longitudinal dataset where each row represents a distinct, sequential treatment episode for a patient, with plausible dates and treatment durations.
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-depth: 5
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+Proceed to load the necessary packages.
+
+<div class="scrollable-content">
+```{r load}
+#| message: false
+#| include: true
+#| warning: false
+#| results: "hold"
+
+# invisible("Only run from Ubuntu")
+# if (!(Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv"))) {
+#   if(Sys.info()["sysname"]!="Windows"){
+#     Sys.setenv(RETICULATE_PYTHON = "/home/fondecytacc/.pyenv/versions/3.11.5/bin/python")
+#   }
+# }
+
+#clean enviroment
+rm(list = ls()); gc()
+
+time_before_dedup2<-Sys.time()
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+suppressPackageStartupMessages(library(reticulate))
+
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+find_python_rel <- function(start = getwd(),
+                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+    if (file.exists(cand)) return(cand)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+    cur <- parent
+  }
+}
+
+py <- find_python_rel()
+
+if (is.na(py)) {
+  stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+       "Directorio actual: ", getwd())
+}
+
+# Forzar ese intérprete
+Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+Sys.setenv(RETICULATE_PYTHON = py)
+reticulate::use_python(py, required=T)
+
+py_config()  # verificación
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# tidy, robust, and commented
+load_ndp <- function(date_tag,
+                     base_name,
+                     input_subdir,
+                     out_subdir,
+                     load_into    = .GlobalEnv) {
+
+  # Are we in RStudio Server or Docker?
+  is_server <- Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")
+
+  # Project root = current WD without a trailing "/cons"
+  # Safer than gsub everywhere
+  wd <- getwd()
+  project_root <- sub("(/)?cons/?$", "", wd)
+
+  # Build dirs
+  out_dir  <- file.path(project_root, out_subdir)
+  in_dir   <- if (is_server) file.path(getwd(), input_subdir) else out_dir
+
+  # Filenames (choose one canonical extension spelling)
+  rdata_file   <- sprintf("%s_%s.Rdata", base_name, date_tag)
+  seven_z_part <- sprintf("%s_%s.Rdata.7z.001", base_name, date_tag)
+  enc_file     <- sprintf("%s_%s.Rdata.enc",  base_name, date_tag)  # only if you actually encrypt to .enc
+
+  # Optional: Windows drive-based Google Drive/E: fallback (only on Windows)
+  envpath <- NULL
+  if (.Platform$OS.type == "windows") {
+    drv <- toupper(substr(normalizePath(project_root, winslash = "\\", mustWork = FALSE), 1, 1))
+    envpath <- if (identical(drv, "G")) {
+      "G:/Mi unidad/Alvacast/SISTRAT 2023/"
+    } else {
+      "E:/Mi unidad/Alvacast/SISTRAT 2023/"
+    }
+  }
+  # message("envpath: ", envpath %||% "<none>")
+
+  # Ensure dirs exist (won't error if already present)
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+  # Helper: load Rdata into the specified environment
+  load_rdata <- function(path) {
+    stopifnot(file.exists(path))
+    loaded <- load(path, envir = load_into)
+    message("Loaded objects: ", paste(loaded, collapse = ", "))
+    invisible(loaded)
+  }
+
+  if (!is_server) {
+    # Desktop workflow: expect plain .Rdata in out_dir
+    local_rdata <- file.path(out_dir, rdata_file)
+    if (!file.exists(local_rdata)) {
+      stop("Rdata file not found: ", local_rdata)
+    }
+    return(load_rdata(local_rdata))
+
+  } else {
+    # Server/Docker workflow: expect compressed/encrypted parts in _input
+    seven_z_path <- file.path(in_dir, seven_z_part)
+    enc_path     <- file.path(in_dir, enc_file)
+    out_rdata    <- file.path(out_dir, rdata_file)
+
+    if (file.exists(seven_z_path)) {
+      # Extract 7z multi-part to out_dir using password
+      pass <- Sys.getenv("PASS_PPIO", unset = NA_character_)
+      if (is.na(pass) || pass == "") stop("Missing PASS_PPIO env var for 7z decryption.")
+      # 7z command: x (extract), -p<pass>, -o<outdir>
+      args <- c("x", shQuote(seven_z_path), sprintf("-p%s", pass), paste0("-o", shQuote(out_dir)))
+      status <- system2("7z", args = args, stdout = TRUE, stderr = TRUE)
+      # Optional: check extraction result
+      if (!file.exists(out_rdata)) {
+        stop("Extraction finished but target not found: ", out_rdata, "\n7z output:\n", paste(status, collapse = "\n"))
+      }
+      return(load_rdata(out_rdata))
+
+    } else if (file.exists(enc_path)) {
+      # If you truly have a raw .enc, you need a decryption step here (not loadable as-is).
+      stop("Found encrypted file but no extractor defined for .enc: ", enc_path)
+
+    } else if (file.exists(out_rdata)) {
+      # Already extracted earlier
+      return(load_rdata(out_rdata))
+
+    } else {
+      stop("No input found in: ", in_dir,
+           "\nTried: ", seven_z_path, " and ", enc_path,
+           "\nAlso looked for already-extracted: ", out_rdata)
+    }
+  }
+}
+
+load_ndp(date_tag = "2025_09_27", 
+                     base_name = "23_ndp",
+                     input_subdir = "_input",
+                     out_subdir   = file.path("data", "20241015_out"),
+                     load_into    = .GlobalEnv)
+```
+</div>
+
+<div class="scrollable-content">
+```{r setup}
+#| results: "hold"
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#only use explicit dependencies (in DESCRIPTION)
+renv::settings$snapshot.type("implicit")
+
+#check if rstools is installed
+try(installr::install.Rtools(check_r_update=F))
+
+check_quarto_version <- function(required = "1.7.29", comparator = c("ge","gt","le","lt","eq")) {
+  comparator <- match.arg(comparator)
+  current <- package_version(paste(unlist(quarto::quarto_version()), collapse = "."))
+  req     <- package_version(required)
+
+  ok <- switch(comparator,
+               ge = current >= req,
+               gt = current >  req,
+               le = current <= req,
+               lt = current <  req,
+               eq = current == req)
+
+  if (!ok) {
+    stop(sprintf("Quarto version check failed: need %s %s (installed: %s).",
+                 comparator, required, current), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# Examples:
+check_quarto_version("1.7.29", "ge") 
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+if(!require(pak)){install.packages("pak");require(pak)}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+
+#check docker
+check_docker_running <- function() {
+  # Try running 'docker info' to check if Docker is running
+  system("docker info", intern = TRUE, ignore.stderr = TRUE)
+}
+
+install_docker <- function() {
+  # Open the Docker Desktop download page in the browser for installation
+  browseURL("https://www.docker.com/products/docker-desktop")
+}
+
+# Main logic
+if (inherits(try(check_docker_running(), silent = TRUE), "try-error")) {
+  liftr::install_docker()
+} else {
+  message("Docker is running.")
+}
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+unlink("*_cache", recursive=T)
+
+# ----------------------------------------------------------------------
+# 2. Use a single pak::pkg_install() call for most CRAN packages
+# ----------------------------------------------------------------------
+
+paks <-
+  c(#"git", 
+    # To connect to github
+    "gh", #interface for  GitHub API from R
+    #
+    "gitcreds", # manages Git credentials (usernames, passwords, tokens)
+    #
+    "usethis", # simplifies common project setup tasks for R developers
+    # Package to bring packages in development
+    "devtools",
+    # Package administration
+    "renv",
+    # To manipulate data
+    "knitr", "pander", "DT",
+    # Join
+    "fuzzyjoin", "RecordLinkage",
+    # For tables
+    "tidyverse", "janitor",
+    # For contingency tables
+    "kableExtra",
+    # For connections with python
+    "reticulate",
+    # To manipulate big data
+    "polars", "sqldf",
+    # To bring big databases
+    "nanoparquet",
+    # Interface for R and RStudio in R
+    "installr", "rmarkdown", "quarto", "yaml", #"rstudioapi",
+    # Time handling
+    "clock",
+    # Combine plots
+    "ggpubr",
+    # Parallelized iterative processing
+    "furrr",
+    # Work like a tibble with a data.table database
+    "tidytable",
+    # Split database into training and testing
+    "caret",
+    # Impute missing data
+    "missRanger", "mice",
+    # To modularize tasks
+    "job",
+    # For PhantomJS install checks
+    "webshot"
+  )
+
+# dplyr
+# janitor
+# reshape2
+# tidytable
+# arrow
+# boot
+# broom
+# car
+# caret
+# data.table
+# DiagrammeR
+# DiagrammeRsvg
+# dplyr
+# epiR
+# epitools
+# ggplot2
+# glue
+# htmlwidgets
+# knitr
+# lubridate
+# naniar
+# parallel
+# polycor
+# pROC
+# psych
+# readr
+# rio
+# rsvg
+# scales
+# stringr
+# tableone
+# rmarkdown
+# biostat3
+# codebook
+# finalfit
+# Hmisc
+# kableExtra
+# knitr
+# devtools
+# tidyr
+# stringi
+# stringr
+# muhaz
+# sqldf
+# compareGroups
+# survminer
+# lubridate
+# ggfortify
+# car
+# fuzzyjoin
+# compareGroups
+# caret
+# job
+# htmltools
+# nanoparquet
+# ggpubr
+# polars
+# installr
+# clock
+# pander
+# reshape
+# mice
+# missRanger
+# VIM
+# withr
+# biostat3
+# broom
+# glue
+# finalfit
+# purrr
+# sf
+
+
+# pak::pkg_install(paks)
+
+pak::pak_sitrep()
+# pak::sysreqs_check_installed(unique(unlist(paks)))
+#pak::lockfile_create(unique(unlist(paks)),  "dependencies_duplicates24.lock", dependencies=T)
+#pak::lockfile_install("dependencies_duplicates24.lock")
+#https://rdrr.io/cran/pak/man/faq.html
+#pak::cache_delete()
+
+library(tidytable)
+#library(polars)
+library(ggplot2)
+library(readr)
+
+# ----------------------------------------------------------------------
+# 3. Activate polars code completion (safe to try even if it fails)
+# ----------------------------------------------------------------------
+#try(polars_code_completion_activate())
+
+# ----------------------------------------------------------------------
+# 4. BPMN from GitHub (not on CRAN, so install via devtools if missing)
+# ----------------------------------------------------------------------
+if (!requireNamespace("bpmn", quietly = TRUE)) {
+  devtools::install_github("bergant/bpmn")
+}
+
+# ----------------------------------------------------------------------
+# 5. PhantomJS Check (use webshot if PhantomJS is missing)
+# ----------------------------------------------------------------------
+# if (!webshot::is_phantomjs_installed()) {
+#   webshot::install_phantomjs()
+# }
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+# NO MORE DEBUGS
+options(error = NULL)        # si antes tenías options(error = recover) o browser)
+options(browserNLdisabled = FALSE)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+pander::panderOptions('big.mark', ',')
+pander::panderOptions('decimal.mark', '.')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: small !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+sum_dates <- function(x){
+  cbind.data.frame(
+    min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+    p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+    p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+    p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+    p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+    p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+    p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+    p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+    p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+    p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+    max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+
+# Custom function for sampling with a seed
+sample_n_with_seed <- function(data, size, seed) {
+  set.seed(seed)
+  dplyr::sample_n(data, size)
+}
+
+# Function to get the most frequent value 
+most_frequent <- function(x) { 
+  uniq_vals <- unique(x)
+  freq_vals <- sapply(uniq_vals, function(val) sum(x == val))
+  most_freq <- uniq_vals[which(freq_vals == max(freq_vals))]
+  
+  if (length(most_freq) == 1) {
+    return(most_freq)
+  } else {
+    return(NA)
+  }
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define the function first
+#oins these values with semicolons and optionally truncates the result if it exceeds a specified width.
+toString2 <- function(x, width = NULL, ...) {
+    string <- paste(x, collapse = "; ")
+    if (missing(width) || is.null(width) || width == 0) 
+        return(string)
+    if (width < 0) 
+        stop("'width' must be positive")
+    if (nchar(string, type = "w") > width) {
+        width <- max(6, width)
+        string <- paste0(substr(string, 1, width - 3), "...")
+    }
+    string
+}
+normalize_txt <- function(x) {
+  x |>
+    stringi::stri_trans_general("Latin-ASCII") |>
+    tolower() |>
+    trimws()
+}
+
+dsmiv_broad <- function(x) {
+  x <- normalize_txt(x)
+  tidytable::case_when(
+    stringr::str_detect(x, "sustancia|alcohol|marihuana|cannab|cocain|opio|opiace|benzodiazep") ~ "Substance-related",
+    stringr::str_detect(x, "esquizofren|psicosis|psicot") ~ "Psychotic",
+    stringr::str_detect(x, "estado de animo|afectiv|depres|bipolar|maniaco|distimi|hipoman") ~ "Mood",
+    stringr::str_detect(x, "ansiedad|fobi|panico|obsesivo|compulsiv|estres|adaptaci") ~ "Anxiety/Stress/Adjustment",
+    stringr::str_detect(x, "somatoform|somatiz|disociativ|conversion") ~ "Somatoform/Dissociative",
+    stringr::str_detect(x, "alimentari|anorex|bulim|sueno|insomni|sexual") ~ "Eating/Sleep/Sexual",
+    stringr::str_detect(x, "personalidad|antisocial|limite|borderline|paranoide|evitativ|dependient|narcis") ~ "Personality",
+    stringr::str_detect(x, "retraso mental|discapacidad intelectual|intelectual") ~ "Intellectual disability",
+    stringr::str_detect(x, "desarrollo|autism|asperger|infancia|tdah|t\\s*d\\s*a\\s*h|lenguaje|aprendizaje") ~ "Neurodevelopment/Childhood-onset",
+    TRUE ~ "Other/unspecified"
+  )
+}
+
+pair_str <- function(main, sub) {
+  main <- as.character(main)
+  sub  <- as.character(sub)
+  both_na <- is.na(main) & is.na(sub)
+
+  out <- paste0(
+    tidytable::coalesce(main, "NA"),
+    "::",
+    tidytable::coalesce(sub,  "NA")
+  )
+
+  out[both_na] <- NA_character_
+  out
+}
+```
+</div>
+
+<br>
+
+::: {.callout-note}
+The previous document revealed cases w/ overlaps and nearly identical records, as well as patients with unfinished treatments (i.e., missing discharge dates in the 2018-2019 databases) who might have received subsequent treatments w/ overlaps.
+
+To assess the main goals of the study, we first focused on **distinguishing each patient** across the yearly datasets obtained from SENDA, as well as their time-invariant characteristics (1). Next, we **separated each patient's treatment episodes** and varying characteristics (2). Finally, we **normalized, standardized, and cleaned each treatment** (3). Although these stages may appear conceptually separate and sequential, they are interdependent (e.g., some variables needed to be standardized to identify duplicate entries). 
+
+Throughout this document, we use the terms **“rows”**,  **“cases”**, **"observations"** or **"treatment episodes"** interchangeably to refer to entries in the dataset.
+:::
+
+<br>
+
+## pre-00.ab. Discharge dates after death
+
+
+We derived a patient-level death date (`def_date`) from the mortality registry (imputing missing day as the 15th to enable parsing, n~ 30), joined it to treatment episodes by unique identifier, censored discharges occurring after death to the death date (`disch_date_rec00`), and removed episodes with admissions after death. For cases with multiple death dates (n= `r length(unique(mortality$hashkey[duplicated(mortality$hashkey)]))`), we retained the earliest death date (conservative, avoids implausible duplicates), and created a database called `mortality_first` with this correction.
+
+```{r disch-dates-death}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+mortality$def_date <- readr::parse_date(paste0(ifelse(is.na(mortality$dia_def),15,mortality$dia_def),"-",mortality$mes_def,"-",mortality$ano_def), format="%d-%m-%Y")
+
+problems_def_date<- readr::problems(mortality$def_date)
+
+
+multiple_deaths<- mortality[,c("hashkey", "def_date")]|> group_by(hashkey)|> summarise(n=n())|> filter(n>1)|> pull(hashkey)|> unique()
+
+warning("As of September 19th, we found that patients had duplicated entries because of more than one death date. Particularly the following records:")
+ mortality[,c("hashkey", "def_date", "diag1", "diag2")]|> 
+  filter(hashkey %in% multiple_deaths)|>
+   filter(hashkey %in% pull(subset(SISTRAT23_c1_2010_2024_df_prev1g, rn %in% c(726, 45001), "hash_key")))|>
+   mutate(
+     hashkey = gsub(
+         "(?<=^.{8}).{2}",   # lookbehind for first 8 chars, match the next 2
+         "**",               # replace with two asterisks
+         hashkey,
+         perl = TRUE
+     ))|>
+   knitr::kable("markdown", caption="Problematic cases with more than one death date")
+ 
+# Chose the earliest date.
+ mortality_first <- mortality|>
+  tidytable::slice_min(def_date, n = 1, with_ties = FALSE, na_rm = TRUE, .by = hashkey)
+
+SISTRAT23_c1_2010_2024_df_prev1h <- 
+SISTRAT23_c1_2010_2024_df_prev1g|>
+    (\(df) {
+    message(paste0("Before discarding treatment episodes after death: ",formatC(nrow(df), big.mark=",")))
+    message(paste0("Before discarding treatment episodes after death: ",formatC(nrow(distinct(df, hash_key)), big.mark=",")))
+    df
+    })()|> 
+  left_join(mortality_first[,c("hashkey", "def_date")], by=c("hash_key"="hashkey"), multiple="first")|>
+  (\(df) { 
+    cat(paste0("4.00.a. Discharge after death date, cases: ", formatC(nrow(tidytable::filter(df, disch_date>def_date)), big.mark=",")),"\n")
+    cat(paste0("4.00.a. Discharge after death date, RUNs: ", formatC(nrow(distinct(tidytable::filter(df, disch_date>def_date), hash_key)), big.mark=",")),"\n")
+    distinct(tidytable::filter(df, disch_date>def_date), hash_key)|> pull(hash_key) ->> hashs_disch_after_def_date
+    tidytable::filter(df, disch_date>def_date)|> pull(rn) ->> rows_disch_after_def_date 
+    df
+    })()|> 
+  tidytable::mutate(disch_date_rec00= tidytable::case_when(disch_date>def_date~ def_date, T~ disch_date))|>
+  tidytable::mutate(dit_rec00= tidytable::case_when(disch_date>def_date~ lubridate::time_length(lubridate::interval(adm_date_rec, def_date), "days"), T~ dit_rec))|>
+  tidytable::mutate(OBS= tidytable::case_when(disch_date>def_date~ paste0(as.character(OBS),";","4.00.a. Discharge after death date, replaced"), TRUE ~ as.character(OBS)))|>
+  (\(df) { 
+    cat(paste0("4.00.b. Admission after death date, cases: ", formatC(nrow(tidytable::filter(df, adm_date>def_date)), big.mark=",")),"\n")
+    cat(paste0("4.00.b. Admission after death date, RUNs: ", formatC(nrow(distinct(tidytable::filter(df, adm_date>def_date), hash_key)), big.mark=",")),"\n")
+    distinct(tidytable::filter(df, adm_date>def_date), hash_key)|> pull(hash_key) ->> hashs_adm_after_def_date
+    tidytable::filter(df, adm_date>def_date)|> pull(rn) ->> rows_adm_after_def_date 
+    df
+    })()|>
+  tidytable::filter(adm_date<=def_date|is.na(def_date))|>
+    tidytable::mutate(OBS= tidytable::case_when(hash_key %in% hashs_adm_after_def_date~ paste0(as.character(OBS),";","4.00.b. Admission after death date, eliminated episode"), TRUE ~ as.character(OBS)))|>
+  (\(df) {
+    message(paste0("After discarding treatment episodes after death: ",formatC(nrow(df), big.mark=",")))
+    message(paste0("After discarding treatment episodes after death: ",formatC(nrow(distinct(df, hash_key)), big.mark=",")))
+    df
+    })()
+# Before discarding treatment episodes after death: 174,107
+# Before discarding treatment episodes after death: 121,447
+# 4.00.a. Discharge after death date, cases: 623 
+# 4.00.a. Discharge after death date, RUNs: 579 
+# 4.00.b. Admission after death date, cases: 201 
+# 4.00.b. Admission after death date, RUNs: 159 
+# Before discarding treatment episodes after death: 173,906
+# Before discarding treatment episodes after death: 121,299
+
+SISTRAT23_c1_2010_2024_df_prev1h$OBS <- sub("^;\\s*", "", SISTRAT23_c1_2010_2024_df_prev1h$OBS)
+if(SISTRAT23_c1_2010_2024_df_prev1h|> group_by(rn)|> summarise(n=n())|> filter(n>1)|> nrow()>0) stop("Error: row count changed after reintegration.")
+
+
+warning(paste0("There are some cases that report death as a cause of administrative discharge previous to 2020: ", SISTRAT23_c1_2010_2024_df_prev1h|> mutate(
+    hash_key = gsub(
+      "(?<=^.{8}).{2}",   # lookbehind for first 8 chars, match the next 2
+      "**",               # replace with two asterisks
+      hash_key,
+      perl = TRUE
+    ))|> filter(adm_disch_reason=="death", is.na(def_date)) |> filter(TABLE<=2019) |> nrow()))
+    
+```
+
+We created the variables `disch_date_rec00` and `dit_rec00` to capture deaths that occurred during treatment.
+
+
+## pre-00.c. Missing discharge dates due to truncation in dataset retrieval
+
+We observe that there are some cases with missing treatment discharge dates, as if they were still ongoing. We also added in September, 2025, those cases with missing dates or originally bad-written dates (thus, with wrong treatment compliance status).
+
+We added the days in treatment for each record, and created what would be a hypothetical discharge date (`disch_date_na`). Then filtered for patients with ongoing treatments (without treatment compliance). If they did not have days in treatment, we completed them based on cutoff dates, depending on the retrieval date of each base (2010-2018: 2019-11-05; 2019: 2019-11-13; 2020-2022: 2023-04-28; 2023-2024: 2025-05-28).
+
+The conclusion of those treatments (whether dropout, administrative discharge, or therapeutic discharge) cannot be determined.
+
+
+```{r miss-dischdate-due-adm-truncaton}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+SISTRAT23_c1_2010_2024_df_prev1h|>
+   tidytable::filter(is.na(disch_date_rec00))|> 
+   tidytable::mutate(disch_date_na= as.Date(adm_date_rec_num+ dit_rec00, origin = "1970-01-01"))|>
+   tidytable::select(TABLE_rec, rn, hash_key, dit_rec00, adm_age_rec, adm_date_rec, disch_date_na, disch_date_rec00, id_centro, tr_compliance, plan_type, senda)|> 
+  tidytable::mutate(
+    year4 = as.integer(substr(as.character(TABLE_rec), 1, 4))
+  )|>
+  tidytable::mutate(
+    cutoff_date = tidytable::case_when(
+      year4 >= 2010 & year4 <= 2018 ~ as.Date("2019-11-05"),
+      year4 == 2019 ~ as.Date("2019-11-13"),
+      year4 >= 2020 & year4 <= 2022 ~ as.Date("2023-04-28"),
+      year4 >= 2023 & year4 <= 2024 ~ as.Date("2025-05-28"),
+      TRUE ~ as.Date(NA)
+    ))|>
+  #sep 2025, corrected to include those with NAs in days in treatment #dias_en_tratamiento
+  tidytable::mutate(disch_date_na= ifelse(is.na(dit_rec00), cutoff_date, disch_date_na))|>
+  tidytable::mutate(dit_rec_na= lubridate::time_length(lubridate::interval(adm_date_rec, disch_date_na),"days"))|>
+  tidytable::filter(
+    #grepl("currently", tr_compliance) &
+      !is.na(cutoff_date) &
+      disch_date_na >= cutoff_date)|>
+  tidytable::select(-year4, -cutoff_date)|>
+  (\(df) { 
+    cat(paste0("4.0.Missing discharge dates due to truncation, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0.Missing discharge dates due to truncation, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    distinct(df, hash_key)|> pull(hash_key) ->> hash_truncated_treatments_due_to_retrieval_total #3621
+    df|> pull(rn) ->> rows_truncated_treatments_due_to_retrieval_total #3626 
+    df    # adding entries with NA in treatment days I added 3643 and 3648 (~20 cases) ; using dit_rec instead of dias_de_tratamiento gave me 3653; 3648
+  })()|> 
+  tidytable::filter(dit_rec_na>1096)|>
+  (\(df) {     
+    cat(paste0("4.0.Missing discharge dates due to truncation, >1096 days in tr., cases: ", formatC(nrow(df), big.mark=",")),"\n") 
+    cat(paste0("4.0.Missing discharge dates due to truncation, >1096 days in tr., RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    distinct(df, hash_key)|> pull(hash_key) ->> hash_truncated_treatments_due_to_retrieval_more_3yrs 
+    df|> pull(rn) ->> rows_truncated_treatments_due_to_retrieval_more_3yrs
+    df
+    })()|> 
+  #View()
+  tidytable::filter(hash_key %in% (sample_n_with_seed(data.frame(hash_truncated_treatments_due_to_retrieval_more_3yrs),20, seed=2125)|> pull(1)))|>
+  tidytable::mutate(hash_key= as.numeric(factor(hash_key)))|>
+  knitr::kable("markdown", caption= "Missing discharge dates due to administrative truncation (sample >3 yrs)")
+# 4.0.Missing discharge dates due to truncation, cases: 3,653 
+# 4.0.Missing discharge dates due to truncation, RUNs: 3,648 
+# 4.0.Missing discharge dates due to truncation, >1096 days in tr., cases: 348 
+# 4.0.Missing discharge dates due to truncation, >1096 days in tr., RUNs: 347 
+#2025-09-27
+# 4.0.Missing discharge dates due to truncation, cases: 3,627 
+# 4.0.Missing discharge dates due to truncation, RUNs: 3,622 
+# 4.0.Missing discharge dates due to truncation, >1096 days in tr., cases: 326 
+# 4.0.Missing discharge dates due to truncation, >1096 days in tr., RUNs: 325 
+
+SISTRAT23_c1_2010_2024_df_prev1h|>
+    tidytable::mutate(disch_date_na= as.Date(adm_date_rec_num+ dit_rec00, origin = "1970-01-01"))|>
+    tidytable::mutate(
+      year4 = as.integer(substr(as.character(TABLE_rec), 1, 4)))|>
+    tidytable::mutate(
+        cutoff_date = tidytable::case_when(
+            year4 >= 2010 & year4 <= 2018 ~ as.Date("2019-11-05"),
+            year4 == 2019 ~ as.Date("2019-11-13"),
+            year4 >= 2020 & year4 <= 2022 ~ as.Date("2023-04-28"),
+            year4 >= 2023 & year4 <= 2024 ~ as.Date("2025-05-28"),
+            TRUE ~ as.Date(NA)
+        ))|>
+    #sep 2025, corrected to include those with NAs in days in treatment #dias_en_tratamiento
+    tidytable::mutate(disch_date_na= ifelse(is.na(dit_rec00), cutoff_date, disch_date_na))|>
+    tidytable::mutate(dit_rec_na= lubridate::time_length(lubridate::interval(adm_date_rec, disch_date_na),"days"))|>
+    tidytable::select(TABLE_rec, rn, hash_key, dit_rec_na, adm_age_rec, adm_date_rec, disch_date_na, disch_date_rec00, id_centro, tr_compliance, plan_type, senda)|>
+    tidytable::filter(hash_key %in% hash_truncated_treatments_due_to_retrieval_more_3yrs)|> tidytable::mutate(hash_key= as.numeric(factor(hash_key)))|> rio::export(paste0(getwd(),"/_out/truncated_tr_retrieval.xlsx"))
+```
+
+As August, 2025, we found `r paste0(length(rows_truncated_treatments_due_to_retrieval_total), " (patients= ", length(hash_truncated_treatments_due_to_retrieval_total) ,")")` records with no discharge date, treatment compliance status as "currently in", and an hypothetical discharge date (by adding recorded days in treatment to each admission date) earlier than the documented date of retrieval. 
+We defined a **per-episode cutoff date** using `tidytable::case_when()` based on the first four digits of `TABLE_rec` (2010–2018 → `2019-11-05`; 2019 → `2019-11-13`; 2020–2022 → `2023-04-28`; 2023–2024 → `2025-05-28`) and then **filtered** records to those with `grepl("currently", tr_compliance)` and `disch_date_na < cutoff_date`. The year was extracted via `substr(as.character(TABLE_rec), 1, 4)`. We complemented this information with information provided in August 8, 2025. 
+
+After flagging pre-00 inconsistencies, we created `pre00_flag` to label episodes by `hash_key`: **4.0.a** when a truncated episode had a subsequent admission in the same `hash_key`, and **4.0.b** when `dias_en_tratamiento > 1096`; we tabulated these flags. We then drew a 1,000-record holdout of non-truncated, observed durations, built an imputation set with the target **log1p(dias\_en\_tratamiento)** (masking the holdout), and ran multiple imputation with chained equations based on predictive mean matching constrained to 1096 days in treatment, days to subsequent treatment and time to death with `mice` package, complemented with `missRanger` (missranger_truncated_treatments.R) with predictive mean matching and calculated the out-of-bag R-squared. Next, for missranger predictions, we computed per-episode constraints. Then, we back-transformed predictions to days, rounded, and evaluated accuracy on the holdout (MAE/MedianAE/RMSE and ±30/90-day rates) for both imputations. Finally, we **reintegrated only for truncated records**: set `dias_final` to the imputed/capped days where original days were missing and annotated changed rows with **“4.00.c. Imputed/capped to avoid overlap and ≤1096 days”**.
+
+```{r miss-dischdate-due-adm-truncaton-apply}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+library(mice)
+
+# c("51e1096da6e54d7be981372550a9d24e2347231f5d20a4cb97ebf0480419d699", 
+# "5ec2e5f2cb286079a5f72321cbda6374fba453f54548b7702472c681de7d0a4f", 
+# "6327eb9dfb10251cfa489ea16d9293be5ac69d33be0be2c004f63d22f4431a1f", 
+# "a8c7d7d7c97a68e25d473498dad684fe5ba4194423a937308579d235839d2c99", 
+# "abd3dedadd9c378d3de7beb50bec1649011f009ca1146b57fad4c83658406ac1", 
+# "c7a7f17ed9d06c9ca06d82ccbdcf5e873fe0fe03417517145ad7fa474f1bfa1d", 
+# "ef0fd066e24b02e077017dc53b0b6684c552c430d1a37ef578558d801b57f4d8"
+# )
+
+pre00_flag<- 
+  SISTRAT23_c1_2010_2024_df_prev1h|>
+  tidytable::mutate(
+    year4 = as.integer(substr(as.character(TABLE_rec), 1, 4))
+  )|>
+  tidytable::mutate(
+    cutoff_date = tidytable::case_when(
+      year4 >= 2010 & year4 <= 2018 ~ as.Date("2019-11-05"),
+      year4 == 2019 ~ as.Date("2019-11-13"),
+      year4 >= 2020 & year4 <= 2022 ~ as.Date("2023-04-28"),
+      year4 >= 2023 & year4 <= 2024 ~ as.Date("2025-05-28"),
+      TRUE ~ as.Date(NA)
+    ))|>
+  tidytable::mutate(disch_date_na= as.Date(adm_date_rec_num+ dit_rec00, origin = "1970-01-01"))|>
+  #sep 2025, corrected to include those with NAs in days in treatment #dias_en_tratamiento
+  tidytable::mutate(disch_date_na= ifelse(is.na(dit_rec), cutoff_date, disch_date_na))|>
+  #should be dit_rec_na, but i skipped for consistency
+  tidytable::mutate(dias_en_tratamiento= lubridate::time_length(lubridate::interval(adm_date_rec, disch_date_na),"days"))|>  
+  tidytable::mutate(is_truncated = rn %in% rows_truncated_treatments_due_to_retrieval_total)|>
+  tidytable::group_by(hash_key)|>
+  tidytable::mutate(max_adm_in_group = max(adm_date_rec, na.rm = TRUE))|>
+  tidytable::ungroup()|>
+  # Flags
+  tidytable::mutate(flag_a = tidytable::case_when(
+    is_truncated & !is.na(adm_date_rec) & adm_date_rec < max_adm_in_group ~
+      "4.0.a.Subsequent treatment after index admission (same hash_key)",
+    TRUE ~ NA_character_),
+    flag_b = tidytable::case_when(
+      dias_en_tratamiento > 1096 ~ "4.0.b.Ongoing treatment (>3 years)",
+      TRUE ~ NA_character_))|>
+  # Combine flags into a single FLAG column
+  tidytable::mutate(FLAG = flag_a,
+                    FLAG = ifelse(!is.na(flag_b) & !is.na(FLAG), paste0(FLAG, "; ", flag_b),
+                                  ifelse(is.na(FLAG), flag_b, FLAG)))|>
+         (\(df) {
+        message(paste0("Episodes w/ problematic adm truncated treatments: ", nrow(tidytable::filter(df,!is.na(FLAG)))))
+        message(paste0("Patients w/ problematic adm truncated treatments: ", tidytable::distinct(tidytable::filter(df,!is.na(FLAG)), hash_key) |> nrow()))
+        tidytable::filter(df,!is.na(FLAG)) |> pull(rn) ->> rows_problematic_adm_truncated_treatments #1345, #1388 after adding missing days in treatment
+        tidytable::filter(df,!is.na(FLAG)) |> distinct(hash_key) |>  pull(hash_key)->> hash_problematic_adm_truncated_treatments #1324 #1366 after adding missing days in treatment
+        df
+    })()|> 
+  tidytable::select(-is_truncated, -max_adm_in_group, -flag_a, -flag_b)|> janitor::tabyl(FLAG)
+
+pre00_flag[,c("FLAG","n")]|>
+  knitr::kable("markdown", caption= "Flags")
+# Table: Flags
+# 
+# |FLAG                                                                                                 |      n|
+# |:----------------------------------------------------------------------------------------------------|------:|
+# |4.0.a.Subsequent treatment after index admission (same hash_key)                                     |     27|
+# |4.0.a.Subsequent treatment after index admission (same hash_key); 4.0.b.Ongoing treatment (>3 years) |     20|
+# |4.0.b.Ongoing treatment (>3 years)                                                                   |   1314|
+# |                                                                                                     | 172547|
+#[1]     27     20   1314 172547
+#27 20 1313  172548
+
+# 0.a) Pick holdout rows (exclude your truncated set)
+set.seed(2125)
+holdout_rn <-
+  SISTRAT23_c1_2010_2024_df_prev1h|>
+  #sep 2025, dont add imputations here, because this are the "clean" candidates for accuracy indexes
+  #corrected to get processed days in treatment also valid
+  tidytable::filter(!is.na(dit_rec00), !is.na(dias_en_tratamiento))|>
+  tidytable::anti_join(
+    tidytable::tidytable(rn = rows_truncated_treatments_due_to_retrieval_total), by = "rn"
+  )|>
+  tidytable::slice_sample(n = 1000)|>
+  tidytable::pull(rn)
+
+# 0.b) Build mr_in and MASK the holdout on the log target
+mr_in <-
+  SISTRAT23_c1_2010_2024_df_prev1h|>
+  tidytable::mutate(
+    year4 = as.integer(substr(as.character(TABLE_rec), 1, 4))
+  )|>
+  tidytable::mutate(
+    cutoff_date = tidytable::case_when(
+      year4 >= 2010 & year4 <= 2018 ~ as.Date("2019-11-05"),
+      year4 == 2019 ~ as.Date("2019-11-13"),
+      year4 >= 2020 & year4 <= 2022 ~ as.Date("2023-04-28"),
+      year4 >= 2023 & year4 <= 2024 ~ as.Date("2025-05-28"),
+      TRUE ~ as.Date(NA)
+    ))|>
+  tidytable::mutate(disch_date_na= as.Date(adm_date_rec_num+ dit_rec00, origin = "1970-01-01"))|>
+  #sep 2025, corrected to include those with NAs in days in treatment #dias_en_tratamiento
+  tidytable::mutate(disch_date_na= ifelse(is.na(dit_rec00), cutoff_date, disch_date_na))|>
+  tidytable::mutate(dias_for_imp0= lubridate::time_length(lubridate::interval(adm_date_rec, disch_date_na),"days"))|>  
+  tidytable::mutate(
+    dias_for_imp0     = as.numeric(dias_for_imp0),
+    dias_for_imp0     = ifelse(is.finite(dias_for_imp0) & dias_for_imp0 >= 0, dias_for_imp0, NA_real_),
+    log_dias_for_imp  = ifelse(is.na(dias_for_imp0), NA_real_, log1p(dias_for_imp0)),
+    adm_days          = as.integer(adm_date_rec - as.Date("1970-01-01")),
+    TABLE_year        = as.integer(substr(as.character(TABLE_rec), 1, 4))
+  )|>
+  tidytable::mutate(
+    is_holdout        = rn %in% holdout_rn,
+    log_dias_for_imp  = ifelse(is_holdout, NA_real_, log_dias_for_imp)  # <- mask for missRanger
+  )
+
+mr_mice <-  mr_in |>
+  tidytable::arrange(hash_key, adm_date_rec) |>
+  tidytable::group_by(hash_key) |>
+  tidytable::mutate(
+    next_adm        = tidytable::lead(adm_date_rec),
+    gap_to_next_raw = as.integer(next_adm - adm_date_rec) - 1L,
+    gap_to_next     = tidytable::case_when(
+      is.na(gap_to_next_raw) ~ 1096L,
+      gap_to_next_raw < 0L   ~ 0L,
+      TRUE                   ~ gap_to_next_raw
+    ),
+    dias_max_allowed = pmin(gap_to_next, 1096L)
+  ) |>
+  tidytable::ungroup() |>
+  tidytable::select(-next_adm, -gap_to_next_raw) |>
+  tidytable::mutate(def_days = as.integer(def_date - as.Date("1970-01-01")))
+
+# 1) Mask the target IN mr_mice (the object you feed to mice)
+mr_mice_eval <-
+  mr_mice |>
+  tidytable::mutate(
+    is_holdout       = rn %in% holdout_rn,
+    log_dias_for_imp = ifelse(is_holdout, NA_real_, log_dias_for_imp)
+  )
+
+# 2) Data frame and full method vector
+# predictor matrix: include adm_days, dias_max_allowed, def_days as predictors of the target
+
+# data for mice should be a plain data.frame
+dat <- as.data.frame(mr_mice_eval)   # not mr_mice
+meth <- mice::make.method(dat); meth[] <- ""
+meth["log_dias_for_imp"] <- "pmm_constrained"
+pred <- mice::make.predictorMatrix(dat)
+pred[,] <- 0
+pred["log_dias_for_imp", c("adm_days","dias_max_allowed","def_days",
+                           "plan_type","tipo_centro","adm_age_rec", "sub_dep_icd10_status", "adm_motive", "macrozone_center", "TABLE_year", "yr_block", "sexo", "senda")] <- 1
+pred[ , "log_dias_for_imp"] <- 0
+##
+mice.impute.pmm_constrained <- function(y, ry, x, wy = NULL, donors = 9, ...) {
+  if (is.null(wy)) wy <- !ry
+  # a) plain PMM on the LOG target
+  yimp <- mice:::mice.impute.pmm(y = y, ry = ry, x = x, wy = wy, donors = donors, ...)
+  
+  # b) enforce constraints on DAYS, then back to log
+  #    x must contain: adm_days, dias_max_allowed, def_days (numeric days since 1970-01-01)
+  adm_days        <- x[wy, "adm_days"]
+  dmax            <- x[wy, "dias_max_allowed"]
+  def_days        <- x[wy, "def_days"]  # may be NA
+  
+  days            <- round(pmax(exp(yimp) - 1, 0))
+  # cap by 1096 and gap_to_next
+  days            <- pmin(days, 1096L, dmax)
+  # cap by death date if available
+  death_cap       <- def_days - adm_days
+  days            <- ifelse(is.finite(death_cap), pmin(days, pmax(0, death_cap)), days)
+  # back to log
+  log_days        <- log1p(pmax(days, 0))
+  return(log_days)
+}
+
+mice.impute.median_matching_constrained <- function(y, ry, x, wy = NULL, donors = 9, ...) {
+  if (is.null(wy)) wy <- !ry
+  
+  # Check required columns
+  required_cols <- c("adm_days", "dias_max_allowed", "def_days")
+  if (!all(required_cols %in% colnames(x))) {
+    stop("x must contain: adm_days, dias_max_allowed, def_days")
+  }
+  
+  # Load required package
+  if (!requireNamespace("quantreg", quietly = TRUE)) {
+    stop("Package 'quantreg' required for median matching. Install with: install.packages('quantreg')")
+  }
+  
+  # Fit quantile regression (median) model
+  fit <- quantreg::rq(y[ry] ~ x[ry, , drop = FALSE], tau = 0.5, ...)
+  
+  # Predict medians for observed and missing cases
+  pred_obs <- predict(fit, newdata = x[ry, , drop = FALSE])
+  pred_mis <- predict(fit, newdata = x[!ry, , drop = FALSE])
+  
+  # Find donors with closest predicted medians
+  y_imp <- sapply(seq_along(pred_mis), function(i) {
+    distances <- abs(pred_obs - pred_mis[i])
+    donor_indices <- order(distances)[1:donors]
+    sample(y[ry][donor_indices], 1)  # Randomly pick one donor
+  })
+  
+  # Apply constraints (same as original function)
+  adm_days <- x[wy, "adm_days"]
+  dmax <- x[wy, "dias_max_allowed"]
+  def_days <- x[wy, "def_days"]
+  
+  # Convert to days and apply constraints
+  days <- round(pmax(exp(y_imp) - 1, 0))
+  days <- pmin(days, 1096L, dmax)
+  
+  # Cap by death date if available
+  death_cap <- def_days - adm_days
+  days <- ifelse(is.finite(death_cap), 
+                 pmin(days, pmax(0, death_cap)), 
+                 days)
+  
+  # Convert back to log scale
+  log_days <- log1p(pmax(days, 0))
+  return(log_days)
+}
+
+# 3) Run mice (custom imputer must be defined in the global env: mice.impute.pmm_constrained)
+set.seed(2125)
+imp_eval <- mice::mice(
+  dat,
+  m = 9,
+  method = meth,
+  predictorMatrix = pred,
+  printFlag = FALSE, 
+  parallel= T
+)
+mice_out <- mice::complete(imp_eval)
+mice_long <- mice::complete(imp_eval, action = "long")|>
+  tidytable::mutate(
+    dias_max_allowed = dplyr::coalesce(as.integer(dias_max_allowed), 1096L)
+  )
+
+meth2 <- mice::make.method(dat); meth2[] <- ""
+meth2["log_dias_for_imp"] <- "pmm_constrained"
+
+imp_eval_alt <- mice::mice(
+  dat,
+  m = 9,
+  method = meth2,
+  predictorMatrix = pred,
+  printFlag = FALSE, 
+  parallel= T
+)
+mice_alt_out <- mice::complete(imp_eval)
+mice_alt_long <- mice::complete(imp_eval, action = "long")|>
+  tidytable::mutate(
+    dias_max_allowed = dplyr::coalesce(as.integer(dias_max_allowed), 1096L)
+  )
+
+# compute metrics per .imp, then average
+
+post_mice <- mice_long |>
+  tidytable::mutate(
+    dias_pred_raw = round(pmax(exp(log_dias_for_imp) - 1, 0)),
+    dias_capped = pmin(dias_pred_raw, 1096L, dias_max_allowed),
+    disch_raw = as.Date(adm_days, origin = "1970-01-01") + dias_capped,
+    death_trim = !is.na(def_date) & disch_raw > def_date,
+    disch_date_imp = tidytable::case_when(
+      death_trim ~ def_date, 
+      TRUE ~ disch_raw
+    ),
+    dias_final = lubridate::time_length(lubridate::interval(as.Date(adm_days, origin = "1970-01-01"), disch_date_imp), "days"))
+
+post_mice_alt <- mice_alt_long |>
+  tidytable::mutate(
+    dias_pred_raw = round(pmax(exp(log_dias_for_imp) - 1, 0)),
+    dias_capped = pmin(dias_pred_raw, 1096L, dias_max_allowed),
+    disch_raw = as.Date(adm_days, origin = "1970-01-01") + dias_capped,
+    death_trim = !is.na(def_date) & disch_raw > def_date,
+    disch_date_imp = tidytable::case_when(
+      death_trim ~ def_date, 
+      TRUE ~ disch_raw
+    ),
+    dias_final = lubridate::time_length(lubridate::interval(as.Date(adm_days, origin = "1970-01-01"), disch_date_imp), "days"))
+
+#real days in treatment
+truth_mice <- SISTRAT23_c1_2010_2024_df_prev1h |> tidytable::select(rn, truth = dit_rec00)
+
+SISTRAT23_c1_2010_2024_df_prev1h |> tidytable::select(rn, truth = dit_rec00) |> pull(truth) |> hist(main="Truth days in treatment (to evaluate imputations)", breaks=50, xlab= "Days in treatment")
+
+# 4) Evaluate on holdout with na.rm=TRUE (per imputation, then average)
+eval_by_imp_mice <- post_mice |>
+  tidytable::inner_join(truth_mice, by = "rn") |>
+  tidytable::filter(rn %in% holdout_rn) |>
+  tidytable::mutate(err = dias_final - truth, ae = abs(err)) |>
+  tidytable::summarise(
+    MAE_days = mean(ae, na.rm = TRUE),
+    MedianAE = stats::median(ae, na.rm = TRUE),
+    RMSE_days = sqrt(mean(err^2, na.rm = TRUE)),
+    p_within_7d = mean(ae <= 7, na.rm = TRUE),
+    p_within_30d = mean(ae <= 30, na.rm = TRUE),
+    p_within_90d = mean(ae <= 90, na.rm = TRUE),
+    .by = .imp
+  )
+eval_by_imp_mice_alt <- post_mice_alt |>
+  tidytable::inner_join(truth_mice, by = "rn") |>
+  tidytable::filter(rn %in% holdout_rn) |>
+  tidytable::mutate(err = dias_final - truth, ae = abs(err)) |>
+  tidytable::summarise(
+    MAE_days = mean(ae, na.rm = TRUE),
+    MedianAE = stats::median(ae, na.rm = TRUE),
+    RMSE_days = sqrt(mean(err^2, na.rm = TRUE)),
+    p_within_7d = mean(ae <= 7, na.rm = TRUE),
+    p_within_30d = mean(ae <= 30, na.rm = TRUE),
+    p_within_90d = mean(ae <= 90, na.rm = TRUE),
+    .by = .imp
+  )
+
+
+eval_summary_mice <- eval_by_imp_mice |>
+  tidytable::summarise(
+    n = length(holdout_rn),
+    dplyr::across(where(is.numeric), mean),
+    .groups = "drop"
+  )
+eval_summary_mice
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     125.     79.9      229.       0.124        0.281        0.536
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     88.7     71.8      122.       0.160        0.296        0.597
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     88.8     68.6      125.       0.152        0.296        0.621
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     138.     76.6      250.       0.137        0.266        0.579
+eval_summary_mice_alt <- eval_by_imp_mice_alt |>
+  tidytable::summarise(
+    n = length(holdout_rn),
+    dplyr::across(where(is.numeric), mean),
+    .groups = "drop"
+  )
+eval_summary_mice_alt
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     83.5     63.4      110.       0.107        0.266        0.643
+# A tidytable: 1 × 8
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     88.7     71.8      122.       0.160        0.296        0.597
+#      n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     88.8     68.6      125.       0.152        0.296        0.621
+#2025-09-27
+#       n  .imp MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int> <dbl>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     5     138.     76.6      250.       0.137        0.266        0.579
+source("G:/My Drive/Alvacast/SISTRAT 2023/cons/_hist_scripts/missranger_truncated_treatments.R")
+# OOB R^2 (log_dias_for_imp): 50.9%
+# The model explains 50.9% of the variance (OOB, log scale).
+# # # A tidytable: 1 × 7
+#       n MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     103.       76      150.       0.089        0.257        0.577
+#2025-09-27
+#The model explains 37.3% of the variance (OOB, log scale).
+#       n MAE_days MedianAE RMSE_days p_within_7d p_within_30d p_within_90d
+#   <int>    <dbl>    <dbl>     <dbl>       <dbl>        <dbl>        <dbl>
+# 1  1000     126.       91      180.       0.074        0.201        0.498
+# --- Reintegrate  with death cap ---
+# 5) Enforce constraints AFTER imputation and build discharge date
+#    (robust: if dias_max_allowed/adm_date_rec are missing, derive them on the fly)
+
+post_mice_reintegrate <- post_mice|>
+  tidytable::filter(rn %in% rows_problematic_adm_truncated_treatments)
+
+pooled_result <- post_mice_reintegrate|>
+  tidytable::left_join(pred_df, by="rn")|>
+  tidytable::group_by(rn) |>
+  tidytable::summarise(
+    dias_pred_unconstrained= mean(pred, na.rm=T),
+    dias_pred_raw = mean(dias_pred_raw, na.rm = TRUE),
+    dias_capped = mean(dias_capped, na.rm = TRUE),
+    dias_final = mean(dias_final, na.rm = TRUE),
+    # For dates, we might want to take the mode or median across imputations
+    disch_date_imp = as.Date(round(mean(as.numeric(disch_date_imp), na.rm = TRUE)), 
+                            origin = "1970-01-01"),
+    # For categorical, take the most frequent value
+    tr_compliance_imp = "adm truncated"
+  ) |>
+  tidytable::ungroup()|> 
+  #avoid on-negative, just in case
+  tidytable::mutate(dias_final= tidytable::case_when(dias_final<0~ dias_pred_unconstrained, dias_pred_unconstrained< dias_final & dias_pred_unconstrained>=0~ dias_pred_unconstrained, is.na(dias_final) & dias_pred_unconstrained>=0~dias_pred_unconstrained, T~dias_final))
+
+hist(pooled_result$dias_final, breaks=60, main="Histogram of imputed days")
+summary(pooled_result$dias_final)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#   0    1096    1096    1058    1096    1096
+# 2025-09-27
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#   0    1096    1096    1057    1096    1096 
+table(cut(pooled_result$dias_final, 6))
+# (-1.1,183]     (183,365]     (365,548]     (548,731]     (731,913] (913,1.1e+03] 
+#       21            16            14            10            13          1286 
+# 2025-09-27
+# (-1.1,183]     (183,365]     (365,548]     (548,731]     (731,913] (913,1.1e+03] 
+#          22            15            15            10            13          1263 
+
+# --- new database ---
+# 6) Join back, keep originals for non-target rows
+SISTRAT23_c1_2010_2024_df_prev1i <-
+  SISTRAT23_c1_2010_2024_df_prev1h|>
+  (\(df) { 
+    cat(paste0("0.Previous to imputing discharge dates,cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("0.Previous to imputing discharge dates,RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|>
+  tidytable::left_join(pooled_result, by= "rn")|>
+  tidytable::mutate(
+    dit_rec0= tidytable::case_when(
+      rn %in% rows_problematic_adm_truncated_treatments &
+        !is.na(dias_final)~ dias_final,
+      TRUE~ dit_rec
+    ),
+    disch_date_rec0= tidytable::case_when(
+      rn %in% rows_problematic_adm_truncated_treatments&
+        !is.na(dias_final)~ (adm_date_rec+ dias_final),
+      TRUE~ disch_date_rec00
+    ),
+    disch_date_rec0= as.Date(disch_date_rec0),
+    OBS= tidytable::case_when(
+      rn %in% rows_problematic_adm_truncated_treatments &
+        (!is.na(dit_rec00) | dit_rec00!= dit_rec)~
+        paste0(OBS,"; 4.0.ab.Adm truncated (>3yrs or subsequent treatment), imputed/capped to avoid overlap and ≤3yrs"),
+      TRUE~ OBS
+    ))|>
+  (\(df) { 
+    cat(paste0("0.After imputing discharge dates,cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("0.After imputing discharge dates,RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df    
+  })()|>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Early vs. late dropout
+  tidytable::mutate(dit_earl_drop_rec0= ifelse(dit_rec00>=90,0,1))|>
+  #changed the order of the labels (2025-06-02)
+  tidytable::mutate(dit_earl_drop_rec0= factor(dit_earl_drop_rec0, labels=c(">= 90 days","<90 days")))|>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Treatment compliance
+  tidytable::mutate(tr_compliance_rec0= case_when(grepl("<",dit_earl_drop_rec0) & grepl("dropout",tr_compliance)~ "early dropout", grepl(">",dit_earl_drop_rec0) & grepl("dropout",tr_compliance)~ "late dropout", rn %in% rows_problematic_adm_truncated_treatments & grepl("currently",tr_compliance)~ "adm truncated" , T~ tr_compliance))|>
+  tidytable::select(-any_of(c("disch_date_rec00", "dias_capped", "dias_pred_raw", "dias_pred_unconstrained", "dias_final", "disch_date_imp", "tr_compliance_imp")))
+
+# 0.Previous to imputing discharge dates,cases: 173,908 
+# 0.Previous to imputing discharge dates,RUNs: 121,299 
+# 0.After imputing discharge dates,cases: 173,908 
+# 0.After imputing discharge dates,RUNs: 121,299 
+# 2025-09-27
+# 0.Previous to imputing discharge dates,cases: 173,906 
+# 0.Previous to imputing discharge dates,RUNs: 121,299 
+# 0.After imputing discharge dates,cases: 173,906 
+# 0.After imputing discharge dates,RUNs: 121,299 
+
+# To explore cases
+# SISTRAT23_c1_2010_2024_df_prev1h|>
+#     tidytable::filter(rn %in% rows_problematic_adm_truncated_treatments) |> 
+#     tidytable::select(rn, hash_key, adm_date_rec,disch_date_rec00, dit_rec00, tr_compliance) |> View()
+
+warning(paste0("Less than 3 years in treatment (because of treatment overlap): ",
+SISTRAT23_c1_2010_2024_df_prev1h|>
+    tidytable::filter(rn %in% rows_problematic_adm_truncated_treatments) |> 
+    tidytable::select(rn, hash_key, adm_date_rec,disch_date_rec00, dit_rec00, tr_compliance) |>
+    tidytable::filter(adm_date_rec>"2022-05-28") |>
+  nrow()
+))
+# Aviso: Less than 3 years in treatment (because of treatment overlap): 7
+
+SISTRAT23_c1_2010_2024_df_prev1i$OBS <- sub("^;\\s*", "", SISTRAT23_c1_2010_2024_df_prev1i$OBS)
+SISTRAT23_c1_2010_2024_df_prev1i$OBS <- sub("^;\\s*", "", SISTRAT23_c1_2010_2024_df_prev1i$OBS)
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+invisible("Tests")
+
+overlap_tbl <-
+  SISTRAT23_c1_2010_2024_df_prev1i |>
+  tidytable::select(rn, hash_key, adm_date_rec, disch_date_rec0, dit_rec0, tr_compliance_rec0) |>
+  tidytable::arrange(hash_key, adm_date_rec, rn) |>
+  tidytable::group_by(hash_key) |>
+  tidytable::mutate(
+    prev_rn         = tidytable::lag(rn),
+    prev_adm        = tidytable::lag(adm_date_rec),
+    prev_disch      = tidytable::lag(disch_date_rec0),
+    prev_dit_days   = tidytable::lag(dit_rec0),
+    prev_compliance = tidytable::lag(tr_compliance_rec0)
+  ) |>
+  tidytable::ungroup() |>
+  tidytable::mutate(
+    # overlapping
+    overlap_flag = !is.na(adm_date_rec) & !is.na(prev_disch) & (adm_date_rec <= prev_disch),
+    # days of overlapping
+    overlap_days = tidytable::case_when(
+      overlap_flag ~ as.integer(prev_disch - adm_date_rec) + 1L,
+      TRUE         ~ 0L
+    )
+  ) |>
+  # keep problematic administrative truncated treatments
+  tidytable::filter(rn %in% rows_problematic_adm_truncated_treatments, overlap_flag) |>
+  # sort for inspection
+  tidytable::arrange(hash_key, prev_adm, adm_date_rec)
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+warning(paste0("Patients with imputed discharge dates but treatments w/ overlaps: ",length(unique(overlap_tbl$hash_key))))
+# to explore overlapped
+# SISTRAT23_c1_2010_2024_df_prev1i |>
+#   tidytable::filter(hash_key %in% pull(overlap_tbl, hash_key)) |>
+#    tidytable::select(rn, TABLE_rec, hash_key, adm_date_rec, disch_date_rec0, dit_rec0, tr_compliance_rec0)
+
+# Aviso: Patients with imputed discharge dates but treatments w/ overlaps: 24
+
+audit_summary_problematic <-
+    SISTRAT23_c1_2010_2024_df_prev1i |>
+    tidytable::arrange(hash_key, adm_date_rec, rn) |>
+    tidytable::group_by(hash_key) |>
+    tidytable::mutate(
+        next_adm   = tidytable::lead(adm_date_rec),
+        prev_disch = tidytable::lag(disch_date_rec0)
+    ) |>
+    tidytable::ungroup() |>
+    tidytable::mutate(
+        v_disch_after_death = !is.na(def_date) & !is.na(disch_date_rec0) & disch_date_rec0 > def_date,
+        v_adm_after_death   = !is.na(def_date) & !is.na(adm_date_rec)   & adm_date_rec   > def_date,
+        v_overlap           = !is.na(prev_disch) & !is.na(adm_date_rec) & (adm_date_rec <= prev_disch),
+        v_over_1096         = !is.na(dit_rec0)    & (dit_rec0 > 1096),
+        v_break_gap         = !is.na(next_adm)    & !is.na(disch_date_rec0) & (disch_date_rec0 >= next_adm)
+    ) |>  
+    tidytable::filter(rn %in% rows_problematic_adm_truncated_treatments) |>
+    tidytable::summarise(
+        n_rows                     = tidytable::n(),
+        disch_after_death_cases    = sum(v_disch_after_death),
+        adm_after_death_cases      = sum(v_adm_after_death),
+        overlap_cases              = sum(v_overlap),
+        over_1096_cases            = sum(v_over_1096),
+        break_gap_cases            = sum(v_break_gap),
+        disch_after_death_RUNs     = tidytable::n_distinct(hash_key[v_disch_after_death]),
+        adm_after_death_RUNs       = tidytable::n_distinct(hash_key[v_adm_after_death]),
+        overlap_RUNs               = tidytable::n_distinct(hash_key[v_overlap]),
+        over_1096_RUNs             = tidytable::n_distinct(hash_key[v_over_1096]),
+        break_gap_RUNs             = tidytable::n_distinct(hash_key[v_break_gap])
+    )
+
+audit_summary_problematic |> glimpse()
+# $ n_rows                  <int> 1360
+# $ disch_after_death_cases <int> 0
+# $ adm_after_death_cases   <int> 0
+# $ overlap_cases           <int> 24
+# $ over_1096_cases         <int> 0
+# $ break_gap_cases         <int> 0
+# $ disch_after_death_RUNs  <int> 0
+# $ adm_after_death_RUNs    <int> 0
+# $ overlap_RUNs            <int> 24
+# $ over_1096_RUNs          <int> 0
+# $ break_gap_RUNs          <int> 0
+
+# 2025-09-27
+# $ n_rows                  <int> 1338
+# $ disch_after_death_cases <int> 0
+# $ adm_after_death_cases   <int> 0
+# $ overlap_cases           <int> 24
+# $ over_1096_cases         <int> 0
+# $ break_gap_cases         <int> 0
+# $ disch_after_death_RUNs  <int> 0
+# $ adm_after_death_RUNs    <int> 0
+# $ overlap_RUNs            <int> 24
+# $ over_1096_RUNs          <int> 0
+# $ break_gap_RUNs          <int> 0
+
+rm(post_mice); rm(mr_mice_eval); rm(dat); rm(mr_mice); rm(mr_in)
+```
+
+On a 1,000-case holdout, MAE = `r round(eval_summary_mice$MAE_days,0)` days and median absolute error = `r round(eval_summary_mice$MedianAE,0)` days (typical error ≈ `r round(eval_summary_mice$MedianAE/30.5,0)` months), RMSE = `r round(eval_summary_mice$RMSE_days,0)` days signals heavy-tailed misses, and only `r scales::percent(eval_summary_mice$p_within_30d,0.1)` and `r scales::percent(eval_summary_mice$p_within_90d)` of predictions fall within ±30 and ±90 days respectively. **These predictions might be useful for coarse aggregates, not for precise episode-level estimates. However, these accuracy metrics apply only to the small subset that required imputation/constraints: `r sum(pre00_flag$n[!is.na(pre00_flag$FLAG)])` episodes (≈ `r scales::percent(sum(pre00_flag$n[!is.na(pre00_flag$FLAG)])/sum(pre00_flag$n), accuracy=.1)`)**. The rest of observations are unaffected and retain their observed durations, so the impact on the full cohort is limited.
+
+We imputed dates of discharge in date (`disch_date_rec0`) formats, considering death date, subsequent admission date, limitation of 1096 days in treatment. Also we corrected the days in treatment from `dit_rec` into `dit_rec0`. Finally, we recoded the `tr_compliance` variable to indicate that the treatment was truncated due to administrative reasons (`tr_compliance_rec0`).
+
+## pre-00.d. Impute negative days in treatment
+
+
+```{r pre-00.d- neg-days-in-tr}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+SISTRAT23_c1_2010_2024_df_prev1i |>  filter(rn %in% (SISTRAT23_c1_2010_2024_df_prev1g |> filter(dit<0) |> pull(rn))) |>  select(hash_key, rn, dit, dit_rec, dit_rec0, adm_date_rec, disch_date_rec0, tr_compliance_rec0) |>  mutate(hash_key= as.numeric(factor(hash_key))) |>  knitr::kable("markdown",caption="Negative days in treatment")
+#194
+
+## 2) Build robust numeric dates using YOUR variables
+df2 <- SISTRAT23_c1_2010_2024_df_prev1i |> 
+  mutate(
+    adm_num = adm_date_rec_num,
+    disch_num =  as.numeric(disch_date_rec0),
+    dit_eff = coalesce(dit, disch_num - adm_num)  # negative DIT detection
+  )
+
+## 3) Identify negative-DIT rows by your rn/hash_key
+neg_tbl <- df2 |> 
+  filter(!is.na(dit_eff) & dit_eff < 0) |> 
+  select(hash_key, rn)
+
+## 4) Build VALID intervals (disch > adm) per hash_key for overlap detection
+ivals <- df2 %>%
+  filter(!is.na(hash_key), !is.na(rn),
+         !is.na(adm_num), !is.na(disch_num),
+         disch_num > adm_num) %>%
+  select(hash_key, rn, adm_num, disch_num)
+
+## 5) Find overlaps **within the same hash_key** (strict, symmetric; nested included)
+# strict overlap: start_x < end_y AND end_x > start_y
+ov_pairs <- ivals %>%
+  inner_join(ivals, by = "hash_key", suffix = c("_x", "_y")) %>%
+  filter(rn_x < rn_y,
+         adm_num_x < disch_num_y,
+         disch_num_x > adm_num_y)
+
+hash_with_overlap <- distinct(ov_pairs, hash_key)
+
+## 6) Decide what to do with negative-DIT rows
+neg_tags <- neg_tbl %>%
+  mutate(
+    has_overlap_in_hash = hash_key %in% hash_with_overlap$hash_key,
+    tag = if_else(
+      has_overlap_in_hash,
+      "4.00.d.Negative days in treatment, removed",
+      "4.00.d.Negative days in treatment, no overlap, imputed"
+    )
+  )
+
+
+invisible("We get values from the imputation")
+missranger_neg_days_treatment_imp<- 
+pred_df |> filter(rn%in% as.numeric(unlist(neg_tags[grepl("impute",neg_tags$tag),"rn"])))
+
+## Remove redundant database
+rm(df2)
+
+## 7) Append tags to OBS and remove the marked rows
+
+SISTRAT23_c1_2010_2024_df_prev1i2 <- 
+  SISTRAT23_c1_2010_2024_df_prev1i|>
+  (\(df) { 
+    cat(paste0("0.Previous to imputing/deleting negative days in treatment,cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("0.Previous to imputing/deleting negative days in treatment,RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|>
+  tidytable::mutate(
+    OBS= tidytable::case_when(
+      hash_key %in% as.character(unlist(neg_tags[grepl("remove",neg_tags$tag),"hash_key"]))~
+        paste0(OBS,"; 4.0.d1. Negative days in treatment and overlap, removed entry"),
+      TRUE~ OBS
+    ))|>
+  tidytable::filter(!rn %in% as.numeric(unlist(neg_tags[grepl("remove",neg_tags$tag),"rn"])))|>
+  tidytable::left_join(missranger_neg_days_treatment_imp, by="rn")|>
+  tidytable::mutate(
+    dit_rec0= tidytable::case_when(
+      !is.na(pred)~ pred,
+      TRUE~ dit_rec0
+    ),
+    disch_date_rec0= tidytable::case_when(
+      !is.na(pred)~ (adm_date_rec+ pred),
+      TRUE~ disch_date_rec0
+    ),
+    disch_date_rec0= as.Date(disch_date_rec0),
+    OBS= tidytable::case_when(
+      !is.na(pred)~
+        paste0(OBS,"; 4.0.d2.Negative days in treatment, no overlap, imputed"),
+      TRUE~ OBS
+    ))|>
+  (\(df) { 
+    cat(paste0("0.After imputing/deleting negative days in treatment,cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("0.After imputing/deleting negative days in treatment,RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df    
+  })()|>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Early vs. late dropout
+  tidytable::mutate(dit_earl_drop_rec0= ifelse(dit_rec0>=90 & !is.na(dit_rec0),0,1))|>
+  #changed the order of the labels (2025-06-02)
+  tidytable::mutate(dit_earl_drop_rec0= factor(dit_earl_drop_rec0, labels=c(">= 90 days","<90 days")))|>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Treatment compliance
+  tidytable::mutate(tr_compliance_rec0= case_when(grepl("<",dit_earl_drop_rec0) & grepl("dropout",tr_compliance_rec0)~ "early dropout", grepl(">",dit_earl_drop_rec0) & grepl("dropout",tr_compliance_rec0)~ "late dropout", T~ tr_compliance_rec0))|>
+  tidytable::select(-any_of(c("pred"))) 
+```
+
+
+## 0. Rule-based deduplication
+
+In order to find and delete duplicated data that does not add information relevant for the purposes of the study, we now may **use these standardized variables as a criteria to achieve the goal of having a unique event per HASH, by reducing its complexity based on irrelevant differences**.
+
+### 0.a. Deduplication based on standardized columns of interest for the study
+
+Some of our main variablesfor the study are listed here:
+
+- hash_key=	Masked Identifier (RUN)
+- region_del_centro=	Chilean Region of the Center
+- dit_rec=	Days of Treatment
+- adm_date_rec_num=	Date of Admission to Treatment
+- disch_date=	Date of Discharge from Treatment
+- id_centro= Treatment Center ID
+- codigo_identificacion =	SENDA ID
+- adm_age_rec=	Age at Admission to Treatment
+- age_subs_onset=	Age of Onset of Drug Use
+- age_prim_subs_onset= Age of Onset of Drug Use Primary Substance
+- type_center= Type of Center
+- nacionalidad= Nationality
+- etnia= Ethnicity
+- diagnostico_trs_psiquiatrico_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria
+- diagnostico_trs_psiquiatrico_sub_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria (sub-classification)
+- x2_diagnostico_trs_psiquiatrico_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria (2)
+- x2_diagnostico_trs_psiquiatrico_sub_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria (sub-classification) (2)
+- x3_diagnostico_trs_psiquiatrico_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria (3)
+- x3_diagnostico_trs_psiquiatrico_sub_dsm_iv= Diagnosis of Psychiatric Disorders, DSM-IV criteria (sub-classification) (3)
+- diagnostico_trs_psiquiatrico_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria
+- diagnostico_trs_psiquiatrico_sub_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria (subclassification)
+- x2_diagnostico_trs_psiquiatrico_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria (2)
+- x2_diagnostico_trs_psiquiatrico_sub_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria (subclassification) (2)
+- x3_diagnostico_trs_psiquiatrico_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria (3)
+- x3_diagnostico_trs_psiquiatrico_sub_cie_10= Diagnosis of Psychiatric Disorders, CIE-10 criteria (subclassification) (3)
+- sub_dep_icd10_status= Drug dependence diagnosis
+- biopsych_comp= Biopsychosocial compromise
+- sexo= Sex of User
+- plan_type= Type of Plan
+- tipo_de_programa_2= Type of Program
+- tr_compliance= Cause of Discharge (with late and early withdrawal)
+- primary_sub= Primary or Main Substance of Consumption
+- second_sub1= Other Substances (1)
+- second_sub2= Other Substances (2)
+- second_sub3= Other Substances (3)
+- first_sub_used= Starting Substance
+- marital_status= Marital Status
+- occupation_condition= Occupational Status
+- occupation_status= Occupational Category
+- adm_motive= Motive of Admission to Treatment
+- ed_attainment= Educational Attainment
+- prim_sub_route= Route of Administration of the Primary or Main Substance
+- prim_sub_freq= Frequency of Consumption of the Primary or Main Substance
+- municipality_res_cutpre18= Commune/municipality of residence
+- adm_disch_reason= Reason of administrative discharge
+- def_date= Date of death
+- pregnant= Pregnancy status at admission 
+- pregnant_disch= Pregnancy status at discharge
+
+<br>
+
+### 0.b. Deduplication from the Overlap Between Dates of Admission & Discharge
+
+Once the duplicated cases were discarded, we searched for cases in which date ranges were overlapped with other treatments for the same user (HASH). To search for different overlaps, we had to temporarily replace those cases that did not have a date of discharge, with the last date of retrieval of the datasets that was "2025-05-28" (20236) [`disch_date_num_miss`] (dates are in the format "years-month-day" in this document).
+
+"In this step, we considered **strict overlap**, defined as at least one day of concurrent treatment between the two groups.
+
+```{r  0b0-tab2_overlap0}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+message(paste0("Missing discharge dates: ",
+               sum(is.na(SISTRAT23_c1_2010_2024_df_prev1i2$disch_date_rec0))))
+# days in treatment
+CONS_C1_df_dup_intervals<- 
+  SISTRAT23_c1_2010_2024_df_prev1i2|>
+    tidytable::mutate(disch_date_num_miss= ifelse(is.na(disch_date_rec0), unclass(as.Date("2025-05-28")), unclass(disch_date_rec0)))|> 
+    tidytable::rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    tidytable::select(rn2, hash_key_2, TABLE, adm_age_rec, adm_date_rec, adm_date_rec_num , disch_date_rec0, disch_date_num_miss, dit_rec0, id_centro, tr_compliance_rec0, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+overlap_dates_C1 <- janitor::clean_names(
+    sqldf::sqldf(
+      "
+      SELECT *
+      FROM CONS_C1_df_dup_intervals AS x
+      INNER JOIN CONS_C1_df_dup_intervals AS y 
+      ON x.hash_key_2 = y.hash_key_2 
+         AND x.rn2 < y.rn2  -- Avoids duplicates (eg.: x vs y and then y vs x)
+         AND x.adm_date_rec_num < y.disch_date_num_miss  -- x Admitted before being admitted into another treatment
+         AND x.disch_date_num_miss > y.adm_date_rec_num  -- x Discharged after being admitted in other
+         "
+    ))|>
+    `colnames<-`(c("rn_1", "hash_key_1", "ano_bd_1", "adm_age_1", "adm_date_1", "adm_date_rec_num_1", "disch_date_1", "disch_date_num_1", "dit_1", "id_centro_1", "tr_compliance_1", "plan_type_1", "senda_1", "rn_2", "hash_key_2", "ano_bd_2", "adm_age_2", "adm_date_2", "adm_date_rec_num_2", "disch_date_2", "disch_date_num_2", "dit_2", "id_centro_2", "tr_compliance_2", "plan_type_2", "senda_2")) 
+
+    cat(paste0("Number of dates w/ overlaps, observations: ", nrow(overlap_dates_C1)),"\n")
+    cat(paste0("Number of dates w/ overlaps, RUNs: ", nrow(distinct(overlap_dates_C1, hash_key_1))))
+    #Number of overlapped dates, observations: 1554 june 2025;  1562; march 2025 1659 ; in 2020, 1,448
+    #Number of overlapped dates, RUNs: 1413 june 2025; 1420; march 2025 1491; in 2020, 173
+    #AUG 2025
+    #Number of overlapped dates, observations: 1505 ; Number of overlapped dates, RUNs: 1396
+    #2025-09-27
+    #Number of dates w/ overlaps, observations: 1495 ; Number of dates w/ overlaps, RUNs: 1391
+
+#The rows on the left originate from older databases.
+CONS_C1_df_dup_overlaps_COMP <- 
+as_tidytable(overlap_dates_C1)|>
+  mutate(pair_id= paste0(rn_1,"_",rn_2))|> 
+  mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+  mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #es el dato de la derecha de una base de datos mas reciente.
+  mutate(senda_status = case_when(
+  senda_1=="si" & senda_2=="si" ~ "both yes",
+  senda_1=="no" & senda_2=="no" ~ "both no",
+  senda_1=="no" & senda_2=="si" ~ "second yes",
+  senda_1=="si" & senda_2=="no" ~ "second no",
+  TRUE ~ NA_character_
+  ))|> 
+  mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+  mutate(days_overlapped = pmax(0, pmin(disch_date_num_1, disch_date_num_2) -
+                           pmax(adm_date_rec_num_1, adm_date_rec_num_2)))|> 
+  #AUG 2025, corrected this
+  # para que hayan dias positivos. Se supone que la fecha de egreso es más reciente que la fecha de ingreso del evento que superpone.
+  mutate(more_dit=ifelse(dit_2>dit_1,1,0))|> #más días tratado en 2
+  mutate(trat_1_within_2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+  select(-hash_key_2)|> 
+  rename("hash_key"="hash_key_1")
+
+####
+CONS_C1_df_dup_overlaps_COMP|>
+  (\(df) {
+    rio::export(df, "_out/_overlaps_dup_step_2.xlsx") # for visual comparison in Excel
+    tbl <- DT::datatable(
+      dplyr::mutate(df,
+                    hash_key = as.numeric(factor(hash_key)),
+                    adm_age_1 = round(adm_age_1, 3),
+                    adm_age_2 = round(adm_age_2, 3)),
+      filter   = "top",
+      rownames = FALSE,
+      caption  = htmltools::tags$caption(
+        style = "caption-side: top; text-align: left;",
+        htmltools::strong("General overview of overlaps")
+      ),
+      class = "stripe hover compact",
+      extensions = c("Scroller"),
+      options = list(
+        paging = TRUE,
+        deferRender = TRUE,
+        scrollX = TRUE,
+        scrollY = 375,
+        scroller = TRUE,
+        dom = "ti",
+        language = list(decimal = ".", thousands = ","),
+        columnDefs = list(list(className = "dt-center", targets = "_all"))
+      ),
+      callback = htmlwidgets::JS("
+        var $c = $(table.table().container());
+        table.on('draw.dt', function(){
+          $c.find('.dataTables_paginate, .dataTables_length').hide();
+        });
+      "))|> 
+      DT::formatStyle(
+        columns = names(df),
+        `white-space` = "nowrap",
+        lineHeight    = "0.75em",
+        fontSize      = "80%",
+        fontFamily    = "Helvetica Neue"
+      )
+    note <- htmltools::div(
+      style = "font-size: 0.8em; margin-top: .5rem;",
+      htmltools::em("Note. Each row represents an overlap; '_1' = first case, '_2' = second; a = date, b = numeric.")
+    )
+    # Return as tagList instead of print()
+    htmltools::tagList(tbl, note)
+  })()
+```
+
+We identified `r CONS_C1_df_dup_overlaps_COMP %>%  nrow() %>% formatC(, format="f", big.mark=",", digits=0)` overlaps. Some of the users appeared more than once (n= `r CONS_C1_df_dup_overlaps_COMP %>%group_by(hash_key)|>  summarise(n=n()) |> filter(n>1) |> nrow()`); those users may have competing dates of discharge, which will have to be chosen based on their individual trajectories.
+
+`r if ((sum(is.na(CONS_C1_df_dup_overlaps_COMP$id_centro_1)) + sum(is.na(CONS_C1_df_dup_overlaps_COMP$id_centro_2))) > 0) warning("There are cases with missing Center ID")`.
+
+#### 0.b.0 Multiple overlaps
+
+We first focused on cases that had multiple overlaps. These will be revised latter.
+
+```{r 00-repeated-hashes-w-multiple-overlappings}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+#We take the row numbers that are paired more than one time
+overlaps_after_miss_appear_more_than_one_time<-
+CONS_C1_df_dup_overlaps_COMP |>
+    tidytable::pivot_longer(
+        cols = matches("_[12]$"),  # All columns ending with _1 or _2
+        names_to = c(".value", "wave"),
+        names_pattern = "(.+)_([12])",
+        values_drop_na = FALSE) |> 
+    group_by(rn) |> 
+    count() |> 
+filter(n>1) |> pull(rn)
+
+
+multiple_overlaps <-
+        CONS_C1_df_dup_overlaps_COMP |> filter(rn_1 %in% overlaps_after_miss_appear_more_than_one_time|rn_2 %in% overlaps_after_miss_appear_more_than_one_time)|>
+      (\(df) {
+    cat(paste0("00. Multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("00. Multiple overlaps, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  tidytable::pivot_longer(
+        cols = matches("_[12]$"),  # All columns ending with _1 or _2
+        names_to = c(".value", "wave"),
+        names_pattern = "(.+)_([12])",
+        values_drop_na = FALSE)|> 
+  filter(dit<1096, senda!="no")|> 
+  group_by(hash_key)|> 
+      mutate(
+        max_ano_bd = max(ano_bd, na.rm = TRUE),
+        max_disch_date_num = max(disch_date_num, na.rm = TRUE)
+    )|> 
+    # 1. Prioritize completed treatments
+  arrange(
+    # 2. Then longest duration
+    desc(dit),
+    # 3. Then most recent retrieval year of the database
+    desc(max_ano_bd),
+    # 4. Then most recent discharge date
+    desc(max_disch_date_num)
+  )|> 
+  # Keep only the top-ranked row per group
+  slice(1)
+# 
+# 00. Multiple overlappings, cases: 221; june 2025 174 
+# 00. Multiple overlappings, RUNs: 87; june 2025 67
+# 2025-09-27
+# 00. Multiple overlaps, cases: 125 
+# 00. Multiple overlaps, RUNs: 54 
+invisible("These rules are too simplistic. I did not use them")
+
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(rn_1 %in% overlaps_after_miss_appear_more_than_one_time |
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time) |>
+  (\(df) {
+    rio::export(df, "_out/_multiple_overlappings.xlsx") # for visual comparison in Excel
+
+    tbl <- DT::datatable(
+      dplyr::mutate(df,
+                    hash_key = as.numeric(factor(hash_key)),
+                    adm_age_1 = round(adm_age_1, 3),
+                    adm_age_2 = round(adm_age_2, 3)),
+      filter   = "top",
+      rownames = FALSE,
+      caption  = htmltools::tags$caption(
+        style = "caption-side: top; text-align: left;",
+        htmltools::strong("Episodes with repeated overlaps")
+      ),
+      class = "stripe hover compact",
+      extensions = c("Scroller"),
+      options = list(
+        paging = TRUE,
+        deferRender = TRUE,
+        scrollX = TRUE,
+        scrollY = 375,
+        scroller = TRUE,
+        dom = "ti",
+        language = list(decimal = ".", thousands = ","),
+        columnDefs = list(list(className = "dt-center", targets = "_all"))
+      ),
+      callback = htmlwidgets::JS("
+        var $c = $(table.table().container());
+        table.on('draw.dt', function(){
+          $c.find('.dataTables_paginate, .dataTables_length').hide();
+        });
+      "))|> 
+      DT::formatStyle(
+        columns = names(df),
+        `white-space` = "nowrap",
+        lineHeight    = "0.75em",
+        fontSize      = "80%",
+        fontFamily    = "Helvetica Neue"
+      )
+
+    note <- htmltools::div(
+      style = "font-size: 0.8em; margin-top: .5rem;",
+      htmltools::em("Note. Each row represents an overlap; '_1' = first case, '_2' = second; a = date, b = numeric.")
+    )
+    # Return as tagList instead of print()
+    htmltools::tagList(tbl, note)
+  })()
+```
+
+#### 0.b.1 Overlaps due to missing discharge dates
+
+First, we checked if a case had any missing value in the discharge date of the earlier treatment.
+
+```{r fig2_image-decision_tree_overlapped_cases-bpmn-miss-disch-dates}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+#| fig.width: 10
+#| fig.height: 12
+#| fig.cap: "Decision tree for overlaps due to missing discharge dates"
+#| fig.align: "center"
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+bpmn::bpmn(paste0(wdpath, "cons/_input/overlapped_ranges_decision_tree_miss_disch_dates.bpmn"))
+```
+
+Apply the decision tree to the overlaps of cases with missing dates of discharge, first identifying scenarios. As August 2025, we also included **administrative truncated treatments**.
+
+```{r 0b1-missing-discharge-dates}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+CONS_C1_df_dup_overlaps_COMP|>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)|grepl("trunc",tr_compliance_1)|grepl("trunc",tr_compliance_2))|> 
+  filter(adm_date_1>adm_date_2, grepl("trunc",tr_compliance_1)) |>
+    (\(df) {
+    cat(paste0("0b1.a0.Number of cases with adm truncated dates of discharge, first obs. within second: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a0.Number of patients with adm truncated dates of discharge, first obs. within second: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  tidytable::pivot_longer(
+    cols = matches("_[12]$"),  # All columns ending with _1 or _2
+    names_to = c(".value", "wave"),
+    names_pattern = "(.+)_([12])",
+    values_drop_na = FALSE) |>  #2025: from 1659 to 3318
+  mutate(wave= as.numeric(wave))|>
+    (\(df) {
+    filter(df, grepl("trunc",tr_compliance)) |> pull(rn) |> as.numeric() ->>eliminate_0b1_a0_a
+    filter(df, !grepl("trunc",tr_compliance)) |> pull(rn) |> as.numeric() ->>keep_0b1_a0_a
+    })()
+# 0b1.a0.Number of cases with adm truncated dates of discharge, first obs. within second: 2 
+# 0b1.a0.Number of patients with adm truncated dates of discharge, first obs. within second: 1 
+
+replace_miss_dischdate_0b1_a0_b<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+    filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+    filter(adm_date_1>adm_date_2, grepl("trunc",tr_compliance_2))|> 
+    (\(df) {
+    cat(paste0("0b1.a0.b.Number of cases w/ 2nd treatment truncated (earlier), replace 2nd discharge date with admission date of the 1st: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a0.b.Number of patients w/ 2nd treatment truncated (earlier), replace 2nd discharge date with admission date of the 1st: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  mutate(disch_date_num_2_rec= adm_date_rec_num_1-1)
+# 0b1.a0.b.Number of cases w/ 2nd treatment truncated (earlier), replace 2nd discharge date with admission date of the 1st: 0 
+# 0b1.a0.b.Number of patients w/ 2nd treatment truncated (earlier), replace 2nd discharge date with admission date of the 1st: 0 
+
+
+CONS_C1_df_dup_overlaps_COMP|>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)|grepl("trunc",tr_compliance_1)|grepl("trunc",tr_compliance_2))|> 
+  filter(adm_date_1>adm_date_2, is.na(disch_date_1), !is.na(disch_date_2)) |>
+    (\(df) {
+    cat(paste0("0b1.a1.Number of cases with missing dates of discharge, first obs. within second: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a1.Number of patients with missing dates of discharge, first obs. within second: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  tidytable::pivot_longer(
+    cols = matches("_[12]$"),  # All columns ending with _1 or _2
+    names_to = c(".value", "wave"),
+    names_pattern = "(.+)_([12])",
+    values_drop_na = FALSE) |>  #2025: from 1659 to 3318
+  mutate(wave= as.numeric(wave))|>
+    (\(df) {
+    filter(df, is.na(disch_date)) |>  pull(rn) |> as.numeric() ->>eliminate_0b1_a1
+    filter(df, !is.na(disch_date)) |>  pull(rn) |> as.numeric() ->>keep_0b1_a1
+    })()
+# 0b1.a1.Number of cases with missing dates of discharge, first obs. within second: 2 
+# 0b1.a1.Number of patients with missing dates of discharge, first obs. within second: 1
+
+# 0b1.a1.Number of cases with missing dates of discharge, first obs. within second: 2 
+# 0b1.a1.Number of patients with missing dates of discharge, first obs. within second: 1 
+
+replace_miss_dischdate_0b1_a2<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+  filter(adm_date_1>adm_date_2, !is.na(disch_date_1)) |>
+    (\(df) {
+    cat(paste0("0b1.a2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  mutate(disch_date_num_2_rec= adm_date_rec_num_1-1)
+# 0b1.a2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: 0 
+# 0b1.a2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: 0 
+
+# 0b1.a2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: 0 
+# 0b1.a2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 2nd disch date: 0
+
+replace_miss_dischdate_0b1_a3_a<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+    filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+    filter(adm_date_1>adm_date_2, is.na(disch_date_1), is.na(disch_date_2))|>
+    filter(ano_bd_1==2024| ano_bd_2==2024)|> 
+    (\(df) {
+    cat(paste0("0b1.a3.a.Number of cases with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a3.a.Number of patients with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  mutate(disch_date_num_2_rec= adm_date_rec_num_1-1)
+# 0b1.a3.a.Number of cases with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: 0 
+# 0b1.a3.a.Number of patients with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: 0 
+
+# 0b1.a3.a.Number of cases with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: 0 
+# 0b1.a3.a.Number of patients with both missing dates of discharge (db retrieval=2024), replace 2nd discharge date with admission date of the 1st: 0 
+discard_cases_0b1_a3_b<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+    filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+    filter(adm_date_1>adm_date_2, is.na(disch_date_1), is.na(disch_date_2))|> 
+    filter(ano_bd_1!=2024, ano_bd_2!=2024)|>
+    (\(df) {
+    cat(paste0("0b1.a3.b.Number of cases with both missing dates of discharge (db retrieval!=2024): ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.a3.b.Number of patients with both missing dates of discharge (db retrieval!=2024): ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  dplyr::select(rn_1, rn_2) |> unlist(use.names = FALSE) |> as.integer()
+# 0b1.a3.b.Number of cases with both missing dates of discharge (db retrieval!=2024): 0 
+# 0b1.a3.b.Number of patients with both missing dates of discharge (db retrieval!=2024): 0 
+
+# 0b1.a3.b.Number of cases with both missing dates of discharge (db retrieval!=2024): 0 
+# 0b1.a3.b.Number of patients with both missing dates of discharge (db retrieval!=2024): 0
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+  filter(adm_date_1<=adm_date_2, is.na(disch_date_2), !is.na(disch_date_1)) |>
+    (\(df) {
+    cat(paste0("0b1.b1.Number of cases with missing dates of discharge, second obs. within first: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b1.Number of patients with missing dates of discharge, second obs. within first: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  tidytable::pivot_longer(
+    cols = matches("_[12]$"),  # All columns ending with _1 or _2
+    names_to = c(".value", "wave"),
+    names_pattern = "(.+)_([12])",
+    values_drop_na = FALSE) |>  #2025: from 1659 to 3318
+  mutate(wave= as.numeric(wave)) |> 
+  arrange(pair_id) |> 
+   (\(df) {
+       filter(df, is.na(disch_date)) |>  pull(rn) |> as.numeric() ->>eliminate_0b1_b1
+       filter(df, !is.na(disch_date)) |>  pull(rn) |> as.numeric() ->>keep_0b1_b1
+   })()  
+#:#:#:#:# 0b1.b1.Number of cases with missing dates of discharge, second obs. within first: 6 
+# 0b1.b1.Number of patients with missing dates of discharge, second obs. within first: 3 
+replace_miss_dischdate_0b1_b2<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+  filter(adm_date_1<=adm_date_2, !is.na(disch_date_2)) |>
+    (\(df) {
+    cat(paste0("0b1.b2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 1st disch date: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 1st disch date: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  mutate(disch_date_num_1_rec= adm_date_rec_num_2-1)
+# 0b1.b2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 1st disch date: 4 
+# 0b1.b2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 1st disch date: 2 
+
+# 0b1.b2.Number of cases with missing dates of discharge, admission date of first tr. replace miss 1st disch date: 2 
+# 0b1.b2.Number of patients with missing dates of discharge, admission date of first tr. replace miss 1st disch date: 1 
+
+replace_miss_dischdate_0b1_b0_a<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+    filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+    filter(adm_date_1<=adm_date_2, grepl("trunc",tr_compliance_1))|> 
+    (\(df) {
+    cat(paste0("0b1.b0.a.Number of cases w/ 1st treatment truncated (earlier), replace 1st discharge date with admission date of the 2nd: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b0.a.Number of patients w/ 1st treatment truncated (earlier), replace 1st discharge date with admission date of the 2nd: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  mutate(disch_date_num_1_rec= adm_date_rec_num_2-1)
+# 0b1.a0.a.Number of cases w/ 1st treatment truncated (earlier), replace 1st discharge date with admission date of the 2nd: 0 
+# 0b1.a0.a.Number of patients w/ 1st treatment truncated (earlier), replace 1st discharge date with admission date of the 2nd: 0
+
+CONS_C1_df_dup_overlaps_COMP|>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)|grepl("trunc",tr_compliance_1)|grepl("trunc",tr_compliance_2))|> 
+  filter(adm_date_1<=adm_date_2, grepl("trunc",tr_compliance_2)) |>
+    (\(df) {
+    cat(paste0("0b1.b0.Number of cases with adm truncated dates of discharge, second obs. within first: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b0.Number of patients with adm truncated dates of discharge, second obs. within first: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  tidytable::pivot_longer(
+    cols = matches("_[12]$"),  # All columns ending with _1 or _2
+    names_to = c(".value", "wave"),
+    names_pattern = "(.+)_([12])",
+    values_drop_na = FALSE) |>  #2025: from 1659 to 3318
+  mutate(wave= as.numeric(wave))|>
+    (\(df) {
+    filter(df, grepl("trunc",tr_compliance)) |> pull(rn) |> as.numeric() ->>eliminate_0b1_b0_b
+    filter(df, !grepl("trunc",tr_compliance)) |> pull(rn) |> as.numeric() ->>keep_0b1_b0_b
+    })()
+# 0b1.a0.Number of cases with adm truncated dates of discharge, second obs. within first: 22 
+# 0b1.a0.Number of patients with adm truncated dates of discharge, second obs. within first: 11 
+
+
+replace_miss_dischdate_0b1_b3_a<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+  filter(adm_date_1<=adm_date_2, is.na(disch_date_1), is.na(disch_date_2),ano_bd_2==2024)|>
+    (\(df) {
+    cat(paste0("0b1.b3.a.Number of cases with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b3.a.Number of patients with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  mutate(disch_date_num_1_rec= adm_date_rec_num_2-1)
+# 0b1.b3.a.Number of cases with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: 2 
+# 0b1.b3.a.Number of patients with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: 1 
+
+# 0b1.b3.a.Number of cases with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: 0 
+# 0b1.b3.a.Number of patients with missing dates of discharge, admission date of 2nd tr. (db retrieval=2024) replace miss 1st disch date: 0 
+
+discard_0b1_b3_b<-
+CONS_C1_df_dup_overlaps_COMP |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time | 
+         rn_2 %in% overlaps_after_miss_appear_more_than_one_time))|> 
+  filter(is.na(disch_date_1)|is.na(disch_date_2)) |> 
+  filter(adm_date_1<=adm_date_2, is.na(disch_date_1), is.na(disch_date_2), ano_bd_2!=2024) |>
+    (\(df) {
+    cat(paste0("0b1.b3.b.Number of cases with missing dates of discharge, both treatments are not 2024: ", formatC(nrow(df)*2, big.mark=",")),"\n")
+    cat(paste0("0b1.b3.b.Number of patients with missing dates of discharge, both treatments are not 2024: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })() |> 
+  dplyr::select(rn_1, rn_2) |> unlist(use.names = FALSE) |> as.integer()
+# 0b1.b3.b.Number of cases with missing dates of discharge, both treatments are not 2024: 0 
+# 0b1.b3.b.Number of patients with missing dates of discharge, both treatments are not 2024: 0 
+
+
+invisible("If you want to explore the source of errors")
+# select(replace_miss_dischdate_0b1_b2, hash_key, adm_date_1, disch_date_num_1_rec) |>
+#   left_join(select(SISTRAT23_c1_2010_2024_df_prev1, hash_key, adm_date, fecha_egreso_de_tratamiento), by=c("hash_key"="hash_key", "adm_date_1"="adm_date"))
+```
+
+We apply the scenarios found to the main database.
+
+```{r 0b1-apply-missing-discharge-dates}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+#eliminate_0b1_a1
+#keep_0b1_a1
+#eliminate_0b1_b1
+#keep_0b1_b1
+#discard_cases_0b1_a3_b
+#discard_0b1_b3_b
+
+hashkeys_overlapped_discarded_missing_dates<-
+  rbind.data.frame(filter(SISTRAT23_c1_2010_2024_df_prev1i2, rn %in% discard_cases_0b1_a3_b[!is.na(discard_cases_0b1_a3_b)]),
+  filter(SISTRAT23_c1_2010_2024_df_prev1i2, rn %in% discard_0b1_b3_b[!is.na(discard_0b1_b3_b)])) |> distinct(hash_key) |> pull(hash_key)
+
+SISTRAT23_c1_2010_2024_df_prev1j<-
+  SISTRAT23_c1_2010_2024_df_prev1i2|>
+      (\(df) {
+    cat(paste0("4. Database before correcting overlaps with missing discharge dates, obs.: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4. Database before correcting overlaps with missing discharge dates, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|> 
+  #AUG 2025
+  mutate(OBS= case_when(rn %in% c(keep_0b1_a0_a, keep_0b1_b0_b)~ paste0(as.character(OBS),";","4.0b1.a/b0.b/a.Eliminate overlaps with episodes within others and missing discharge dates"), T~ OBS))|> 
+  filter(!rn %in% c(eliminate_0b1_a0_a, eliminate_0b1_b0_b))|> #       
+  mutate(OBS= case_when(rn %in% c(replace_miss_dischdate_0b1_a0_b$rn_2, replace_miss_dischdate_0b1_b0_a$rn_1)~ paste0(as.character(OBS),";","4.0b1.a/b0.b/a.Replace missing discharge date with admission date of the first treatment minus 1 day"), T~ OBS))|>
+  left_join(replace_miss_dischdate_0b1_a0_b[, c("rn_2", "disch_date_num_2_rec")], by=c("rn"="rn_2"))|>
+  left_join(replace_miss_dischdate_0b1_b0_a[, c("rn_1", "disch_date_num_1_rec")], by=c("rn"="rn_1"))|>
+  mutate(disch_date_num_rec= case_when(!is.na(disch_date_num_2_rec)~ disch_date_num_2_rec, !is.na(disch_date_num_1_rec)~ disch_date_num_1_rec, T~ as.numeric(disch_date_rec0)))|>
+  mutate(tr_compliance_rec= case_when(!is.na(disch_date_num_2_rec)~ NA_character_, !is.na(disch_date_num_1_rec)~ NA_character_, T~ tr_compliance_rec0))|>
+  select(-any_of(c("disch_date_num_1_rec","disch_date_num_2_rec")))|>
+  #APR 2025
+  mutate(OBS= case_when(hash_key %in% hashkeys_overlapped_discarded_missing_dates~ paste0(as.character(OBS),";","4.0b1.a/b3.b.Eliminate overlaps with both missing dates prior to 2024"), T~ OBS))|> 
+  filter(!rn %in% c(discard_cases_0b1_a3_b, discard_0b1_b3_b))|> 
+  mutate(OBS= case_when(rn %in% c(keep_0b1_a1, keep_0b1_b1)~paste0(as.character(OBS),";","4.0b1.a1/b1.Eliminate overlaps with episodes within others and missing discharge dates"), T~ OBS))|> 
+  filter(!rn %in% c(eliminate_0b1_a1, eliminate_0b1_b1))|>
+  mutate(OBS= case_when(rn %in% c(replace_miss_dischdate_0b1_a2$rn_2, 
+                                  replace_miss_dischdate_0b1_b2$rn_1,
+                                  replace_miss_dischdate_0b1_a3_a$rn_2,
+                                  replace_miss_dischdate_0b1_b3_a$rn_1)~ paste0(as.character(OBS),";","4.0b1.b2/a2/a3.a/b3.a.Replace missing discharge date with admission date of the first treatment minus 1 day"), T~ OBS)) |>
+  left_join(replace_miss_dischdate_0b1_a2[, c("rn_2", "disch_date_num_2_rec")], by=c("rn"="rn_2"))|>
+  left_join(replace_miss_dischdate_0b1_b2[, c("rn_1", "disch_date_num_1_rec")], by=c("rn"="rn_1"))|>
+  left_join(replace_miss_dischdate_0b1_a3_a[, c("rn_2", "disch_date_num_2_rec")], by=c("rn"="rn_2"), suffix = c("_a2", "_a3_a"))|>
+  left_join(replace_miss_dischdate_0b1_b3_a[, c("rn_1", "disch_date_num_1_rec")], by=c("rn"="rn_1"), suffix = c("_b2", "_b3_a"))|>
+  mutate(disch_date_num_rec= case_when(!is.na(disch_date_num_2_rec_a2 )~ disch_date_num_2_rec_a2, !is.na(disch_date_num_1_rec_b2)~ disch_date_num_1_rec_b2, !is.na(disch_date_num_2_rec_a3_a)~ disch_date_num_2_rec_a3_a, !is.na(disch_date_num_1_rec_b3_a)~ disch_date_num_1_rec_b3_a, T~ disch_date_num_rec))|>
+  mutate(tr_compliance_rec= case_when(!is.na(disch_date_num_2_rec_a2)~ NA_character_, !is.na(disch_date_num_1_rec_b2)~ NA_character_, !is.na(disch_date_num_2_rec_a3_a)~ NA_character_, !is.na(disch_date_num_1_rec_b3_a)~ NA_character_, T~ tr_compliance_rec0))|>
+  mutate(dit_rec2= disch_date_num_rec-adm_date_rec_num)|>
+  tidytable::select(-tidytable::any_of(c(
+  "disch_date_num_2_rec_a2",
+  "disch_date_num_1_rec_b2",
+  "disch_date_num_2_rec_a3_a",
+  "disch_date_num_1_rec_b3_a"
+)))|>
+        (\(df) {
+    cat(paste0("4.b1. Database after correcting overlaps with missing discharge dates, obs.: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.b1. Database after correcting overlaps with missing discharge dates, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    if (nrow(df) > nrow(SISTRAT23_c1_2010_2024_df_prev1i2))stop("Error: Added treatment episodes in the process")
+    stopifnot(dplyr::n_distinct(df$hash_key) ==
+          dplyr::n_distinct(SISTRAT23_c1_2010_2024_df_prev1i2$hash_key))
+    df
+  })()
+# 4. Database before correcting overlapping with missing discharge dates, obs.: 150,187 
+# 4. Database before correcting overlapping with missing discharge dates, RUNs: 106,283 
+# 4. Database after correcting overlapping with missing discharge dates, obs.: 150,182 
+# 4. Database after correcting overlapping with missing discharge dates, RUNs: 106,283 
+# AUG 2025
+# 4. Database before correcting overlapping with missing discharge dates, obs.: 173,908 
+# 4. Database before correcting overlapping with missing discharge dates, RUNs: 121,299 
+# 4. Database after correcting overlapping with missing discharge dates, obs.: 173,892 
+# 4. Database after correcting overlapping with missing discharge dates, RUNs: 121,299 
+# SEP 2025
+# 4. Database before correcting overlapping with missing discharge dates, obs.: 173,908 
+# 4. Database before correcting overlapping with missing discharge dates, RUNs: 121,299 
+# 4. Database after correcting overlapping with missing discharge dates, obs.: 173,898 
+# 4. Database after correcting overlapping with missing discharge dates, RUNs: 121,299 
+
+stopifnot( nrow(filter(SISTRAT23_c1_2010_2024_df_prev1j, disch_date_rec0==20236)) ==  nrow(filter(SISTRAT23_c1_2010_2024_df_prev1i2,disch_date_rec0==20236)))
+```
+
+The database `SISTRAT23_c1_2010_2024_df_prev1j` includes correction of overlaps to account for missing discharge dates. We replaced the dates in `disch_date_num_rec`, `dit_rec2` accounting for the new discharge date and `tr_compliance_rec` were replaced with missing values for the cases that had missing discharge dates with replaced values. 
+
+
+#### 0.b.2 After replacement missing dates of discharge
+
+
+```{r 0b2-tab2_overlap1}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+CONS_C1_df_dup_intervals_after_miss<- 
+  SISTRAT23_c1_2010_2024_df_prev1j|>
+    mutate(disch_date_num_miss= ifelse(is.na(disch_date_num_rec), 20236, disch_date_num_rec))|> 
+    rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    select(rn2, hash_key_2, TABLE, adm_age_rec, adm_date_rec, adm_date_rec_num , disch_date_rec0, disch_date_num_miss, dit_rec2, id_centro, tr_compliance_rec, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+overlap_dates_C1_after_miss <- janitor::clean_names(
+    sqldf::sqldf(
+      "
+      SELECT *
+      FROM CONS_C1_df_dup_intervals_after_miss AS x
+      INNER JOIN CONS_C1_df_dup_intervals_after_miss AS y 
+      ON x.hash_key_2 = y.hash_key_2 
+         AND x.rn2 < y.rn2  -- Avoids duplicates (eg.: x vs y and then y vs x)
+         AND x.adm_date_rec_num < y.disch_date_num_miss  -- x Admitted before being admitted into another treatment
+         AND x.disch_date_num_miss > y.adm_date_rec_num  -- x Discharged after being admitted in other
+         "
+    ))  |>
+    `colnames<-`(c("rn_1", "hash_key_1", "ano_bd_1", "adm_age_1", "adm_date_1", "adm_date_rec_num_1", "disch_date_1", "disch_date_num_1", "dit_1", "id_centro_1", "tr_compliance_1", "plan_type_1", "senda_1",  "rn_2",
+                   "hash_key_2", "ano_bd_2", "adm_age_2", "adm_date_2", "adm_date_rec_num_2", "disch_date_2", "disch_date_num_2", "dit_2", "id_centro_2", "tr_compliance_2", "plan_type_2", "senda_2")) 
+  
+    cat(paste0("Number of dates w/ overlaps, observations: ", nrow(overlap_dates_C1_after_miss)),"\n")
+    cat(paste0("Number of dates w/ overlaps, RUNs: ", nrow(distinct(overlap_dates_C1_after_miss, hash_key_1))))
+    #Number of overlapped dates, observations: 1546 june 2025; 1554, 1518, 1579
+    #Number of overlapped dates, RUNs: 1405 june 2025; 1412, 1385, 1411
+
+    #AUG 2025
+    #Number of overlapped dates, observations: 1488 
+    #Number of overlapped dates, RUNs: 1379
+    
+    #SEP 2025
+    #Number of overlapped dates, observations: 1485 
+    #Number of overlapped dates, RUNs: 1381
+
+#The rows on the left originate from older databases.
+CONS_C1_df_dup_overlaps_COMP_after_miss <- 
+as_tidytable(overlap_dates_C1_after_miss)|>
+  mutate(pair_id= paste0(rn_1,"_",rn_2))|> 
+  mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+  mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #es el dato de la derecha de una base de datos mas reciente.
+  mutate(senda_status = case_when(
+  senda_1=="si" & senda_2=="si" ~ "both yes",
+  senda_1=="no" & senda_2=="no" ~ "both no",
+  senda_1=="no" & senda_2=="si" ~ "second yes",
+  senda_1=="si" & senda_2=="no" ~ "second no",
+  TRUE ~ NA_character_
+  ))|> 
+  mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+  mutate(days_overlapped = pmax(0, pmin(disch_date_num_1, disch_date_num_2) -
+                           pmax(adm_date_rec_num_1, adm_date_rec_num_2)))|> 
+  mutate(more_dit=ifelse(dit_2>dit_1,1,0))|> #más días tratado en 2
+  mutate(trat_1_within_2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+  select(-hash_key_2) |> 
+  rename("hash_key"="hash_key_1")
+
+CONS_C1_df_dup_overlaps_COMP |>
+  (\(df) {
+    rio::export(df, "_out/_overlaps_dup_step_2_after_miss.xlsx") # for visual comparison in Excel
+
+    tbl <- DT::datatable(
+      dplyr::mutate(df, hash_key = as.numeric(factor(hash_key)),
+                       adm_age_1 = round(adm_age_1, 3),
+                       adm_age_2 = round(adm_age_2, 3)),
+      filter   = "top",
+      rownames = FALSE,
+      caption  = htmltools::tags$caption(
+        style = "caption-side: top; text-align: left;",
+        htmltools::strong("Cases with multiple overlaps")
+      ),
+      class = "stripe hover compact",
+      extensions = c("Scroller"),
+      options = list(
+        paging = TRUE,
+        deferRender = TRUE,
+        scrollX = TRUE,
+        scrollY = 375,
+        scroller = TRUE,
+        dom = "ti",
+        language = list(decimal = ".", thousands = ","),
+        columnDefs = list(list(className = "dt-center", targets = "_all"))
+      ),
+      callback = htmlwidgets::JS("
+        var $c = $(table.table().container());
+        table.on('draw.dt', function(){
+          $c.find('.dataTables_paginate, .dataTables_length').hide();
+        });
+      ")
+    )
+
+    tbl <- DT::formatStyle(
+      tbl,
+      columns = names(df),
+      `white-space` = "nowrap",
+      lineHeight    = "0.75em",
+      fontSize      = "80%",
+      fontFamily    = "Helvetica Neue"
+    )
+
+    note <- htmltools::div(
+      style = "font-size: 0.8em; margin-top: .5rem;",
+      htmltools::em("Note. Each row represents an overlap; '_1' = first case, '_2' = second; a = date, b = numeric.")
+    )
+
+    # Return as tagList instead of print()
+    htmltools::tagList(tbl, note)
+  })()
+```
+
+
+#### 0.b.3 Overlaps <= 30 days
+
+Meanwhile, we focused in cases with overlap of less than 30 days. If the admission date of the first episode was later than that of the second episode, we subtracted one day to the second
+
+```{r 0b3_menos_30_dias_superpuestos,echo=T, paged.print=TRUE}
+replace_disch_dates_0b3 <- CONS_C1_df_dup_overlaps_COMP_after_miss |>
+  filter(!(rn_1 %in% overlaps_after_miss_appear_more_than_one_time |
+               rn_2 %in% overlaps_after_miss_appear_more_than_one_time)) |>
+  filter(days_overlapped > 0, days_overlapped <= 30) |>
+  (\(df) {
+      cat("4.0b3. Overlaps <= 30 days, cases: ", formatC(nrow(df), big.mark=","), "\n")
+      cat("4.0b3. Overlaps <= 30 days, RUNs: ", formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n")
+      df
+  })() |>
+  mutate(
+      # Untie
+      who_is_later = case_when(
+          adm_date_rec_num_1 >  adm_date_rec_num_2 ~ "first",
+          adm_date_rec_num_1 <  adm_date_rec_num_2 ~ "second",
+          adm_date_rec_num_1 == adm_date_rec_num_2 ~ if_else(rn_1 > rn_2, "first", "second"),
+          TRUE ~ NA_character_
+      ),
+      OBS = if_else(
+          who_is_later == "first",
+          "4.0b3.<=30 days overlaps, replaced w date of discharge of last treatment minus 1(first)",
+          if_else(
+              who_is_later == "second",
+              "4.0b3.<=30 days overlaps, replaced w date of discharge of last treatment minus 1(second)",
+              NA_character_
+          )
+      ),
+      disch_date_num_2_rec = if_else(who_is_later == "first",  adm_date_rec_num_1 - 1, NA_real_),
+      disch_date_num_1_rec = if_else(who_is_later == "second", adm_date_rec_num_2 - 1, NA_real_)
+  )
+
+# 4.0b3. Overlapping <= 30 days, cases:  1,049 
+# 4.0b3. Overlapping <= 30 days, RUNs:  1,032 
+
+# Unicity for joins
+y2 <- replace_disch_dates_0b3 |>
+    filter(!is.na(disch_date_num_2_rec)) |>
+    distinct(rn_2, .keep_all = TRUE) |>
+    select(rn_2, disch_date_num_2_rec, OBS)
+
+y1 <- replace_disch_dates_0b3 |>
+    filter(!is.na(disch_date_num_1_rec)) |>
+    distinct(rn_1, .keep_all = TRUE) |>
+    select(rn_1, disch_date_num_1_rec, OBS)
+```
+
+These overlaps were resolved by replacing the admission date minus 1 to the treatment that followed (more recent). 
+
+```{r 0b3-apply-less30d-overlap}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+SISTRAT23_c1_2010_2024_df_prev1k <-
+    SISTRAT23_c1_2010_2024_df_prev1j |>
+    (\(df) {
+        cat("4.0b3. Database before correcting overlaps <=30d, cases: ",
+            formatC(nrow(df), big.mark=","), "\n")
+        cat("4.0b3. Database before correcting overlaps <=30d, RUNs: ",
+            formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n")
+        df
+    })() |>
+    # we already forced multiple first in y1/y2
+    left_join(y2, by = c("rn" = "rn_2"), suffix = c("", "_0b31")) |>
+    left_join(y1, by = c("rn" = "rn_1"), suffix = c("", "_0b32")) |>
+    # OBS without NA;
+    mutate(
+        OBS = paste(
+            ifelse(is.na(OBS), "", OBS),
+            ifelse(is.na(OBS_0b31), "", OBS_0b31),
+            ifelse(is.na(OBS_0b32), "", OBS_0b32),
+            sep = ";"
+        ),
+        OBS = gsub("(^;|;$|;{2,})", ";", OBS),
+        OBS = na_if(trimws(OBS, which = "both", whitespace = "; "), "")
+    ) |>
+    mutate(
+        disch_date_num_rec2 = coalesce(disch_date_num_2_rec, disch_date_num_1_rec, disch_date_num_rec),
+        dit_rec3 = pmax(disch_date_num_rec2 - adm_date_rec_num, 0)
+    ) |>
+    select(-any_of(c("disch_date_num_2_rec","disch_date_num_1_rec","OBS_0b31","OBS_0b32"))) |>
+    (\(df) {
+        cat("4.0b3. Database after correcting overlaps <=30d, cases: ",
+            formatC(nrow(df), big.mark=","), "\n")
+        cat("4.0b3. Database after correcting overlaps <=30d, RUNs: ",
+            formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n")
+        if (nrow(df) > nrow(SISTRAT23_c1_2010_2024_df_prev1j))
+            stop("Error: Added treatment episodes in the process")
+        df
+    })()
+# 4. Database before correcting overlapping with <= 30 days of overlapping, cases: 150,182 
+# 4. Database before correcting overlapping with <= 30 days of overlapping, RUNs: 106,283 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, cases: 150,182 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, RUNs: 106,283
+# AUG 2025
+# 4. Database before correcting overlapping with <= 30 days of overlapping, cases: 173,892 
+# 4. Database before correcting overlapping with <= 30 days of overlapping, RUNs: 121,299 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, cases: 173,892 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, RUNs: 121,299 
+# SEP 2025
+# 4.0b3. Database before correcting overlapping <=30d, cases:  173,898 
+# 4.0b3. Database before correcting overlapping <=30d, RUNs:  121,299 
+# 4.0b3. Database after correcting overlapping <=30d, cases:  173,898 
+# 4.0b3. Database after correcting overlapping <=30d, RUNs:  121,299 
+
+stopifnot( nrow(filter(SISTRAT23_c1_2010_2024_df_prev1k, disch_date_num_rec2==20236)) ==  nrow(filter(SISTRAT23_c1_2010_2024_df_prev1j, disch_date_rec0==20236)))
+```
+
+We obtained the database `SISTRAT23_c1_2010_2024_df_prev1k`. We corrected the dates in `disch_date_num_rec2`, `dit_rec3` to account for the new discharge date.
+
+
+#### 0.b.4 Treatment episode without a single day in treatment
+
+We apply the detection of duplicates again and scenarios
+
+```{r 0b4-tab2_overlap2}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+CONS_C1_df_dup_intervals_after_miss_less30d<- 
+  SISTRAT23_c1_2010_2024_df_prev1k|>
+    mutate(disch_date_num_miss= ifelse(is.na(disch_date_num_rec2), 20236, disch_date_num_rec2))|>
+  
+    rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    select(rn2, hash_key_2, TABLE, adm_age_rec, adm_date_rec, adm_date_rec_num , disch_date_rec0, disch_date_num_miss, dit_rec3, id_centro, tr_compliance_rec, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+overlap_dates_C1_after_miss_less30d <- janitor::clean_names(
+    sqldf::sqldf(
+      "
+      SELECT *
+      FROM CONS_C1_df_dup_intervals_after_miss_less30d AS x
+      INNER JOIN CONS_C1_df_dup_intervals_after_miss_less30d AS y 
+      ON x.hash_key_2 = y.hash_key_2 
+         AND x.rn2 < y.rn2  -- Avoids duplicates (eg.: x vs y and then y vs x)
+         AND x.adm_date_rec_num < y.disch_date_num_miss  -- x Admitted before being admitted into another treatment
+         AND x.disch_date_num_miss > y.adm_date_rec_num  -- x Discharged after being admitted in other
+         "
+    ))  |>
+    `colnames<-`(c("rn_1", "hash_key_1", "ano_bd_1", "adm_age_1", "adm_date_1", "adm_date_rec_num_1", "disch_date_1", "disch_date_num_1", "dit_1", "id_centro_1", "tr_compliance_1", "plan_type_1", "senda_1",  "rn_2", "hash_key_2", "ano_bd_2", "adm_age_2", "adm_date_2", "adm_date_rec_num_2", "disch_date_2", "disch_date_num_2", "dit_2", "id_centro_2", "tr_compliance_2", "plan_type_2", "senda_2")) 
+  
+    cat(paste0("Number of dates w/ overlaps, observations: ", nrow(overlap_dates_C1_after_miss_less30d)),"\n")
+    cat(paste0("Number of dates w/ overlaps, RUNs: ", nrow(distinct(overlap_dates_C1_after_miss_less30d, hash_key_1))))
+    #Number of overlapped dates, observations: 536 ; 560 ; 532 ; 525 june 2025 ; 444  aug 2025; 436 sep 2025
+    #Number of overlapped dates, RUNs: 412 ; 420 ; 418 ; 412 june 2025 ; 363 aug 2025; 360 sep 2025
+
+#The rows on the left originate from older databases.
+CONS_C1_df_dup_overlaps_COMP_after_miss_less30d <- 
+as_tidytable(overlap_dates_C1_after_miss_less30d)|>
+  mutate(pair_id= paste0(rn_1,"_",rn_2))|> 
+  mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+  mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #es el dato de la derecha de una base de datos mas reciente.
+  mutate(senda_status = case_when(
+  senda_1=="si" & senda_2=="si" ~ "both yes",
+  senda_1=="no" & senda_2=="no" ~ "both no",
+  senda_1=="no" & senda_2=="si" ~ "second yes",
+  senda_1=="si" & senda_2=="no" ~ "second no",
+  TRUE ~ NA_character_
+  ))|> 
+  mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+  mutate(days_overlapped = pmax(0, pmin(disch_date_num_1, disch_date_num_2) -
+                           pmax(adm_date_rec_num_1, adm_date_rec_num_2)))|> 
+  # para que hayan dias positivos. Se supone que la fecha de egreso es más reciente que la fecha de ingreso del evento que superpone.
+  mutate(more_dit=ifelse(dit_2>dit_1,1,0))|> #más días tratado en 2
+  mutate(trat_1_within_2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+  select(-hash_key_2) |> 
+  rename("hash_key"="hash_key_1")
+```
+
+We apply the scenarios to the main database, discarding cases with less than one day in treatment.
+
+```{r 0b4-discard-0-days-in-treatment}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# 1) Identify pairs with any episode < 1 day (NA-safe)
+zero_pairs <- CONS_C1_df_dup_overlaps_COMP_after_miss_less30d %>%
+  filter((!is.na(dit_1) & dit_1 < 1) | (!is.na(dit_2) & dit_2 < 1)) %>%
+  (\(df) {
+    cat("4. < 1 day in treatment (within overlap pairs), cases: ",
+        formatC(nrow(df), big.mark=","), "\n", sep = "")
+    cat("4. < 1 day in treatment (within overlap pairs), RUNs: ",
+        formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n", sep = "")
+    df
+  })()
+# 4. < 1 day in treatment (within overlap pairs), cases: 4
+# 4. < 1 day in treatment (within overlap pairs), RUNs: 4
+
+# 2) Build discard & keep RN lists
+#    - discard: all episodes with <1 day (drop both if both <1)
+#    - keep: the counterpart(s) in those pairs with >=1 day (for tagging)
+discard_0c_0b <- c(
+  zero_pairs$rn_1[!is.na(zero_pairs$dit_1) & zero_pairs$dit_1 < 1],
+  zero_pairs$rn_2[!is.na(zero_pairs$dit_2) & zero_pairs$dit_2 < 1]
+) |> unique()
+
+keep_0c_0b <- c(
+  zero_pairs$rn_1[!is.na(zero_pairs$dit_1) & zero_pairs$dit_1 >= 1],
+  zero_pairs$rn_2[!is.na(zero_pairs$dit_2) & zero_pairs$dit_2 >= 1]
+) |> setdiff(discard_0c_0b) |> unique()
+
+warning(paste0("Both dit <1: ",
+                CONS_C1_df_dup_overlaps_COMP_after_miss_less30d |> 
+                    filter(dit_2<1, dit_1<1)|>nrow() ))
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# 3) Apply to the main DB
+SISTRAT23_c1_2010_2024_df_prev1l <-
+  SISTRAT23_c1_2010_2024_df_prev1k %>%
+  (\(df) {
+    cat("4. Database BEFORE discarding <1-day episodes, cases: ",
+        formatC(nrow(df), big.mark=","), "\n", sep = "")
+    cat("4. Database BEFORE discarding <1-day episodes, RUNs: ",
+        formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n", sep = "")
+    df
+  })() %>%
+  filter(!(rn %in% discard_0c_0b)) %>%
+  mutate(
+    OBS = dplyr::case_when(
+      rn %in% keep_0c_0b ~ paste0(
+        dplyr::coalesce(as.character(OBS), ""),
+        ifelse(!is.na(OBS), ";", ""),
+        "4.0b4. Kept this episode; paired episode with <1 day was discarded"
+      ),
+      TRUE ~ OBS
+    )
+  ) %>%
+  (\(df) {
+    cat("4. Database AFTER discarding <1-day episodes, cases: ",
+        formatC(nrow(df), big.mark=","), "\n", sep = "")
+    cat("4. Database AFTER discarding <1-day episodes, RUNs: ",
+        formatC(nrow(dplyr::distinct(df, hash_key)), big.mark=","), "\n", sep = "")
+    if (nrow(df) > nrow(SISTRAT23_c1_2010_2024_df_prev1k))
+      stop("Error: Added treatment episodes in the process")
+
+    # Optional sanity check: removed as many rows as expected
+    exp_rm <- sum(SISTRAT23_c1_2010_2024_df_prev1k$rn %in% discard_0c_0b)
+    got_rm <- nrow(SISTRAT23_c1_2010_2024_df_prev1k) - nrow(df)
+    if (got_rm != exp_rm)
+      warning(sprintf("Removed %d rows, expected %d (check RN lists or duplicates).", got_rm, exp_rm))
+    df
+  })()
+# 4. Database before discarding cases with less than one day in treatment, cases: 150,182 
+# 4. Database before discarding cases with less than one day in treatment, RUNs: 106,283 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, cases: 150,181 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, RUNs: 106,283 
+# AUG 2025
+# 4. Database before discarding cases with less than one day in treatment, cases: 173,892 
+# 4. Database before discarding cases with less than one day in treatment, RUNs: 121,299 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, cases: 173,890 
+# 4. Database after correcting overlapping with <= 30 days of overlapping, RUNs: 121,299 
+# SEP 2025
+# 4. Database BEFORE discarding <1-day episodes, cases: 173,898
+# 4. Database BEFORE discarding <1-day episodes, RUNs: 121,299
+# 4. Database AFTER discarding <1-day episodes, cases: 173,894
+# 4. Database AFTER discarding <1-day episodes, RUNs: 121,299
+stopifnot( nrow(filter(SISTRAT23_c1_2010_2024_df_prev1l, disch_date_num_rec2==20236)) ==  nrow(filter(SISTRAT23_c1_2010_2024_df_prev1k, disch_date_num_rec2==20236)))
+
+```
+
+The new database is called `SISTRAT23_c1_2010_2024_df_prev1l`.
+
+
+#### 0.b.5 Citeria based on sharing center ID, SENDA financing status, treatment length and referral discharge
+
+We apply the detection of duplicates again and scenarios
+
+```{r  0b5-tab2_overlap3}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+CONS_C1_df_dup_intervals_after_miss_less30d_0d<- 
+  SISTRAT23_c1_2010_2024_df_prev1l|>
+    mutate(disch_date_num_miss= ifelse(is.na(disch_date_num_rec2), 20236, disch_date_num_rec2))|> 
+    rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    select(rn2, hash_key_2, TABLE, adm_age_rec, adm_date_rec, adm_date_rec_num , disch_date_rec0, disch_date_num_miss, dit_rec3, id_centro, tr_compliance_rec, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+overlap_dates_C1_after_miss_less30d_0d <- janitor::clean_names(
+    sqldf::sqldf(
+      "
+      SELECT *
+      FROM CONS_C1_df_dup_intervals_after_miss_less30d_0d AS x
+      INNER JOIN CONS_C1_df_dup_intervals_after_miss_less30d_0d AS y 
+      ON x.hash_key_2 = y.hash_key_2 
+         AND x.rn2 < y.rn2  -- Avoids duplicates (eg.: x vs y and then y vs x)
+         AND x.adm_date_rec_num < y.disch_date_num_miss  -- x Admitted before being admitted into another treatment
+         AND x.disch_date_num_miss > y.adm_date_rec_num  -- x Discharged after being admitted in other
+         "
+    ))  |>
+    `colnames<-`(c("rn_1", "hash_key_1", "ano_bd_1", "adm_age_1", "adm_date_1", "adm_date_rec_num_1", "disch_date_1", "disch_date_num_1", "dit_1", "id_centro_1", "tr_compliance_1", "plan_type_1", "senda_1",  "rn_2",
+                   "hash_key_2", "ano_bd_2", "adm_age_2", "adm_date_2", "adm_date_rec_num_2", "disch_date_2", "disch_date_num_2", "dit_2", "id_centro_2", "tr_compliance_2", "plan_type_2", "senda_2")) 
+  
+    cat(paste0("Number of dates w/ overlaps, observations: ", nrow(overlap_dates_C1_after_miss_less30d_0d)),"\n")
+    cat(paste0("Number of dates w/ overlaps, RUNs: ", nrow(distinct(overlap_dates_C1_after_miss_less30d_0d, hash_key_1))))
+    #Number of overlapped dates, observations: 559 ; 524 june 2025; 1465 ago 2025; 432 sep 2025
+    #Number of overlapped dates, RUNs: 419 ; 411 june 2025; 1357 ago 2025; 357 sep 2025
+
+#The rows on the left originate from older databases.
+CONS_C1_df_dup_overlaps_COMP_after_miss_less30d_0d <- 
+as_tidytable(overlap_dates_C1_after_miss_less30d_0d)|>
+  mutate(pair_id= paste0(rn_1,"_",rn_2))|> 
+  mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+  mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #es el dato de la derecha de una base de datos mas reciente.
+  mutate(senda_status = case_when(
+  senda_1=="si" & senda_2=="si" ~ "both yes",
+  senda_1=="no" & senda_2=="no" ~ "both no",
+  senda_1=="no" & senda_2=="si" ~ "second yes",
+  senda_1=="si" & senda_2=="no" ~ "second no",
+  TRUE ~ NA_character_
+  ))|> 
+  mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+  mutate(days_overlapped = pmax(0, pmin(disch_date_num_1, disch_date_num_2) -
+                           pmax(adm_date_rec_num_1, adm_date_rec_num_2)))|> 
+  mutate(trat_1_within_2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+  mutate(trat_2_within_1=ifelse(disch_date_num_2<disch_date_num_1 & adm_date_rec_num_2>adm_date_rec_num_1,1,0))|>
+  select(-hash_key_2) |> 
+  rename("hash_key"="hash_key_1")
+```
+
+
+In 2020, we followed this rules to discard overlapping cases. Now, we are trying to apply them sequentially rather than all at once.
+
+```{r 0b5-fig2_image-decision_tree_overlapped_cases}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+#| fig.width: 10
+#| fig.height: 12
+#| fig.cap: "Decision Tree for the Deletion of Dates in Cases w/ Overlaps"
+#| fig.align: "center"
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+
+bpmn::bpmn(paste0(wdpath,"cons/_input/overlapped_ranges_decision_tree.bpmn"))
+```
+
+If we check the IDs of the centers with the most treatment day overlaps, we can see some sort of pattern. We think that this could be related to small changes in treatment modality or setting within treatment centers, similar to internal referrals. Sometimes can be related to the change of centers due to termination of agreements with SENDA.
+
+```{r 0b5-center-id-overlapped}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+SISTRAT23_c1_2010_2024_df_prev1l|>
+    select(id_centro, nombre_centro_rec) |> 
+    filter(id_centro %in% attr(rev(sort(table(c(CONS_C1_df_dup_overlaps_COMP_after_miss_less30d$id_centro_1, CONS_C1_df_dup_overlaps_COMP_after_miss_less30d$id_centro_2)))),"names")[1:20]) |> 
+  distinct(id_centro, .keep_all=T) |> 
+  knitr::kable("markdown", caption= "Most frequent treatment centers with treatment dates w/ overlaps")
+```
+
+Hence, treatment center might be an important criteria to judge overlaps.
+
+```{r  0b5-decision-flow-overlapped-dates}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# Inputs assumed present:
+# CONS_C1_df_dup_overlaps_COMP_after_miss_less30d_0d  (your pair table)
+# overlaps_after_miss_appear_more_than_one_time       (vector of rn to skip)
+
+#earlier_is_1 <- adm_date_rec_num_1 <= adm_date_rec_num_2
+pairs_scored <- CONS_C1_df_dup_overlaps_COMP_after_miss_less30d_0d |>
+  mutate(
+    # housekeeping
+    multi_overlap = rn_1 %in% overlaps_after_miss_appear_more_than_one_time |
+                    rn_2 %in% overlaps_after_miss_appear_more_than_one_time,
+    zero_day_1 = tidyr::replace_na(dit_1 < 1, FALSE), 
+    zero_day_2 = tidyr::replace_na(dit_2 < 1, FALSE),
+    oldest = if_else(adm_date_rec_num_1 < adm_date_rec_num_2, "oldest_1", "oldest_2"),
+    right_newer = as.integer(ano_bd_2 > ano_bd_1)  # convenience
+  ) |>
+  mutate(
+    rule = dplyr::case_when(
+      multi_overlap ~ "00.check.afterwards",
+      zero_day_1 | zero_day_2 ~ "0.erase.zero.day",
+
+      # SAME center, BOTH SENDA
+      same_id==1 & grepl("^both", senda_status) & (trat_1_within_2==1 | trat_2_within_1==1) ~ "4.0b5.3a.keep.largest",
+      same_id==1 & grepl("^both", senda_status) & trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_2 < adm_date_rec_num_1 & tr_compliance_2=="referral" ~ "4.0b5.4a.1.modify.second",
+      same_id==1 & grepl("^both", senda_status) & trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_1 < adm_date_rec_num_2 & tr_compliance_1=="referral" ~ "4.0b5.4a.2.modify.first",
+      same_id==1 & grepl("^both", senda_status) & trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_2 < adm_date_rec_num_1 & tr_compliance_2!="referral" ~ "4.0b5.4b.1.modify.second+ref",
+      same_id==1 & grepl("^both", senda_status) & trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_1 < adm_date_rec_num_2 & tr_compliance_1!="referral" ~ "4.0b5.4b.2.modify.first+ref",
+
+      # SAME center, DIFFERENT SENDA
+      same_id==1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_2 > adm_date_rec_num_1 & tolower(senda_2)=="si" ~ "4.0b5.2b1.1.keep.second",
+      same_id==1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_1 > adm_date_rec_num_2 & tolower(senda_1)=="si" ~ "4.0b5.2b1.2.keep.first",
+      same_id==1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_2 > adm_date_rec_num_1 & tolower(senda_2)=="no" ~ "4.0b5.2b2.1.keep.first",
+      same_id==1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_1 > adm_date_rec_num_2 & tolower(senda_1)=="no" ~ "4.0b5.2b2.2.keep.second",
+
+      # DIFFERENT center, BOTH SENDA
+      same_id!=1 & grepl("^both", senda_status) &
+        (trat_1_within_2==1 | trat_2_within_1==1) & right_newer==1 ~ "4.0b5.35a.check/trim.longstay",
+      same_id!=1 & grepl("^both", senda_status) &
+        (trat_1_within_2==1 | trat_2_within_1==1) & right_newer==0 ~ "4.0b5.35b.keep.largest",
+      same_id!=1 & grepl("^both", senda_status) &
+        trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_2 < adm_date_rec_num_1 & tr_compliance_2=="referral" ~ "4.0b5.2_4a.1.modify.second",
+      same_id!=1 & grepl("^both", senda_status) &
+        trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_1 < adm_date_rec_num_2 & tr_compliance_1=="referral" ~ "4.0b5.2_4a.2.modify.first",
+      same_id!=1 & grepl("^both", senda_status) &
+        trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_2 < adm_date_rec_num_1 & tr_compliance_2!="referral" ~ "4.0b5.2_4b.1.modify.second+ref",
+      same_id!=1 & grepl("^both", senda_status) &
+        trat_1_within_2==0 & trat_2_within_1==0 &
+        adm_date_rec_num_1 < adm_date_rec_num_2 & tr_compliance_1!="referral" ~ "4.0b5.2_4b.2.modify.first+ref",
+
+      # DIFFERENT center, DIFFERENT SENDA
+      same_id!=1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_2 > adm_date_rec_num_1 & tolower(senda_2)=="si" ~ "4.0b5.2_2b1.1.keep.second",
+      same_id!=1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_1 > adm_date_rec_num_2 & tolower(senda_1)=="si" ~ "4.0b5.2_2b1.2.keep.first",
+      same_id!=1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_2 > adm_date_rec_num_1 & tolower(senda_2)=="no" ~ "4.0b5.2_2b2.1.keep.first",
+      same_id!=1 & !grepl("^both", senda_status) &
+        adm_date_rec_num_1 > adm_date_rec_num_2 & tolower(senda_1)=="no" ~ "4.0b5.2_2b2.2.keep.second",
+      TRUE ~ "99.check.afterwards"
+    )
+  )
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- (3) Derive actions from the rule ---
+
+pairs_scored <- pairs_scored |> dplyr::filter(rule != "00.check.afterwards")
+
+actions <- pairs_scored |>
+  mutate(
+    rn_keep   = NA_real_, rn_discard = NA_real_,
+    disch_date_num_1_new = disch_date_num_1,
+    disch_date_num_2_new = disch_date_num_2,
+    tr_compliance_1_new  = tr_compliance_1,
+    tr_compliance_2_new  = tr_compliance_2,
+    obs_tag = NA_character_
+  ) |>
+
+  # 0-day erase
+  mutate(
+    rn_discard = if_else(rule=="0.erase.zero.day" & zero_day_1, rn_1,
+                  if_else(rule=="0.erase.zero.day" & zero_day_2, rn_2, rn_discard)),
+    rn_keep    = if_else(rule=="0.erase.zero.day" & zero_day_1, rn_2,
+                  if_else(rule=="0.erase.zero.day" & zero_day_2, rn_1, rn_keep)),
+    obs_tag    = if_else(rule=="0.erase.zero.day",
+                         "4.0b4.Discard episode with 0 days in treatment", obs_tag)
+  ) |>
+
+  # 3a: keep largest (same center, both SENDA, nested)
+  mutate(
+    rn_discard = if_else(rule=="4.0b5.3a.keep.largest" & dit_1 < dit_2, rn_1,
+                  if_else(rule=="4.0b5.3a.keep.largest" & dit_2 < dit_1, rn_2, rn_discard)),
+    rn_keep    = if_else(rule=="4.0b5.3a.keep.largest" & dit_1 >= dit_2, rn_1,
+                  if_else(rule=="4.0b5.3a.keep.largest" & dit_2 >  dit_1, rn_2, rn_keep)),
+    obs_tag    = if_else(rule=="4.0b5.3a.keep.largest",
+                         "4.0b5.3a.Same center & same SENDA; nested; kept largest", obs_tag)
+  ) |>
+
+  # 4a/4b (same center, both SENDA; not nested) – modify oldest; +ref where needed
+  mutate(
+    disch_date_num_2_new = if_else(rule %in% c("4.0b5.4a.1.modify.second","4.0b5.4b.1.modify.second+ref"), adm_date_rec_num_1 - 1L, disch_date_num_2_new),
+    tr_compliance_2_new  = if_else(rule=="4.0b5.4b.1.modify.second+ref","referral", tr_compliance_2_new),
+    disch_date_num_1_new = if_else(rule %in% c("4.0b5.4a.2.modify.first","4.0b5.4b.2.modify.first+ref"), adm_date_rec_num_2 - 1L, disch_date_num_1_new),
+    tr_compliance_1_new  = if_else(rule=="4.0b5.4b.2.modify.first+ref","referral", tr_compliance_1_new),
+    obs_tag = dplyr::coalesce(
+      if_else(startsWith(rule, "4.0b5.4a"), "4.0b5.4a.Same center same SENDA; subtracted days to oldest", NA_character_),
+      if_else(startsWith(rule, "4.0b5.4b"), "4.0b5.4b.Same center same SENDA; subtracted days & set referral", NA_character_),
+      obs_tag)
+  ) |>
+
+  # 2b (same center, different SENDA) – choose side to keep
+  mutate(
+    rn_keep    = if_else(startsWith(rule, "4.0b5.2b"),
+                         if_else(grepl("keep.second", rule), rn_2, rn_1), rn_keep),
+    rn_discard = if_else(startsWith(rule, "4.0b5.2b"),
+                         if_else(grepl("keep.second", rule), rn_1, rn_2), rn_discard),
+    obs_tag    = if_else(startsWith(rule, "4.0b5.2b"),
+                         "4.0b5.2b.Same center; different SENDA; kept per rule", obs_tag)
+  ) |>
+
+  # 35a/b (different center, same SENDA; nested)
+  mutate(
+    long_1 = dit_1 > 1096,  # see note below about threshold (dont care, photo was old. should be 1096)
+    long_2 = dit_2 > 1096,
+    disch_date_num_1_new = if_else(rule=="4.0b5.35a.check/trim.longstay" & trat_2_within_1==1 & long_1,
+                                   adm_date_rec_num_2 - 1L, disch_date_num_1_new),
+    disch_date_num_2_new = if_else(rule=="4.0b5.35a.check/trim.longstay" & trat_1_within_2==1 & long_2,
+                                   adm_date_rec_num_1 - 1L, disch_date_num_2_new),
+
+    # keep/discard for 35b
+    rn_discard = if_else(rule=="4.0b5.35b.keep.largest" & dit_1 < dit_2, rn_1,
+                  if_else(rule=="4.0b5.35b.keep.largest" & dit_2 < dit_1, rn_2, rn_discard)),
+    rn_keep    = if_else(rule=="4.0b5.35b.keep.largest" & dit_1 >= dit_2, rn_1,
+                  if_else(rule=="4.0b5.35b.keep.largest" & dit_2 >  dit_1, rn_2, rn_keep)),
+
+    obs_tag = dplyr::case_when(
+      rule=="4.0b5.35a.check/trim.longstay" & (long_1 | long_2) ~
+        "4.0b5.35a2.Different center same SENDA; nested; trimmed long stay >1096",
+      rule=="4.0b5.35a.check/trim.longstay" ~
+        "4.0b5.35a1.Different center same SENDA; nested; <=1096; check afterwards",
+      rule=="4.0b5.35b.keep.largest" ~
+        "4.0b5.35b.Different center same SENDA; nested; kept largest",
+      TRUE ~ obs_tag
+    )
+  ) |> 
+
+  # 2_4a / 2_4b (different center, same SENDA; not nested)
+  mutate(
+    disch_date_num_2_new = if_else(rule %in% c("4.0b5.2_4a.1.modify.second", "4.0b5.2_4b.1.modify.second+ref"), adm_date_rec_num_1 - 1L, disch_date_num_2_new),
+    tr_compliance_2_new  = if_else(rule=="4.0b5.2_4b.1.modify.second+ref","referral", tr_compliance_2_new),
+    disch_date_num_1_new = if_else(rule %in% c("4.0b5.2_4a.2.modify.first", "4.0b5.2_4b.2.modify.first+ref"), adm_date_rec_num_2 - 1L, disch_date_num_1_new),
+    tr_compliance_1_new  = if_else(rule=="4.0b5.2_4b.2.modify.first+ref","referral", tr_compliance_1_new),
+    obs_tag = dplyr::coalesce(
+      if_else(startsWith(rule, "4.0b5.2_4a"), "4.0b5.2_4a.Different center same SENDA; subtracted days to oldest", NA_character_),
+      if_else(startsWith(rule, "4.0b5.2_4b"), "4.0b5.2_4b.Different center same SENDA; subtracted days & set referral", NA_character_),
+      obs_tag)
+  ) |>
+
+  # 2_2b (different center, different SENDA)
+  mutate(
+    rn_keep    = if_else(startsWith(rule, "4.0b5.2_2b"),
+                         if_else(grepl("keep.second", rule), rn_2, rn_1), rn_keep),
+    rn_discard = if_else(startsWith(rule, "4.0b5.2_2b"),
+                         if_else(grepl("keep.second", rule), rn_1, rn_2), rn_discard),
+    obs_tag    = if_else(startsWith(rule, "4.0b5.2_2b"),
+                         "4.0b5.2_2b.Different center different SENDA; kept per rule", obs_tag)
+  )
+
+actions <- actions |>
+  mutate(
+    changed_1 = (disch_date_num_1_new != disch_date_num_1) | (tr_compliance_1_new != tr_compliance_1),
+    changed_2 = (disch_date_num_2_new != disch_date_num_2) | (tr_compliance_2_new != tr_compliance_2),
+
+    disch_date_num_1_new = if_else(changed_1, disch_date_num_1_new, NA_real_),
+    tr_compliance_1_new  = if_else(changed_1, tr_compliance_1_new,  NA_character_),
+    disch_date_num_2_new = if_else(changed_2, disch_date_num_2_new, NA_real_),
+    tr_compliance_2_new  = if_else(changed_2, tr_compliance_2_new,  NA_character_)
+  )
+
+
+must_decide <- c("4.0b5.3a.keep.largest",
+                 "4.0b5.35b.keep.largest",
+                 grep("^4\\.0b5\\.(2b|2_2b)", unique(actions$rule), value = TRUE))
+
+actions |>
+  filter(rule %in% must_decide) |>
+  summarise(still_undecided = sum(is.na(rn_keep) & is.na(rn_discard)))
+
+warning(paste0("4.0b5.35a1.Different center same SENDA; nested; <=1096; check afterwards: ", filter(actions, grepl("after",obs_tag)) |> nrow()))
+```
+
+We apply these rules into the dataset and check overlaps again
+
+
+```{r 0b5-apply-rules-based-center-id-senda-financing-length-referral}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+# reshape edits to row-level
+mods_long <- tidytable::bind_rows(
+  actions |>
+    tidytable::transmute(
+      rn = rn_1,
+      disch_date_num_rec_rule = disch_date_num_1_new,
+      tr_compliance_rec_rule  = tr_compliance_1_new,
+      OBS_rule = obs_tag
+    ),
+  actions |>
+    tidytable::transmute(
+      rn = rn_2,
+      disch_date_num_rec_rule = disch_date_num_2_new,
+      tr_compliance_rec_rule  = tr_compliance_2_new,
+      OBS_rule = obs_tag
+    )
+) |>
+  tidytable::filter(!is.na(rn)) |>
+  tidytable::distinct(rn, .keep_all = TRUE)
+
+mods_long <- mods_long |>
+  filter(!is.na(disch_date_num_rec_rule) |
+         !is.na(tr_compliance_rec_rule) |
+         !is.na(OBS_rule))
+
+# rows to drop
+to_discard <- unique(na.omit(actions$rn_discard))
+
+SISTRAT23_c1_2010_2024_df_prev1m <-
+  SISTRAT23_c1_2010_2024_df_prev1l |>
+  (\(df) {
+  cat(paste0("4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+  cat(paste0("4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+  df
+  })()|> 
+  tidytable::filter(!(rn %in% to_discard)) |>
+  tidytable::left_join(mods_long, by = "rn") |>
+  tidytable::mutate(
+    disch_date_num_rec5 = tidytable::coalesce(disch_date_num_rec_rule, disch_date_num_rec2),
+    tr_compliance_rec5   = tidytable::coalesce(tr_compliance_rec_rule, tr_compliance_rec),
+    OBS = tidytable::case_when(
+      !is.na(OBS_rule) &  is.na(OBS) ~ OBS_rule,
+      !is.na(OBS_rule)               ~ paste0(OBS, ";", OBS_rule),
+      TRUE                           ~ OBS
+    ),
+    dit_rec5 = disch_date_num_rec5 - adm_date_rec_num,
+    disch_date_rec5 = as.Date(disch_date_num_rec5, origin = "1970-01-01")
+  ) |>
+  tidytable::select(-any_of(c("disch_date_num_rec_rule", "tr_compliance_rec_rule", "OBS_rule")))|>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Early vs. late dropout
+  #changed the order of the labels (2025-06-02)
+  tidytable::mutate(
+    dit_earl_drop_rec5 = tidytable::case_when(
+      is.na(dit_rec5)  ~ NA_character_,
+      dit_rec5 >= 90   ~ ">= 90 days",
+      dit_rec5 <  90   ~ "<90 days"
+    ),
+    dit_earl_drop_rec5 = factor(
+      dit_earl_drop_rec5,
+      levels = c(">= 90 days","<90 days")
+    )
+  ) |>
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #Treatment compliance
+  tidytable::mutate(
+    tr_compliance_rec5 = tidytable::case_when(
+      !is.na(dit_earl_drop_rec5) &
+        grepl("dropout", tr_compliance_rec5, ignore.case = TRUE) &
+        as.character(dit_earl_drop_rec5) == "<90 days"            ~ "early dropout",
+      !is.na(dit_earl_drop_rec5) &
+        grepl("dropout", tr_compliance_rec5, ignore.case = TRUE) &
+        as.character(dit_earl_drop_rec5) == ">= 90 days"          ~ "late dropout",
+      TRUE ~ tr_compliance_rec5
+    ))|>
+  (\(df) {
+    cat(paste0("4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+  if (nrow(df) > nrow(SISTRAT23_c1_2010_2024_df_prev1l))stop("Error: Added treatment episodes in the process")
+    df
+  })()
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: 173,894 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: 121,299 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: 173,785 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: 121,299 
+
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: 173,894 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: 121,299 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, cases: 173,767 
+# 4.0b5. Database before apply rules based on center ID, SENDA financing status, referral cause and treatment length, RUNs: 121,299 
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# keep ∩ discard must be empty
+stopifnot(length(intersect(
+  stats::na.omit(actions$rn_keep),
+  stats::na.omit(actions$rn_discard)
+)) == 0)
+
+# no negative stays
+stopifnot( nrow(filter(SISTRAT23_c1_2010_2024_df_prev1m, disch_date_num_rec5==20236)) ==  nrow(filter(SISTRAT23_c1_2010_2024_df_prev1l, disch_date_num_rec2==20236)))
+
+stopifnot(SISTRAT23_c1_2010_2024_df_prev1m |> 
+    filter(rn==14483|rn==17410
+) |> nrow()<=1)
+```
+
+The generated database is called `SISTRAT23_c1_2010_2024_df_prev1m`. We included the variables `tr_compliance_rec5`, `disch_date_rec`, `dit_rec5`, and `disch_date_num_rec5`, as the result of replacing values for the deduplication process.
+
+
+```{r post-0b5-tab2_overlap4}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5<- 
+  SISTRAT23_c1_2010_2024_df_prev1m|>
+    mutate(disch_date_num_miss= ifelse(is.na(disch_date_num_rec5), 20236, disch_date_num_rec5))|> 
+    rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    select(rn2, hash_key_2, TABLE, adm_age_rec, senda_adm_date, adm_date_rec, adm_date_rec_num , disch_date_rec5, disch_date_num_miss, dit_rec5, id_centro, tr_compliance_rec5, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5 <-
+  janitor::clean_names(
+    sqldf::sqldf("SELECT * FROM CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5 AS x
+                  INNER JOIN CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5 AS y 
+                    ON x.hash_key_2 = y.hash_key_2 
+                   AND x.rn2 < y.rn2
+                   AND x.adm_date_rec_num < y.disch_date_num_miss
+                   AND x.disch_date_num_miss > y.adm_date_rec_num")
+  ) |>
+  `colnames<-`(c(
+    # left (x)
+    "rn_1","hash_key_1","ano_bd_1","adm_age_1","senda_adm_1","adm_date_1",
+    "adm_date_rec_num_1","disch_date_1","disch_date_num_1","dit_1",
+    "id_centro_1","tr_compliance_1","plan_type_1","senda_1",
+    # right (y) -- NOTE the order: adm_age_2 THEN senda_adm_2
+    "rn_2","hash_key_2","ano_bd_2","adm_age_2","senda_adm_2","adm_date_2",
+    "adm_date_rec_num_2","disch_date_2","disch_date_num_2","dit_2",
+    "id_centro_2","tr_compliance_2","plan_type_2","senda_2"
+  ))|> 
+#The rows on the left originate from older databases.
+  as_tidytable()|>
+    mutate(pair_id = paste0(sprintf("%06d", rn_1), "_", sprintf("%06d", rn_2)))|>
+    mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+    mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #data at the right is the more recent
+    mutate(senda_status = case_when(
+    senda_1=="si" & senda_2=="si" ~ "both yes",
+    senda_1=="no" & senda_2=="no" ~ "both no",
+    senda_1=="no" & senda_2=="si" ~ "second yes",
+    senda_1=="si" & senda_2=="no" ~ "second no",
+    TRUE ~ NA_character_
+    ))|> 
+    mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+    mutate(days_overlapped = pmax(0, pmin(disch_date_num_1, disch_date_num_2) -
+                             pmax(adm_date_rec_num_1, adm_date_rec_num_2)))|> 
+    mutate(trat_1_within2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+    mutate(trat_2_within1=ifelse(disch_date_num_2<disch_date_num_1 & adm_date_rec_num_2>adm_date_rec_num_1,1,0))|>
+    select(-hash_key_2) |> 
+    rename("hash_key"="hash_key_1") |> 
+    mutate(multiple = ifelse(rn_1 %in% overlaps_after_miss_appear_more_than_one_time |
+                         rn_2 %in% overlaps_after_miss_appear_more_than_one_time,
+                         TRUE, FALSE)) |>
+    mutate(
+    senda_adm_2 = as.Date(senda_adm_2, origin = "1970-01-01"),
+     adm_age_2 = as.numeric( adm_age_2 )
+  )|>
+  (\(df) {
+   df |> janitor::tabyl(multiple) |> print()
+  stopifnot(filter(df, !is.na(adm_age_2) & (adm_age_2 < 0 | adm_age_2 > 120)) |> nrow()<1)
+    df
+  })() 
+ # multiple   n   percent
+ #    FALSE  45 0.2662722
+ #     TRUE 124 0.7337278  
+
+# multiple   n   percent
+#   FALSE  27 0.1788079
+#    TRUE 124 0.8211921
+#Number of overlapped dates, observations: 559 ; 524 june 2025; 178  ago 2025
+#Number of overlapped dates, RUNs: 419 ; 411 june 2025; 102 ago 2025
+
+warning("2025-04-09: The conditions now should be that the row number is present in the Excel file and also in the rows vector where more than one overlap was detected. Otherwise, outdated cases will be corrected, which, due to the correction of the truncation date in the 2019 database, are no longer valid as overlaps.")
+
+cat("We export the dataset with more than one overlap and leftovers hard to un-overlap to check it manually.\n")
+# result_more_one_overlap_after_center_id <- aggregate(rn ~ hash_key, data = more_one_overlap_after_center_id|>
+#   mutate(hash_key=as.numeric(hash_key)), FUN = function(x) paste(x, collapse = ","))
+
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5|> 
+  #mutate(hash_key=as.numeric(factor(hash_key)))|> 
+    rio::export(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_sep25.xlsx"))
+
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5|> 
+    tidytable::pivot_longer(
+        cols = matches("_[12]$"),  # All columns ending with _1 or _2
+        names_to = c(".value", "wave"),
+        names_pattern = "(.+)_([12])",
+        values_drop_na = T,
+        values_transform = list(
+          adm_age = as.numeric,
+          senda_adm = as.Date,
+          adm_date = as.Date,
+          disch_date = as.Date,
+          dit = as.numeric
+        )) |> 
+  tidytable::arrange(pair_id, wave) |> #338
+  tidytable::distinct(rn ,.keep_all=T) |> #257
+  tidytable::arrange(hash_key, adm_date)|>
+  tidytable::mutate(obs4.0b5.35a1= ifelse(rn %in% (tidytable::filter(actions, grepl("after",obs_tag))|> pull(rn_1, rn_2)),1,0))|> 
+  rio::export(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_sep25_long.xlsx"))
+
+warning("Exercise caution when tracking these individuals’ trajectories: the database only includes treatment episodes that already overlap. Ignoring this risks introducing further overlaps.")
+#4.0b5.35a1.Different center same SENDA; nested; <=1096; check afterwards:
+```
+
+<br>
+
+### 0.c. Resolution of most problematic cases and multiple overlaps
+
+We apply the rules to detect for overlaps again. We used the `SISTRAT23_c1_2010_2024_df_prev1m` data set, which is the one that has been cleaned of duplicates and has the new variables.
+
+Here’s a clear English translation of your text, keeping the technical nuance:
+
+<span style="color:darkred">
+Since on September 27, 2025, we integrated cases with truncated treatments and new information, the rows and case identifier (rn) no longer match the original numbering. For this reason, we standardized through the column `overlap_2025-0927`, which contains new entries (“new”), old ones (“pre-27sep”), and preserved concatenations (e.g., `097268_126406`). Consequently, we filtered out those old rows where making any changes could introduce errors.
+</span>
+
+```{r 0c-more-1-overlaps-leftovers}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+cat("Explore whether there are more than one treatment episodes overlaps within the same center ID, and if so, how many times it occurs, after replacing center ID and previous steps in overlap correction.\n")
+overlaps_after_miss_appear_more_than_one_time_post_center_id<-
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5|>
+    tidytable::pivot_longer(
+        cols = matches("_[12]$"),  # All columns ending with _1 or _2
+        names_to = c(".value", "wave"),
+        names_pattern = "(.+)_([12])",
+        values_drop_na = FALSE) |> 
+    group_by(rn) |> 
+    count() |> 
+filter(n>1) |> pull(rn)
+
+cat(paste0("Number of overlaps after replacing center ID, episodes: ", formatC(length(overlaps_after_miss_appear_more_than_one_time_post_center_id), big.mark=",")),"\n")
+# Number of overlaps after replacing center ID, episodes: 73 
+
+
+#Number of overlaps after replacing center ID, episodes: 106 # 105 june 2025
+#Number of overlapping combinations after replacing center IDs: 176 # 174 june 2025 
+
+# More than one overlapping, cases: 176 # 174 june 2025
+# More than one overlapping, RUNs: 68 #67 june 2025
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+#3e97be604b540841225cf7948ed4e822c969cba6c5b6484c916e0bb109cd38e4
+#0d3452833c9825ed178e4aea8da2bd30f86b1e5e1839fdc57e7e446105bcedde
+#rn_1==76076|rn_2==76076
+#opc <- c(10716,2678,5505)
+#194
+
+multiple_overlaps_manual_correction<-
+#rio::import(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_mod.xlsx"), sheet = "Hoja 1")
+rio::import(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx")) |> 
+  mutate(hash_prev_sep25= gsub("^x","",hash_prev_sep25))|> 
+#rn's of the pre-aug 2025 manual review to pair with actual. might be imprecise due to changes in rows
+  #2025-09-27: modified
+  filter(overlap_20250927 != "pre-27sep")
+invisible("hash_prev_sep25= to homologue more_one_overlaps_after_center_id_mod.xlsx; hash_key was in numeric factor")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+
+multiple_overlaps_manual_correction|>
+  filter(OBS == "eliminar")|>
+  (\(df) {
+    cat(paste0("4.0c.1.Delete tr. episodes, multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c.1.Delete tr. episodes, multiple overlaps, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df|> 
+      pull(rn) ->> row_40c_delete_tr_episodes
+    df|> distinct(hash_key) |> pull(hash_key) ->> hashes_40c_delete_tr_episodes
+  })()
+#june 2025
+# 4.0c.1.Delete tr. episodes, multiple overlappings, cases: 31 
+# 4.0c.1.Delete tr. episodes, multiple overlappings, RUNs: 24
+# aug 2025
+# 4.0c.1.Delete tr. episodes, multiple overlappings, cases: 45 
+# 4.0c.1.Delete tr. episodes, multiple overlappings, RUNs: 40 
+# 2025-09-27
+# 4.0c.1.Delete tr. episodes, multiple overlaps, cases: 34 
+# 4.0c.1.Delete tr. episodes, multiple overlaps, RUNs: 29 
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+multiple_overlaps_manual_correction|>
+  filter(!is.na( disch_date_corr))|>
+  (\(df) {
+    cat(paste0("4.0c.2.Replace discharge dates, multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c.2.Replace discharge dates, multiple overlaps, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    #df|> distinct(hash_key) |> pull(hash_key) ->> row_40c_replace_disch_dates
+     df|> 
+      select(rn, disch_date_corr)|> 
+      mutate(disch_date_corrected= as.Date(as.character(disch_date_corr))) ->> row_40c_replace_disch_dates
+  })()
+#june 2025
+# 4.0c.2.Replace discharge dates, multiple overlappings, cases: 56 
+# 4.0c.2.Replace discharge dates, multiple overlappings, RUNs: 38 
+# aug 2025
+# 4.0c.2.Replace discharge dates, multiple overlappings, cases: 54 
+# 4.0c.2.Replace discharge dates, multiple overlappings, RUNs: 37 
+# 2025-09-27
+# 4.0c.2.Replace discharge dates, multiple overlaps, cases: 52 
+# 4.0c.2.Replace discharge dates, multiple overlaps, RUNs: 35 
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+multiple_overlaps_manual_correction|>
+  filter(!is.na(adm_date_2_corr))|>
+  (\(df) {
+    cat(paste0("4.0c.3.Replace admission date, multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c.3.Replace admission date, multiple overlaps, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df|> 
+      select(rn, adm_date_2_corr)|> 
+      mutate(adm_date_corrected= as.Date(as.character(adm_date_2_corr))) ->> row_40c_replace_adm_dates
+  })()
+#june2025
+# 4.0c.3.Replace admission date, multiple overlappings, cases: 42 
+# 4.0c.3.Replace admission date, multiple overlappings, RUNs: 33 
+# aug 2025
+# 4.0c.3.Replace admission date, multiple overlappings, cases: 54 
+# 4.0c.3.Replace admission date, multiple overlappings, RUNs: 47
+# 2025-09-27
+# 4.0c.3.Replace admission date, multiple overlaps, cases: 45 
+# 4.0c.3.Replace admission date, multiple overlaps, RUNs: 38 
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+multiple_overlaps_manual_correction|>
+  filter(!is.na(tr_compliance_rec))|>
+  (\(df) {
+    cat(paste0("4.0c.4.Replace referral cause, multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c.4.Replace referral cause, multiple overlaps, RUNs: ", formatC(nrow(distinct(df, hash_key)), big.mark=",")),"\n")
+    df|> 
+      select(rn, tr_compliance_rec)|> 
+      mutate(tr_compliance_rec= as.character(tr_compliance_rec)) ->> row_40c_replace_referral
+  })()
+# june2025
+# 4.0c.4.Replace referral cause, multiple overlappings, cases: 2 
+# 4.0c.4.Replace referral cause, multiple overlappings, RUNs: 2 
+# aug 2025
+# 4.0c.4.Replace referral cause, multiple overlappings, cases: 8 
+# 4.0c.4.Replace referral cause, multiple overlappings, RUNs: 8
+#2025-09-27
+# 4.0c.4.Replace referral cause, multiple overlaps, cases: 6 
+# 4.0c.4.Replace referral cause, multiple overlaps, RUNs: 6 
+```
+
+
+**Summary of Manual Data Cleaning for Treatments w/ Overlaps**
+
+Manual adjustments were made to resolve treatment episodes based on the following criteria:
+
+*   **Prioritized SENDA Admission Date (`adm_date_senda`):** Used `adm_date_senda` over `adm_date` to resolve overlaps, especially for treatments >1096 days or from pre-2012 databases.
+*   **Handled Multiple Ongoing Treatments:** Retained the most recent ongoing treatment; adjusted the previous discharge date to one day before the next admission.
+*   **Prioritized Recent Data:** When overlaps occurred between records from different database years, the record from the most recent year was kept.
+*   **Managed Missing Discharge Dates:** Replaced missing discharge dates with the subsequent admission date minus one day, if applicable.
+*   **Removed Unreliable Long Treatments:** Eliminated treatments >1096 days if they lacked SENDA funding or originated from pre-2012 databases without a discharge date.
+*   **Addressed Short Overlaps (<15 days):** Considered these minor discrepancies, likely due to administrative delays, and resolved by retaining the most plausible record.
+*   **Handled Referrals:** Prioritized referrals from more recent databases in case of overlaps. If one treatment absorbed others (especially if SENDA-funded and recent), only the absorbing record was kept.
+*   **Noted Truncated 2019 Data:** Acknowledged that treatments recorded in the 2019 database might be truncated as of Nov 13, 2019, using `dias_en_tratamiento` for duration calculations.
+*   **Flagged Ongoing Status:** Marked treatments listed as "ongoing" for future status updates.
+
+Changes were in the following variables: `adm_date_corrected`, `disch_date_rec5_corrected` and `tr_compliance_rec`.
+
+```{r 0c-more-1-overlaps-leftovers-ext-correction}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: false
+
+# Chooses the admission date to use per episode: use senda_adm unless the episode is >1096 days or from an annual DB <2012, in which case use the original adm_date.
+# 
+# Collapses near-duplicate starts (≤15 days): keep the episode from the newer annual DB.
+# 
+# Hard reliability drops:
+# 
+# non-SENDA & >1096 days → drop.
+# 
+# <2012 and (open or >1096 days) → drop.
+# 
+# Fixes open/short overlaps by capping opens to (next start − 1) and trimming <15-day overlaps.
+# 
+# Drops sandwiched non-SENDA records between two others from the same/newer year.
+# 
+# Drops referrals fully contained inside a solid, SENDA-funded, <1096-day episode from the same/newer year.
+# 
+# Breaks any remaining ties pairwise (prefer non-referral, then SENDA “si”, then newer year; otherwise trim earlier).
+# 
+# Safety: no negative stays; every change has a reason tag for audit.
+# 
+# It’s generalizable: rules are parameterized (LONG_LIM, SHORT_OVERLAP), it never hard-codes rn values, and it works whether your input is pairwise or long—as long as the core columns exist.
+# ========= Overlap resolver (no library(), fully qualified) =========
+
+# ----- Parameters you can tweak -----
+LONG_LIM <- 1096L     # long-run threshold (days)
+SHORT_OVERLAP <- 15L  # "short overlap" boundary (days)
+EPOCH0 <- as.Date("1970-01-01")
+
+# ----- Helpers -----
+to_daynum <- function(x) {
+  # Convert to "days since 1970-01-01"; NAs pass through
+  if (inherits(x, "Date")) return(as.integer(x - EPOCH0))
+  if (inherits(x, "POSIXct") || inherits(x, "POSIXt")) return(as.integer(as.Date(x) - EPOCH0))
+  # if numeric (already daynum), coerce via Date safely
+  suppressWarnings({
+    if (is.numeric(x)) return(as.integer(x))
+    xx <- as.Date(x)
+    as.integer(xx - EPOCH0)
+  })
+}
+
+norm_si_no <- function(x) {
+  y <- tolower(trimws(as.character(x)))
+  y[y %in% c("sí","si","yes","y","1","true")] <- "si"
+  y[y %in% c("no","0","false")] <- "no"
+  y
+}
+
+# If input is pairwise (…_1 / …_2), pivot it to long and de-duplicate by rn
+to_long_if_needed <- function(df) {
+  has_pair_suffix <- any(grepl("_[12]$", names(df)))
+  if (!has_pair_suffix) {
+    # normalize a few column aliases if present
+    if (!"senda_adm" %in% names(df) && "senda_adm_date" %in% names(df)) df$senda_adm <- df$senda_adm_date
+    if (!"dit" %in% names(df) && all(c("adm_date_rec_num","disch_date_num") %in% names(df))) {
+      df$dit <- as.integer(df$disch_date_num) - as.integer(df$adm_date_rec_num)
+    }
+    return(df)
+  }
+
+  # pairwise -> long (keeps one row per rn)
+  cols_to_pivot <- grep("_[12]$", names(df), value = TRUE)
+  long <- tidyr::pivot_longer(
+    data = df,
+    cols = tidyselect::all_of(cols_to_pivot),
+    names_to = c(".value","side"),
+    names_pattern = "(.+)_([12])$",
+    values_drop_na = FALSE
+  )
+  long <- dplyr::distinct(long, rn, .keep_all = TRUE)
+
+  # normalize minimal set we need
+  if (!"senda_adm" %in% names(long) && "senda_adm_date" %in% names(long)) long$senda_adm <- long$senda_adm_date
+  if (!"dit" %in% names(long) && all(c("adm_date_rec_num","disch_date_num") %in% names(long))) {
+    long$dit <- as.integer(long$disch_date_num) - as.integer(long$adm_date_rec_num)
+  }
+  long
+}
+
+# Pairwise tie-breaker if a real overlap remains
+resolve_pair <- function(prev, nxt) {
+  # If both are non-SENDA → trim earlier, don't drop by default (Obs 19)
+  if (prev$senda == "no" && nxt$senda == "no") return("trim_prev")
+
+  # Short overlap → trim earlier
+  if (is.finite(prev$end_use_num) &&
+      prev$end_use_num >= nxt$start_use_num &&
+      (prev$end_use_num - nxt$start_use_num) < SHORT_OVERLAP) {
+    return("trim_prev")
+  }
+
+  # Prefer non-referral over referral
+  if (prev$tr_compliance == "referral" && nxt$tr_compliance != "referral") return("drop_prev")
+  if (nxt$tr_compliance == "referral" && prev$tr_compliance != "referral") return("drop_next")
+
+  # Prefer SENDA = "si"
+  if (!identical(prev$senda, nxt$senda)) {
+    if (prev$senda == "no" && nxt$senda == "si") return("drop_prev")
+    if (prev$senda == "si" && nxt$senda == "no") return("drop_next")
+  }
+
+  # Prefer newer annual DB
+  if (!identical(prev$ano_bd, nxt$ano_bd)) {
+    return(if (prev$ano_bd < nxt$ano_bd) "drop_prev" else "drop_next")
+  }
+
+  # Default: trim the earlier
+  "trim_prev"
+}
+
+# Core resolver: run on a single person (by hash_key)
+resolve_one_person <- function(g) {
+    g <- g |>
+        dplyr::mutate(
+            # Normalize
+            ano_bd = suppressWarnings(as.integer(ano_bd)),
+            senda = norm_si_no(senda),
+            start_raw = suppressWarnings(as.integer(adm_date_rec_num)),
+            end_raw   = suppressWarnings(as.integer(disch_date_num)),
+            senda_adm_num = to_daynum(senda_adm),
+            
+            # (1) Choose admission date with safe fallback (Obs 1,5,8,9,15)
+            .tmp_start = ifelse( (dit > LONG_LIM) | (ano_bd < 2012) | is.na(senda_adm_num),
+                                 start_raw, senda_adm_num ),
+            start_use_num = dplyr::coalesce(.tmp_start, start_raw, senda_adm_num),
+            end_use_num   = end_raw,
+            action = "keep",
+            reason = ""
+        ) |>
+        dplyr::select(-.tmp_start) |>
+        # sort; NAs will go last due to large sentinel
+        dplyr::arrange(ifelse(is.na(start_use_num), .Machine$integer.max, start_use_num),
+                       dplyr::desc(ano_bd))
+    
+    # (0) If start is missing, we cannot sequence → drop
+    idx_na_start <- which(is.na(g$start_use_num))
+    drops <- dplyr::tibble()
+    if (length(idx_na_start)) {
+        g$action[idx_na_start] <- "drop"
+        g$reason[idx_na_start] <- paste(g$reason[idx_na_start], "missing start date", sep="|")
+        drops <- dplyr::bind_rows(drops, g[idx_na_start,])
+        g <- g[-idx_na_start, , drop = FALSE]
+    }
+    if (nrow(g) == 0L) return(drops)
+    
+    # (2) Near-duplicate starts (≤ SHORT_OVERLAP): keep newer year (Obs 3,22)
+    if (nrow(g) > 1L) {
+        keep_mask <- rep(TRUE, nrow(g))
+        i <- 1L
+        while (i <= nrow(g)) {
+            j <- i + 1L
+            while (j <= nrow(g) &&
+                   is.finite(g$start_use_num[i]) &&
+                   is.finite(g$start_use_num[j]) &&
+                   abs(g$start_use_num[j] - g$start_use_num[i]) <= SHORT_OVERLAP) {
+                j <- j + 1L
+            }
+            if ((j - i) > 1L) {
+                block <- i:(j-1L)
+                max_year <- max(g$ano_bd[block], na.rm = TRUE)
+                drop_ids <- block[g$ano_bd[block] < max_year]
+                keep_mask[drop_ids] <- FALSE
+            }
+            i <- j
+        }
+        g$action[!keep_mask] <- "drop"
+        g$reason[!keep_mask] <- paste(g$reason[!keep_mask], "start~same keep newer year", sep="|")
+    }
+    
+    kept  <- g |> dplyr::filter(action != "drop")
+    drops <- dplyr::bind_rows(drops, g |> dplyr::filter(action == "drop"))
+    
+    # (3) Hard drops (Obs 10,18,6,11)
+    idx <- which(kept$senda == "no" & kept$dit > LONG_LIM)
+    if (length(idx)) {
+        kept$action[idx] <- "drop"
+        kept$reason[idx] <- paste(kept$reason[idx], "non-SENDA >1096", sep="|")
+    }
+    idx <- which(kept$ano_bd < 2012 & (is.na(kept$end_use_num) | kept$dit > LONG_LIM))
+    if (length(idx)) {
+        kept$action[idx] <- "drop"
+        kept$reason[idx] <- paste(kept$reason[idx], "old<2012 open or >1096", sep="|")
+    }
+    drops <- dplyr::bind_rows(drops, kept |> dplyr::filter(action == "drop"))
+    kept  <- kept |> dplyr::filter(action != "drop") |>
+        dplyr::arrange(start_use_num, dplyr::desc(ano_bd))
+    
+    # (4) Cap opens to next-1; trim short overlaps (Obs 2,4,12)
+    if (nrow(kept) > 1L) {
+        for (i in seq_len(nrow(kept)-1L)) {
+            next_start <- kept$start_use_num[i+1L]
+            # cap open only if next start is finite
+            if (is.na(kept$end_use_num[i]) && is.finite(next_start)) {
+                kept$end_use_num[i] <- next_start - 1L
+                kept$reason[i] <- paste(kept$reason[i], "cap open to next-1", sep="|")
+            }
+            # trim short overlaps only if both endpoints are finite
+            if (is.finite(kept$end_use_num[i]) && is.finite(next_start) &&
+                kept$end_use_num[i] >= next_start &&
+                (kept$end_use_num[i] - next_start) < SHORT_OVERLAP) {
+                kept$end_use_num[i] <- next_start - 1L
+                kept$reason[i] <- paste(kept$reason[i], "trim short overlap", sep="|")
+            }
+        }
+    }
+    
+    # (5) Drop “sandwiched” non-SENDA (Obs 14)
+    if (nrow(kept) > 2L) {
+        idx_drop <- integer()
+        for (i in 2:(nrow(kept)-1L)) {
+            prev <- kept[i-1L,]; cur <- kept[i,]; nxt <- kept[i+1L,]
+            if (is.finite(prev$end_use_num) && is.finite(cur$start_use_num) &&
+                is.finite(cur$end_use_num) && is.finite(nxt$start_use_num)) {
+                if (cur$senda == "no" &&
+                    prev$end_use_num >= cur$start_use_num &&
+                    cur$end_use_num   <= nxt$start_use_num &&
+                    cur$ano_bd <= min(prev$ano_bd, nxt$ano_bd, na.rm = TRUE)) {
+                    idx_drop <- c(idx_drop, i)
+                }
+            }
+        }
+        if (length(idx_drop)) {
+            kept$action[idx_drop] <- "drop"
+            kept$reason[idx_drop] <- paste(kept$reason[idx_drop], "non-SENDA sandwiched", sep="|")
+            drops <- dplyr::bind_rows(drops, kept[idx_drop,])
+            kept  <- kept[-idx_drop, , drop=FALSE]
+        }
+    }
+    
+    # (6) Drop referrals fully contained by a solid SENDA (<1096d; newer/equal year) (Obs 7,17)
+    if (nrow(kept) > 1L) {
+        kept$dur_eff <- kept$end_use_num - kept$start_use_num
+        idx_drop <- integer()
+        for (i in seq_len(nrow(kept))) {
+            if (kept$tr_compliance[i] != "referral") next
+            for (j in seq_len(nrow(kept))) {
+                if (i == j) next
+                if (is.finite(kept$start_use_num[j]) && is.finite(kept$end_use_num[j]) &&
+                    is.finite(kept$start_use_num[i]) && is.finite(kept$end_use_num[i])) {
+                    if (kept$start_use_num[j] <= kept$start_use_num[i] &&
+                        kept$end_use_num[j]   >= kept$end_use_num[i] &&
+                        kept$senda[j] == "si" && kept$dur_eff[j] < LONG_LIM &&
+                        kept$ano_bd[j] >= kept$ano_bd[i]) {
+                        idx_drop <- c(idx_drop, i); break
+                    }
+                }
+            }
+        }
+        if (length(idx_drop)) {
+            kept$action[idx_drop] <- "drop"
+            kept$reason[idx_drop] <- paste(kept$reason[idx_drop], "referral contained by SENDA", sep="|")
+            drops <- dplyr::bind_rows(drops, kept[idx_drop,])
+            kept  <- kept[-idx_drop, , drop=FALSE]
+        }
+    }
+    
+    # (7) Pairwise resolution if anything still overlaps (Obs 19)
+    if (nrow(kept) > 1L) {
+        changed <- TRUE
+        while (changed) {
+            changed <- FALSE
+            kept <- kept |> dplyr::arrange(start_use_num)
+            i <- 1L
+            while (i < nrow(kept)) {
+                prev <- kept[i,]; nxt <- kept[i+1L,]
+                if (is.finite(prev$end_use_num) && is.finite(nxt$start_use_num) &&
+                    prev$end_use_num >= nxt$start_use_num) {
+                    decision <- resolve_pair(prev, nxt)
+                    if (decision == "trim_prev") {
+                        kept$end_use_num[i] <- nxt$start_use_num - 1L
+                        kept$reason[i] <- paste(kept$reason[i], "trim pair overlap", sep="|")
+                        changed <- TRUE; i <- i + 1L
+                    } else if (decision == "drop_prev") {
+                        prev$action <- "drop"; prev$reason <- paste(prev$reason, "drop by rule pair", sep="|")
+                        drops <- dplyr::bind_rows(drops, prev)
+                        kept  <- kept[-i, , drop=FALSE]
+                        changed <- TRUE
+                    } else if (decision == "drop_next") {
+                        nxt$action <- "drop"; nxt$reason <- paste(nxt$reason, "drop by rule pair", sep="|")
+                        drops <- dplyr::bind_rows(drops, nxt)
+                        kept  <- kept[-(i+1L), , drop=FALSE]
+                        changed <- TRUE
+                    } else {
+                        i <- i + 1L
+                    }
+                } else {
+                    i <- i + 1L
+                }
+            }
+        }
+    }
+    
+    # (8) Safety: no negative stays
+    bad <- which(is.finite(kept$end_use_num) & is.finite(kept$start_use_num) &
+                     kept$end_use_num < kept$start_use_num)
+    if (length(bad)) {
+        kept$end_use_num[bad] <- kept$start_use_num[bad]
+        kept$reason[bad] <- paste(kept$reason[bad], "end<start => set to start", sep="|")
+    }
+    
+    dplyr::bind_rows(kept, drops)
+}
+
+
+# ----- Public API -----
+run_overlap_resolver <- function(df_in) {
+  # 0) Accept pairwise or long; normalize minimal columns
+  df <- to_long_if_needed(df_in)
+
+  # 1) Require core columns
+  must <- c("hash_key","rn","ano_bd","adm_date_rec_num","disch_date_num","dit","tr_compliance","senda")
+  missing <- setdiff(must, names(df))
+  if (length(missing)) {
+    stop("Missing required columns: ", paste(missing, collapse=", "))
+  }
+  if (!"senda_adm" %in% names(df)) df$senda_adm <- NA
+
+  # 2) Split-apply by person (hash_key)
+  split_list <- split(df, df$hash_key)
+  out_list <- lapply(split_list, resolve_one_person)
+  out <- dplyr::bind_rows(out_list)
+
+  # 3) Mark changes and assemble outputs
+  out <- out |>
+    dplyr::mutate(
+      start_changed = is.na(start_raw) | (!is.na(start_use_num) & start_use_num != start_raw),
+      end_changed   = is.na(end_raw)   | (!is.na(end_use_num)   & end_use_num   != end_raw)
+    )
+
+  cleaned <- out |> dplyr::filter(action == "keep")
+  dropped <- out |> dplyr::filter(action == "drop")
+
+  # 4) Quick overlap check (residual should be 0)
+  overlaps_total <- 0L
+  
+  # will store each adjacent overlap we find
+  overlap_pairs <- data.frame(
+    hash_key     = character(),
+    rn_left      = integer(),
+    rn_right     = integer(),
+    left_end     = integer(),
+    right_start  = integer(),
+    overlap_days = integer(),
+    stringsAsFactors = FALSE
+  )
+  
+  for (hk in unique(cleaned$hash_key)) {
+    g <- cleaned[cleaned$hash_key == hk, , drop = FALSE]
+    g <- g[order(g$start_use_num, -g$ano_bd), , drop = FALSE]
+  
+    if (nrow(g) > 1) {
+      prev_end <- NA_integer_
+      prev_rn  <- NA_integer_
+  
+      for (i in seq_len(nrow(g))) {
+        st <- g$start_use_num[i]
+        en <- g$end_use_num[i]
+  
+        # if previous episode's end overlaps this start, record it
+        if (!is.na(prev_end) && !is.na(st) && prev_end >= st) {
+          overlaps_total <- overlaps_total + 1L
+          overlap_pairs <- rbind(
+            overlap_pairs,
+            data.frame(
+              hash_key     = hk,
+              rn_left      = prev_rn,
+              rn_right     = g$rn[i],
+              left_end     = prev_end,
+              right_start  = st,
+              overlap_days = as.integer(prev_end - st + 1L), # inclusive
+              stringsAsFactors = FALSE
+            )
+          )
+        }
+  
+        # carry forward the last non-missing end (and its rn)
+        if (!is.na(en)) {
+          prev_end <- en
+          prev_rn  <- g$rn[i]
+        }
+      }
+    }
+  }
+  
+  # unique RNs that participate in any residual overlap
+  overlap_rns <- unique(c(overlap_pairs$rn_left, overlap_pairs$rn_right))
+
+  list(
+    cleaned = cleaned,
+    dropped = dropped,
+    overlapped = overlap_rns,
+    summary = data.frame(
+      episodes_in = nrow(df),
+      episodes_kept = nrow(cleaned),
+      episodes_dropped = nrow(dropped),
+      residual_overlaps_pairs = overlaps_total
+    )
+  )
+}
+
+
+res <- run_overlap_resolver(CONS_C1_df_dup_intervals_after_miss_less30d_0d_0b5)
+
+cat("Percentage of coincidence of manual review among dropped by chat GPT function: \n")
+scales::percent(res$dropped |> filter(rn%in% row_40c_delete_tr_episodes) |> nrow() / nrow(distinct(res$dropped, .keep_all=T)), accuracy=.1)
+# SEP 2025
+# Percentage of coincidence of manual review among dropped by chat GPT function: 
+# [1] "50.0%"
+```
+
+
+```{r 0c-more-1-overlaps-leftovers-ext-correction-manual-apply}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+#row_40c_replace_referral row_40c_delete_tr_episodes hashes_40c_delete_tr_episodes  row_40c_replace_disch_dates row_40c_replace_adm_dates row_40c_replace_referral
+#overlaps_after_miss_appear_more_than_one_time_post_center_id
+
+#check before joining
+stopifnot(nrow(row_40c_replace_adm_dates) == nrow(distinct(row_40c_replace_adm_dates, rn)))
+stopifnot(nrow(row_40c_replace_disch_dates) == nrow(distinct(row_40c_replace_disch_dates, rn)))
+stopifnot(nrow(row_40c_replace_referral) == nrow(distinct(row_40c_replace_referral, rn)))
+
+SISTRAT23_c1_2010_2024_df_prev1n <-
+  SISTRAT23_c1_2010_2024_df_prev1m|>
+  (\(df) {
+    cat(paste0("4.0c. Database before apply rules based on multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c. Database before apply rules based on multiple overlaps, RUNs: ", formatC(nrow(tidytable::distinct(df, hash_key)), big.mark=",")),"\n")
+    df
+  })()|>
+  tidytable::filter(!(rn %in% row_40c_delete_tr_episodes))|>
+  tidytable::mutate(OBS = tidytable::case_when(
+    (hash_key %in% hashes_40c_delete_tr_episodes) & (rn %in% overlaps_after_miss_appear_more_than_one_time_post_center_id)  ~ paste0(as.character(OBS), ";", "4.0c.1.Multiple overlaps, discarded tr. episodes"),
+    TRUE ~ OBS
+  ))|>
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;  
+  tidytable::left_join(row_40c_replace_adm_dates, by = "rn", suffix = c("", "_40c3"))|>
+  tidytable::left_join(row_40c_replace_disch_dates, by = "rn", suffix = c("", "_40c2"))|>
+  tidytable::left_join(row_40c_replace_referral, by = "rn", suffix = c("", "_40c4"))|>
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;  
+  tidytable::mutate(OBS = tidytable::case_when(
+    !is.na(adm_date_corrected) & (rn %in% overlaps_after_miss_appear_more_than_one_time_post_center_id) ~ paste0(as.character(OBS), ";", "4.0c.3.Multiple overlaps, replace admission dates"),
+    TRUE ~ OBS
+  ))|>
+  tidytable::mutate(OBS = tidytable::case_when(
+    !is.na(disch_date_corrected) & (rn %in% overlaps_after_miss_appear_more_than_one_time_post_center_id) ~ paste0(as.character(OBS), ";", "4.0c.2.Multiple overlaps, replace discharge dates"),
+    TRUE ~ OBS
+  ))|>
+  tidytable::mutate(OBS = tidytable::case_when(
+    !is.na(tr_compliance_rec_40c4) & (rn %in% overlaps_after_miss_appear_more_than_one_time_post_center_id) ~ paste0(as.character(OBS), ";", "4.0c.4.Multiple overlaps, replace cause of discharge as referral"),
+    TRUE ~ OBS
+  ))|>
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  tidytable::mutate(
+    adm_date_rec2 = tidytable::coalesce(adm_date_corrected, adm_date_rec),
+    disch_date_rec6 = tidytable::coalesce(disch_date_corrected, disch_date_rec5),
+    tr_compliance_rec6 = tidytable::coalesce(tr_compliance_rec_40c4, tr_compliance_rec5),
+    # Accurate age calculation using lubridate
+    adm_age_rec2 = round(lubridate::time_length(lubridate::interval(birth_date_rec, adm_date_rec2), "years"), 2),
+    # Numeric versions (for DIT)
+    adm_date_num_rec2 = as.numeric(adm_date_rec2),
+    disch_date_num_rec6 = as.numeric(disch_date_rec6)
+  )|>
+  # Drop temporary join columns
+  tidytable::select(-any_of(c("adm_date_2_corr", "adm_date_corrected", "disch_date_corr", "disch_date_corrected", "tr_compliance_rec_40c4")))|>
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  #;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;#;
+  # Compute DIT correctly (using corrected dates!)
+  tidytable::mutate(dit_rec6 = round(lubridate::time_length(lubridate::interval(adm_date_rec2, disch_date_rec6), "days"),0))|>
+  # Early vs late dropout
+  tidytable::mutate(dit_earl_drop_rec = ifelse(dit_rec6 < 90 & !is.na(dit_rec6), 1, 0))|>
+  tidytable::mutate(dit_earl_drop = factor(dit_earl_drop_rec, labels = c(">= 90 days", "<90 days")))|>
+  # Treatment compliance (complex logic — keep case_when)
+  tidytable::mutate(tr_compliance_rec6 = tidytable::case_when(
+    dit_earl_drop == "<90 days" & grepl("drop", tr_compliance_rec6) ~ "early dropout",
+    dit_earl_drop == ">= 90 days" & grepl("drop", tr_compliance_rec6) ~ "late dropout",
+    dit_earl_drop == "<90 days" & grepl("adm dis", tr_compliance_rec6) ~ "early adm discharge",
+    dit_earl_drop == ">= 90 days" & grepl("adm dis", tr_compliance_rec6) ~ "late adm discharge",
+    grepl("completion", tr_compliance_rec6) ~ "completion",
+    grepl("death", tr_compliance_rec6) ~ "death",
+    grepl("referral", tr_compliance_rec6) ~ "referral",
+    grepl("adm tr", tr_compliance_rec6) ~ "adm truncated",
+    is.na(tr_compliance_rec6) ~ "adm truncated",
+    TRUE ~ "currently in"
+  ))|>
+  #_#_#_#_#_#_#_#_#_#_#_#_#_
+  # Admission age
+  tidytable::mutate(adm_age_rec3 = round(lubridate::time_length(lubridate::interval(birth_date_rec, adm_date_rec2), "years"),2))|>
+  (\(df) {
+    cat(paste0("4.0c. Database after apply rules based on multiple overlaps, cases: ", formatC(nrow(df), big.mark=",")),"\n")
+    cat(paste0("4.0c. Database after apply rules based on multiple overlaps, RUNs: ", formatC(nrow(tidytable::distinct(df, hash_key)), big.mark=",")),"\n")
+    if (nrow(df) > nrow(SISTRAT23_c1_2010_2024_df_prev1m)) stop("Error: Added treatment episodes in the process")
+    df
+  })()
+# pre SEP 2025
+# 4.0c. Database before apply rules based on multiple overlappings, cases: 150,076 
+# 4.0c. Database before apply rules based on multiple overlappings, RUNs: 106,283 
+# 4.0c. Database after apply rules based on multiple overlappings, cases: 150,041 
+# 4.0c. Database after apply rules based on multiple overlappings, RUNs: 106,283 
+# SEP 2025
+# 4.0c. Database before apply rules based on multiple overlappings, cases: 173,767 
+# 4.0c. Database before apply rules based on multiple overlappings, RUNs: 121,299 
+# 4.0c. Database after apply rules based on multiple overlappings, cases: 173,730 
+# 4.0c. Database after apply rules based on multiple overlappings, RUNs: 121,299 
+
+stopifnot( nrow(filter(SISTRAT23_c1_2010_2024_df_prev1n, disch_date_num_rec6==20236)) ==  nrow(filter(SISTRAT23_c1_2010_2024_df_prev1m, disch_date_num_rec2==20236)))
+```
+
+The database `SISTRAT23_c1_2010_2024_df_prev1n` was generated by replacing the original admission and discharge dates, along with the causes of discharge. Subsequently, the following variables were added to this dataset: the revised discharge date (`disch_date_rec6`), its numeric representation (`disch_date_num_rec6`), and the calculated days in treatment (`dit_rec6`). The revised admission date resulting from the replacement was also included in the final dataset in its numeric (`adm_date_num_rec2`) and date (`adm_date_rec2`) format. Also, we generated `tr_compliance_rec6` to recode cause of discharge according to changes made in days in treatment and overlapping correction. We also added `dit_earl_drop_rec`, a binary classification of treatments with less than 90 days. Finally, we created the variable `adm_age_rec3` to indicate the age at admission according to the new admission dates.
+
+We check again if there are overlaps after manual replacements.
+
+
+```{r  tab2_overlap5-after-manual-review}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_center_id_multiple_overlaps<- 
+  SISTRAT23_c1_2010_2024_df_prev1n|>
+    mutate(disch_date_num_miss= ifelse(is.na(disch_date_num_rec6), 20236, disch_date_num_rec6))|>
+    rename("hash_key_2"="hash_key", "rn2"="rn")|>
+    select(rn2, hash_key_2, TABLE, adm_age_rec2, adm_date_rec2, adm_date_num_rec2 , disch_date_rec6, disch_date_num_miss, dit_rec6, id_centro, tr_compliance_rec6, plan_type, senda)|> 
+    #dplyr::filter(motivodeegreso!="Derivación")|>
+    data.table::as.data.table()
+  
+overlap_dates_C1_after_miss_less30d_0d_center_id_mult_overlap <- janitor::clean_names(
+    sqldf::sqldf(
+      "
+      SELECT *
+      FROM CONS_C1_df_dup_intervals_after_miss_less30d_0d_center_id_multiple_overlaps AS x
+      INNER JOIN CONS_C1_df_dup_intervals_after_miss_less30d_0d_center_id_multiple_overlaps AS y 
+      ON x.hash_key_2 = y.hash_key_2 
+         AND x.rn2 < y.rn2  -- Avoids duplicates (eg.: x vs y and then y vs x)
+         AND x.adm_date_num_rec2 < y.disch_date_num_miss  -- x Admitted before being admitted into another treatment
+         AND x.disch_date_num_miss > y.adm_date_num_rec2  -- x Discharged after being admitted in other
+         "
+    ))|>
+    `colnames<-`(c("rn_1", "hash_key_1", "ano_bd_1", "adm_age_1", "adm_date_1", "adm_date_rec_num_1", "disch_date_1", "disch_date_num_1", "dit_1", "id_centro_1", "tr_compliance_1", "plan_type_1", "senda_1",  "rn_2", "hash_key_2", "ano_bd_2", "adm_age_2", "adm_date_2", "adm_date_rec_num_2", "disch_date_2", "disch_date_num_2", "dit_2", "id_centro_2", "tr_compliance_2", "plan_type_2", "senda_2")) 
+  
+    cat(paste0("Number of dates w/ overlaps, observations: ", nrow(overlap_dates_C1_after_miss_less30d_0d_center_id_mult_overlap)),"\n")
+    cat(paste0("Number of dates w/ overlaps, RUNs: ", nrow(distinct(overlap_dates_C1_after_miss_less30d_0d_center_id_mult_overlap, hash_key_1))))
+    #Number of overlapped dates, observations: 90 
+    #Number of overlapped dates, RUNs: 89
+# june 2025
+    #Number of overlapped dates, observations: 89 
+    #Number of overlapped dates, RUNs: 88
+    
+    #Number of overlapped dates, observations: 8 
+    #Number of overlapped dates, RUNs: 5
+# sep 2025
+    #Number of overlapped dates, observations: 0 
+    #Number of overlapped dates, RUNs: 0
+
+#The rows on the left originate from older databases.
+CONS_C1_df_dup_intervals_after_miss_less30d_0d_center_id_multiple_overlaps <- 
+as_tidytable(overlap_dates_C1_after_miss_less30d_0d_center_id_mult_overlap)|>
+  mutate(pair_id= paste0(rn_1,"_",rn_2))|> 
+  mutate(same_id=ifelse(id_centro_1==id_centro_2,1,0))|>
+  mutate(bd_2_earlier=ifelse(ano_bd_2>ano_bd_1,1,0))|> #es el dato de la derecha de una base de datos mas reciente.
+  mutate(senda_status= case_when(senda_1=="si" & senda_2=="si"~ "both yes", senda_1=="no" & senda_2=="no"~ "both no", senda_1=="no" & senda_2=="si"~ "second yes", senda_1=="no" & senda_2=="no"~ "second no",  T~NA_character_))|>
+  mutate(referral= ifelse(tr_compliance_1=="referral",1,0))|>
+  mutate(days_overlapped=disch_date_num_1-adm_date_rec_num_2)|> # para que hayan dias positivos. Se supone que la fecha de egreso es más reciente que la fecha de ingreso del evento que superpone.
+  mutate(more_dit=ifelse(dit_2>dit_1,1,0))|> #más días tratado en 2
+  mutate(trat_1_within_2=ifelse(disch_date_num_1<disch_date_num_2 & adm_date_rec_num_1>adm_date_rec_num_2,1,0))|>
+  mutate(trat_2_within_1=ifelse(disch_date_num_2<disch_date_num_1 & adm_date_rec_num_2>adm_date_rec_num_1,1,0))|>
+  select(-hash_key_2) |> 
+  rename("hash_key"="hash_key_1")
+
+stopifnot(nrow(CONS_C1_df_dup_intervals_after_miss_less30d_0d_center_id_multiple_overlaps)==0)
+
+warning("2025-04-09: The conditions now should be that the row number is present in the Excel file and also in the rows vector where more than one overlap was detected. Otherwise, outdated cases will be corrected, which, due to the correction of the truncation date in the 2019 database, are no longer valid as overlaps.")
+warning("2025-06-02: This was corrected partially, as 2019 updated dates were used.")
+```
+
+
+
+To close the project, we erase polars objects.
+
+```{r erase-polar-objs}
+rm(list = ls()[grepl("_pl$", ls())])
+```
+
+```{=html}
+<!---
+ #https://github.com/kosukeimai/fastLink
+#https://github.com/rapidfuzz/rapidfuzz-cpp
+
+#Octubre 2024- Limpiar la edad, fecha de nacimiento y días de tratamiento negativo, ver qué hacer: añadir con glue los casos que voy limpiando para distinguirlos con el código propio; luego debería venir la deduplicación probabilística y superposición (otra semana)  
+#Noviembre 2024- Darle calendarización: ver cuánto me va a costar cada etapa; ver tema paper
+  
+#https://rpolars.github.io/r-polarssql/
+#para descriptive (paso 1)
+
+# - Standardize type of plan by sex and gender identity
+# dplyr::mutate(OBS=case_when(embarazo=="Si" & sexo=="Hombre" ~paste0(as.character(OBS),";","1.7.07. Invalid Pregnancy= Pregnant Man"),TRUE ~ as.character(OBS)))%>%
+
+
+#dejarlo para la seugnda etapa para género
+
+ --->
+```
+
+
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+) %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#|class-output: center-table
+
+reticulate::py_list_packages() %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out", paste0("24_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  password <- Sys.getenv("PASSWORD_SECRET")
+} else {
+  if (interactive()) {
+    utils::savehistory(tempfile())
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+    utils::loadhistory()
+  }
+  Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+save.image(paste0(rdata_path,".enc"))
+
+# Encriptar el archivo en el mismo lugar
+httr2::secret_encrypt_file(path = paste0(rdata_path,".enc"), key = "PASSWORD_SECRET")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Copy renv lock into cons folder\n")
+
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup2<-Sys.time()
+
+paste0("Time in markdown: ");time_after_dedup2-time_before_dedup2
+```

@@ -1,0 +1,1778 @@
+---
+title: "HOSP-C1 SISTRAT"
+format: pdf
+---
+
+```{r options}
+#| include: false
+#| message: false
+#| echo: false
+#| warning: false
+
+# Function to install and load packages
+install_and_load <- function(package) {
+  if (!require(package, character.only = TRUE)) {
+    utils::install.packages(package)
+    library(package, character.only = TRUE)
+  }
+}
+
+# List of packages to be installed and loaded
+packages <- c("devtools", "renv", "tidyverse", "janitor", "plyr", 
+              "kableExtra", "reticulate", "FactoMineR", "factoextra", "knitr","plotly","censo2017", "ggbreak", "patchwork")
+
+# Apply the function to each package
+sapply(packages, install_and_load)
+
+opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+
+options(scipen = 999)
+
+rm(list = ls())
+```
+
+```{r import-c1}
+#| include: false
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#LOAD C1 DATA_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define the directories
+dir_c1 <- paste0(gsub("cons", "", getwd()), "data/20231018_original_data/")
+
+# Function to simplify pattern matching
+matches_pattern <- function(x, patterns) {
+  any(sapply(patterns, function(p) grepl(p, x)))
+}
+
+# Create a function to process each file
+process_file <- function(x) {
+  # Determine the HASH_KEY index based on file name
+  prefix <- ifelse(matches_pattern(x, "dup1"), "SISTRAT23dup1_", 
+                   ifelse(matches_pattern(x, "dup2"), "SISTRAT23dup2_", "SISTRAT23_"))
+  
+  # Read and process the file
+  readr::read_delim(paste0(dir_c1, x),
+                    na = c("", "NA", "null"),
+                    guess_max = min(1e5, Inf),
+                    skip = 0) %>% 
+    janitor::clean_names() %>%
+    dplyr::rename(
+      HASH_KEY = !!names(.[(ncol(.))])) %>%
+    dplyr::mutate(TABLE = rep(x)) %>%
+    dplyr::select(TABLE, HASH_KEY, everything()) %>%
+    assign(paste0(prefix, stringr::str_sub(x, 1, 4)), ., envir = .GlobalEnv)
+}
+
+# Get the list of files and apply the process_file function to each
+SISTRAT23_c1_2010_2022 <- list.files(path = toString(dir_c1))
+lapply(SISTRAT23_c1_2010_2022[SISTRAT23_c1_2010_2022 != c("erronea","TOP")], process_file)
+
+# Process C1 data
+C1_dup<-plyr::rbind.fill(mget(paste0("SISTRAT23_",c(2010:2013,2019,2020)))) %>% 
+  data.table::data.table() %>% 
+ dplyr::mutate(TABLE = sub("^(\\d{4}).*", "\\1", TABLE))
+
+C1_dup1<-plyr::rbind.fill(mget(paste0("SISTRAT23dup1_",c(2014:2019,2021,2022)))) %>% 
+  data.table::data.table() %>% 
+ dplyr::mutate(TABLE = sub("^(\\d{4}).*", "\\1", TABLE))
+
+C1_dup2<-plyr::rbind.fill(mget(paste0("SISTRAT23dup2_",c(2014:2019,2021,2022)))) %>% 
+  data.table::data.table() %>% 
+ dplyr::mutate(TABLE = sub("^(\\d{4}).*", "\\1", TABLE))
+
+CONS_C1_2010_22<- plyr::rbind.fill(C1_dup,C1_dup1,C1_dup2)
+
+# Process C2-C6 data
+CONS_C2 <- plyr::rbind.fill(SISTRAT23dup1_c2_o, SISTRAT23dup2_c2_o) %>% 
+  data.table::data.table() %>% 
+  dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+CONS_C3 <- SISTRAT23_c3_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C4 <- SISTRAT23_c4_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C5 <- SISTRAT23_c5_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+CONS_C6 <- SISTRAT23_c6_o %>% dplyr::mutate(TABLE = substr(TABLE, start=1, stop=2))
+
+rm(list = ls()[!grepl("CONS", ls())])
+```
+
+```{r clean-c1}
+#| include: false
+
+patterns <- c("_a3", "i_a_", "_a_", "_ao", "ac_")
+replacements <- c("o", "ia", "i", "u", "e")
+
+for (i in seq_along(patterns)) {
+  colnames(CONS_C1_2010_22) <- sub(patterns[i], replacements[i], colnames(CONS_C1_2010_22))
+}
+
+# Clean character vars
+# Create a named vector with replacements
+replacements <- c(
+  "Ã©" = "é",
+  "Ã³" = "ó",
+  "Ã¡" = "á",
+  "Ã" = "í",
+  "íº" = "ú",
+  "í" = "Ú",
+  "í" = "Í",
+  "í" = "Ñ",
+  "í±" = "ñ"
+)
+
+# Apply the replacements using a single str_replace_all call
+CONS_C1_2010_22 <- CONS_C1_2010_22 %>%
+  dplyr::mutate(across(where(is.character), ~str_replace_all(., replacements)))
+
+#nombre_centro with unique id_centro#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#exploration: 
+#centers with same id, distint name
+# view(CONS_C1_2010_22[,c("nombre_centro","i_dcentro")] %>% group_by(nombre_centro,i_dcentro) %>% dplyr::summarise(n=n()) %>% group_by(i_dcentro) %>% filter(n()>1) %>%arrange(i_dcentro))
+
+#rename with unique level nombre_centro
+CONS_C1_2010_22$nombre_centro <- recode(CONS_C1_2010_22$nombre_centro,
+                                        "CADEM de Chillan" = "COSAM ÑUBLE (CADEM de Chillan)",
+                                        "Centro de Tratamiento adicciones Esperanza, Hospital Santa Cruzz" = "Centro de Tratamiento adicciones Esperanza, Hospital Santa Cruz",
+                                        "CESFAM Colon" = "CESFAM Colón",
+                                        "Comunidad Terapeutica Orion San Bernardo (Orion Vespertino) pai - mpai pg" ="Comunidad Terapeutica Orion San Bernardo (Orion Vespertino)",
+                                        "CTA Villa Alemana (CTA Penablanca)" = "CTA Nancy Araya Ruiz Hospital Peñablanca  (Ex CTA Villa Alemana -CTA Penablanca)",
+                                        "Sociedad de Profesionales Salud integral LTDA"="Sociedad de Profesionales Salud integral LTDA (Mujeres)")
+
+#regiondel_centro#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# view(TABLEVARSC1[["char_regiondel_centro"]])
+CONS_C1_2010_22$regiondel_centro <- recode(CONS_C1_2010_22$regiondel_centro,
+                                            "DE ?BLE"="DE ÑUBLE",
+                                            "DE AYSEN DEL GENERAL CARLOS IBA?S DEL CAMPO"="DE AYSEN DEL GENERAL CARLOS IBAÑES DEL CAMPO")
+#comuna residencia#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# view(TABLEVARSC1[["char_comuna_residencia"]] %>% filter (grepl('\\?',comuna_residencia)))
+CONS_C1_2010_22$comuna_residencia <- recode(CONS_C1_2010_22$comuna_residencia,
+                                            "??A"="ÑUÑOA",
+                                            "CA?TE"="CAÑETE",
+                                            "CHA?RAL"="CHAÑARAL",
+                                            "DO?HUE"="DOÑIHUE",
+                                            "HUALA?"="HUALAÑE",
+                                            "OLLAG?"="OLLAGÜE",
+                                            "PE?FLOR"="PEÑAFLOR",
+                                            "PE?LOLEN"="PEÑALOLEN",
+                                            "SAN GREGORIO DE ?QUEN"="SAN GREGORIO DE ÑIQUEN",
+                                            "VI? DEL MAR"="VIÑA DEL MAR",
+                                            "VICU?"="VICUÑA",
+                                            "?qu?"=NA_character_)
+#etnia#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# view(TABLEVARSC1[["char_etnia"]])
+CONS_C1_2010_22$etnia <- recode(CONS_C1_2010_22$etnia,
+                                "Atacame?"="Atacameño",
+                                "Y?na"="Yaman o Yagana")
+
+#estado conyugal#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+CONS_C1_2010_22$estado_conyugal <- recode(CONS_C1_2010_22$estado_conyugal,
+                                "Nocontesta"="No contesta",
+                                "conviviente civil"="Conviviente civil")
+
+CONS_C1_2010_22$evaluaciondel_proceso_terapic_uti <- recode(CONS_C1_2010_22$evaluaciondel_proceso_terapic_uti,
+                                                            "Logro M?mo"="Logro Mínimo")
+#sustancia_de_inicio#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# Create a named vector with replacements
+replacements <- c(
+  "Coca?" = "Cocaína",
+  "Hero?" = "Heroína",
+  "Hipn?os" = "Hipnóticos",
+  "Inhalables: neopren, GHB, ?o nitroso (gas hilarante), \"poppers\", solventes, gasolina, diluyente" = "Inhalables: neopren, GHB, óxido nitroso (gas hilarante), \"poppers\", solventes, gasolina, diluyente",
+  "Inhalables" = "Inhalables: neopren, GHB, óxido nitroso (gas hilarante), \"poppers\", solventes, gasolina, diluyente",
+  "Otros Alucin?os" = "Otros Alucinógenos",
+  "Otros Opioides Analg?cos" = "Otros Opioides Analgésicos: morfina, codeína, meperidina,  demerol, tramadol, tramal.",
+  "Otros Opioides Analg?cos: morfina, code?, meperidina,  demerol, tramadol, tramal." = "Otros Opioides Analgésicos: morfina, codeína, meperidina,  demerol, tramadol, tramal."
+)
+
+# Apply the replacements using recode
+CONS_C1_2010_22$sustanciade_inicio <- recode(CONS_C1_2010_22$sustanciade_inicio, !!!replacements)
+
+CONS_C1_2010_22 <- CONS_C1_2010_22 %>% 
+  rename(
+    region_del_centro = regiondel_centro,
+    servicio_de_salud = serviciode_salud,
+    tipo_de_programa = tipode_programa,
+    tipo_de_plan = tipode_plan,
+    n_meses_en_tratamiento = n_mesesen_tratamiento,
+    dias_en_senda = diasen_senda,
+    n_meses_en_senda = n_mesesen_senda,
+    origen_de_ingreso = origende_ingreso,
+    numero_de_hijos = numerode_hijos,
+    numero_de_hijos_ingreso_tratamiento_residencial = numerode_hijos_ingreso_tratamie,
+    parentesco_con_el_jefe_de_hogar = parentescoconel_jefede_hogar,
+    numero_de_tratamientos_anteriores = numerode_tratamientos_anteriore,
+    sustancia_de_inicio = sustanciade_inicio,
+    edad_inicio_consumo = edad_inicio_consumo,
+    se_trata_de_una_mujer_embarazada = setratadeunamujerembarazad,
+    escolaridad_ultimo_ano_cursado = escolaridadultimoaiocursado,
+    condicion_ocupacional = condicion_ocupacional,
+    rubro_trabaja = rubro_trabaja,
+    tipo_de_vivienda = tipodevivienda,
+    tenencia_de_la_vivienda = tenenciadelavivienda,
+    otras_sustancias_no1 = otras_sustanciasnu1,
+    otras_sustancias_no2 = otras_sustanciasnu2,
+    otras_sustancias_no3 = otras_sustanciasnu3,
+    frecuencia_de_consumo_sustancia_principal = frecuenciade_consumo_sustancia,
+    via_administracion_sustancia_principal = vaiadministracion_sustancia_pr,
+    diagnostico_trs_consumo_sustancia = diagnostico_trs_consumo_sustanc,
+    diagnostico_trs_psiquiatrico_dsm_iv = diagnostico_trs_psiquiatrico_ds,
+    diagnostico_trs_psiquiatrico_sub_dsm_iv = diagnostico_trs_psiquiatrico_su,
+    x2_diagnostico_trs_psiquiatrico_dsm_iv = diagnostico_trs_psiquiatrico,
+    x2_diagnostico_trs_psiquiatrico_sub_dsm_iv = av,
+    x3_diagnostico_trs_psiquiatrico_dsm_iv = aw,
+    x3_diagnostico_trs_psiquiatrico_sub_dsm_iv = ax,
+    diagnostico_trs_psiquiatrico_cie_10 = diagnostico_trs_psiquiatrico_ci,
+    diagnostico_trs_psiquiatrico_sub_cie_10 = az,
+    x2_diagnostico_trs_psiquiatrico_cie_10 = ba,
+    x2_diagnostico_trs_psiquiatrico_sub_cie_10 = bb,
+    x3_diagnostico_trs_psiquiatrico_cie_10 = bc,
+    x3_diagnostico_trs_psiquiatrico_sub_cie_10 = bd,
+    diagnostico_trs_fisico = diagnostico_trs_fa_sico,
+    otros_problemas_de_atencion_de_salud_mental = otros_problemasde_atencionde_s,
+    diagnostico_global_de_necesidades_de_integracion_social_60 = diagnosticoglobaldenecesidade,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_humano_61 = diagnosticodenecesidadesdein,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_fisico_62 = bj,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_social_63 = bk,
+    fecha_ingreso_a_convenio_senda = fecha_ingresoa_convenio_senda,
+    usuario_de_tribunales_tratamiento_drogas = usuariode_tribunales_tratamien,
+    evaluacion_del_proceso_terapeutico = evaluaciondel_proceso_terapic_uti,
+    evaluacion_al_egreso_respecto_al_patron_de_consumo = evaluacional_egreso_respectoal,
+    evaluacion_al_egreso_respecto_a_situacion_familiar = evaluacional_egreso_respectoa,
+    evaluacion_al_egreso_respecto_relaciones_interpersonales = evaluacional_egreso_respecto_re,
+    evaluacion_al_egreso_respecto_a_situacion_ocupacional = bw,
+    evaluacion_al_egreso_respecto_salud_mental = evaluacional_egreso_respecto_sa,
+    evaluacion_al_egreso_respecto_salud_fisica = by,
+    evaluacion_al_egreso_respecto_trasgresion_a_la_norma_social = evaluacional_egreso_respecto_tr,
+    diagnostico_trastorno_psiquiatrico_cie_10_al_egreso = diagnostico_trastorno_psiquiatri,
+    diagnostico_global_de_necesidades_de_integracion_social_80 = cb,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_humano_81 = cc,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_fisico_82 = cd,
+    diagnostico_de_necesidades_de_integracion_social_en_capital_social_83 = ce,
+    tiene_menores_de_edad_a_cargo = tienemenoresdeedadacargo,
+    motivo_de_egreso_alta_administrativa = motivodeegreso_alta_administra,
+    id_centro = i_dcentro,
+    ha_estado_embarazada_egreso = haestadoembarazadaegreso,
+    identidad_de_genero = identidaddegenero,
+    opcion_discapacidad = opciondiscapacidad,
+    servicios_basicos_95 = servicios_basicos,
+    servicios_basicos_99 = ct
+  )
+```
+
+```{r, standardization}
+CONS_C1_2010_22 <- CONS_C1_2010_22 %>%
+  mutate(
+    motivode_egreso = case_when(
+      diasen_tratamiento < 90 & motivode_egreso == "Abandono" ~ "Abandono Temprano",
+      diasen_tratamiento >= 90 & motivode_egreso == "Abandono" ~ "Abandono Tardio",
+      TRUE ~ as.character(motivode_egreso)
+    )
+  )
+
+
+saveRDS(CONS_C1_2010_22, "CONS_C1_2010_22.rds")
+```
+
+
+
+```{r import Hosp}
+#| include: false
+
+HOSP <- read_delim("G:/Mi unidad/Alvacast/SISTRAT 2023/data/20231107_egres_hosp/2023-11-07  DatosEgresosHosp_encrip.csv",
+    delim = "~", escape_double = FALSE, trim_ws = TRUE)
+HOSP$YEAR<- lubridate::year(HOSP$FECHA_EGRESO)
+```
+
+```{r merge}
+#| include: false
+HOSP20102022_MERGE1<- HOSP %>% filter( RUN != "1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464") %>% 
+  filter(RUN != "c5f3fe488faac0ee7e286f44fc5ea62c5c8e41fd7c15b0dbf8fd9178f005af6f") %>% 
+  filter(RUN != "82636e7790d5b64e40cb81de8f06d438cfced66ca35bd3953bf05fa73e2ddb81") %>%
+  filter(RUN != "e8e014fa3a46c3583e25ba2b45629703a530799199d2cbc8cf5f21ede7fb389c") %>%
+  filter(YEAR > 2004) %>% 
+  group_by(RUN)  %>%
+  dplyr::mutate(REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(FECHA_INGRESO)) %>% #last hosp
+  dplyr::mutate(LAST_HOSP = row_number()) %>%
+  dplyr::arrange(.,FECHA_INGRESO) %>% 
+  dplyr::mutate(FIRST_HOSP = row_number()) %>% 
+  ungroup() %>% dplyr::rename("HASH_KEY"="RUN")
+
+CONS_C1_2010_22_MERGE <- CONS_C1_2010_22 %>% distinct(across(2:99), .keep_all = TRUE) %>% 
+  mutate(TABLE = as.numeric(TABLE)) %>%
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>% 
+  mutate(fecha_egresode_tratamiento = dmy(fecha_egresode_tratamiento)) %>%
+  group_by(HASH_KEY)  %>%
+  dplyr::mutate(SISTRAT_REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(fecha_ingresoa_tratamiento)) %>% #last hosp
+  dplyr::mutate(LAST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,fecha_ingresoa_tratamiento) %>%
+  dplyr::mutate(FIRST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,TABLE) %>%
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  ungroup() %>% 
+  filter(YEAR_TTO > 2006) %>% 
+  filter(SISTRAT_REPETITION_COUNT < 20) %>%  
+  pivot_wider(.,
+              id_cols = HASH_KEY,
+              names_from = FIRST_SISTRAT,
+              values_from = c(1,3:103))
+
+CONS_C1_2010_22_MERGE1 <- CONS_C1_2010_22 %>%
+  mutate(TABLE = as.numeric(TABLE)) %>%
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>%
+  group_by(HASH_KEY)  %>%
+  dplyr::mutate(SISTRAT_REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(fecha_ingresoa_tratamiento)) %>% #last hosp
+  dplyr::mutate(LAST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,fecha_ingresoa_tratamiento) %>%
+  dplyr::mutate(FIRST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,TABLE) %>%
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  ungroup() %>% filter(FIRST_SISTRAT == 1) %>% filter(YEAR_TTO > 2006)
+
+CONS_C1_2010_22_MERGE2 <- CONS_C1_2010_22 %>% 
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>% 
+  distinct(across(2:99), .keep_all = TRUE) %>% 
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  group_by(YEAR_TTO) %>% 
+  dplyr::summarise(n_admission=n())
+
+
+#MERGE 1
+
+MERGE1 <- HOSP20102022_MERGE1 %>% 
+  full_join(.,CONS_C1_2010_22_MERGE1, by = "HASH_KEY") %>% 
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1)) %>% 
+  mutate(SISTRAT = if_else(is.na(SISTRAT_REPETITION_COUNT), 0, 1)) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento - FECHA_EGRESO)) 
+
+#MERGE 2
+
+MERGE2 <- HOSP20102022_MERGE1 %>% 
+  full_join(.,CONS_C1_2010_22_MERGE1, by = "HASH_KEY") %>% 
+  drop_na(TABLE) %>%
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1)) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento - FECHA_EGRESO))
+
+#MERGE 2.1
+
+MERGE2.1 <- MERGE2[,1:29] %>% pivot_wider(.,
+              id_cols = HASH_KEY,
+              names_from = FIRST_HOSP,
+              values_from = c(2:29)) %>% 
+  select(where(~ any(!is.na(.)))) %>%
+  full_join(.,CONS_C1_2010_22_MERGE, by = "HASH_KEY")
+
+MERGE2.2 <- MERGE2.1[,c(1,231:308,2915:2929)]
+#MERGE 3
+
+MERGE3 <- MERGE2[,1:29] %>%
+  full_join(.,CONS_C1_2010_22_MERGE, by = "HASH_KEY") %>%
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1))
+
+```
+
+```{r tables and graphs}
+#| include: false
+TABLE1 <- MERGE1 %>% 
+  group_by(YEAR_TTO, YEAR) %>% 
+  dplyr::summarise(n_hosp = n()) %>% 
+  drop_na() %>% 
+  left_join(.,CONS_C1_2010_22_MERGE2, by = "YEAR_TTO") %>% 
+  dplyr::mutate(percent = round(n_hosp/n_admission*100, digits = 1))
+
+TABLE1.1 <- TABLE1 %>% 
+  filter(YEAR==YEAR_TTO) %>% 
+  select(-2) %>%
+  ungroup() %>%
+  mutate(YEAR_TTO = as.character(YEAR_TTO)) %>% 
+  dplyr::add_row(YEAR_TTO = "Total", n_hosp = sum(.$n_hosp, na.rm = TRUE), n_admission = sum(.$n_admission, na.rm = TRUE)) %>% 
+  dplyr::mutate(percent = round(n_hosp/n_admission*100, digits = 1))
+
+TABLE1_vis <- TABLE1.1 %>% 
+  mutate(combined = str_c(n_hosp, " (", percent, "%)", sep = "")) %>% 
+  select(-c(2,4)) %>%
+  dplyr::rename(`Admission Year to Drug Rehab.` = YEAR_TTO,
+                `Total admissions.`= n_admission,
+                `Total hospitalizations in the same year.`= combined)
+  # spread(key = YEAR, value = combined)
+TABLE1_vis <- TABLE1_vis[-c(1:3),]
+
+TABLE2 <- MERGE1 %>% 
+  group_by(YEAR) %>% filter(YEAR > 2009) %>% 
+  dplyr::summarise("total_hosp" = n()) %>% 
+  left_join(.,TABLE1, by = "YEAR") %>% select(3,1,4,2) %>% 
+  mutate(hosp_rate=round(n_hosp/total_hosp*100000,2)) %>% drop_na()
+
+TABLE2_vis <- TABLE2 %>%
+  group_by(YEAR) %>% filter(YEAR > 2009) %>% 
+  dplyr::summarise(
+    total_n_hosp = sum(n_hosp, na.rm = TRUE),
+    total_hosp = unique(total_hosp)
+    ) %>%
+  mutate(YEAR = as.character(YEAR)) %>% 
+  drop_na() %>% dplyr::add_row(YEAR = "Total", total_n_hosp = sum(.$total_n_hosp, na.rm = TRUE), total_hosp = sum(.$total_hosp, na.rm = TRUE)) %>% 
+  mutate(calculated_rate = round(total_n_hosp / total_hosp*100000,2)) %>% 
+  mutate(total_n_hosp = str_c(total_n_hosp, " (", calculated_rate, ")", sep = "")) %>% 
+  dplyr::rename(`Year.` = YEAR,
+                `Total of patients who were in drug rehabilitation (Rate per 100,000 hospitalized).`=total_n_hosp,
+                `Total hospitalized.`= total_hosp) %>% 
+  select(1,3,2)
+  
+
+categorize_icd <- function(code) {
+  if (code >= "V00" & code < "X59") {
+    return("V00-X58. Accidents.")
+  } else if (code >= "X71" & code < "X84") {
+    return("X71-X83. Intentional self-harm.")
+  } else if (code >= "X92" & code < "Y10") {
+    return("X92-Y09. Assault.")
+  } else if (code >= "Y21" & code < "Y34") {
+    return("Y21-Y33. Event of undetermined intent.")
+  } else if (code >= "Y35" & code < "Y39") {
+    return("Y35-Y38. Legal intervention, operations of war, military operations, and terrorism.")
+  } else if (code >= "Y62" & code < "Y85") {
+    return("Y62-Y84. Complications of medical and surgical care.")
+  } else if (code >= "Y90" & code <= "Y99") {
+    return("Y90-Y99. Supplementary factors related to causes of morbidity classified elsewhere.")
+  } else {
+    return(NA)
+  }
+}
+
+MERGE3.1 <- MERGE3 %>% 
+  filter(substring(DIAG2, 1, 3) >= "V00" & substring(DIAG2, 1, 3) <= "Y99") %>%
+  mutate(
+    icd_category = factor(sapply(substring(DIAG2, 1, 3), categorize_icd), 
+                          levels = c("V00-X58. Accidents", "X71-X83. Intentional self-harm.", 
+                                     "X92-Y09. Assault.", "Y21-Y33. Event of undetermined intent.", 
+                                     "Y35-Y38. Legal intervention, operations of war, military operations, and terrorism.", 
+                                     "Y62-Y84. Complications of medical and surgical care.", 
+                                     "Y90-Y99. Supplementary factors related to causes of morbidity classified elsewhere."))
+  ) %>% drop_na(icd_category)
+
+MERGE3.2 <- MERGE1 %>% 
+  filter(substring(DIAG2, 1, 3) >= "V00" & substring(DIAG2, 1, 3) <= "Y99") %>%
+  mutate(
+    icd_category = factor(sapply(substring(DIAG2, 1, 3), categorize_icd), 
+                          levels = c("V00-X58. Accidents", "X71-X83. Intentional self-harm.", 
+                                     "X92-Y09. Assault.", "Y21-Y33. Event of undetermined intent.", 
+                                     "Y35-Y38. Legal intervention, operations of war, military operations, and terrorism.", 
+                                     "Y62-Y84. Complications of medical and surgical care.", 
+                                     "Y90-Y99. Supplementary factors related to causes of morbidity classified elsewhere."))
+  ) %>% drop_na(icd_category)
+
+TABLE3 <- MERGE3 %>% 
+  filter(YEAR >= 2010) %>% 
+  group_by(YEAR) %>% 
+  dplyr::summarise(n_hosp = n()) %>% 
+  drop_na()
+
+TABLE3.1 <- MERGE3.1  %>% 
+  filter(YEAR >= 2010) %>%  
+  group_by(YEAR) %>% 
+  dplyr::summarise(n_hosp_icd = n()) %>% 
+  mutate(icd_category = "Total") %>% 
+  drop_na()
+
+TABLE3.2 <- MERGE3.1 %>%
+  filter(YEAR >= 2010) %>% 
+  group_by(YEAR,icd_category) %>% 
+  dplyr::summarise(n_hosp_icd = n()) %>% 
+  drop_na() %>% 
+  full_join(.,TABLE3.1, by = c("YEAR","icd_category","n_hosp_icd")) %>% 
+  left_join(.,TABLE3, by = "YEAR") %>% mutate(YEAR = as.character(YEAR)) #  %>% 
+  # dplyr::mutate(hosp_rate = round(n_hosp_icd/n_hosp*100, digits = 2))
+
+TABLE3.3 <- TABLE3.2 %>% 
+  group_by(icd_category) %>% 
+  dplyr::summarise(
+    YEAR = "Total",
+    n_hosp_icd = sum(n_hosp_icd, na.rm = TRUE),
+    n_hosp = 159369) %>% select(2,1,3,4)
+
+TABLE3.2 <-rbind(TABLE3.2,TABLE3.3)
+TABLE3.2 <- TABLE3.2 %>% dplyr::mutate(hosp_rate = round(n_hosp_icd/n_hosp*100, digits = 2))
+
+TABLE3.2_vis <- TABLE3.2 %>% 
+  mutate(n_hosp_icd = str_c(n_hosp_icd, " (", hosp_rate, ")", sep = "")) %>% 
+  select(-c(4,5)) %>%
+  spread(key = YEAR, value = n_hosp_icd) %>% 
+  dplyr::rename(`Year.` = icd_category) %>% as.data.frame() 
+
+TABLE3.2_vis[] <- lapply(TABLE3.2_vis, function(x) ifelse(is.na(x), "0 (0)", x))
+TABLE3.2_vis$`Year.` <- sub("\\..*$", "", TABLE3.2_vis$`Year.`)
+
+TABLE5 <- MERGE1 %>%
+  group_by(YEAR) %>% filter(YEAR >= 2010) %>% 
+  dplyr::summarise(n_hosp = n()) %>%
+  drop_na()
+
+TABLE5.1 <- MERGE3.2  %>%
+  filter(YEAR >= 2010) %>%
+  group_by(YEAR) %>%
+  dplyr::summarise(n_hosp_icd = n()) %>%
+  mutate(icd_category = "Total") %>%
+  drop_na()
+
+TABLE5.2 <- MERGE3.2 %>%
+  filter(YEAR >= 2010) %>%
+  group_by(YEAR,icd_category) %>%
+  dplyr::summarise(n_hosp_icd = n()) %>%
+  drop_na() %>%
+  full_join(.,TABLE5.1, by = c("YEAR","icd_category","n_hosp_icd")) %>%
+  left_join(.,TABLE5, by = "YEAR") %>% mutate(YEAR = as.character(YEAR)) #  %>%
+  # dplyr::mutate(hosp_rate = round(n_hosp_icd/n_hosp*100, digits = 2))
+
+TABLE5.3 <- TABLE5.2 %>%
+  group_by(icd_category) %>%
+  dplyr::summarise(
+    YEAR = "Total",
+    n_hosp_icd = sum(n_hosp_icd, na.rm = TRUE),
+    n_hosp = sum(n_hosp, na.rm = TRUE)) %>% select(2,1,3,4)
+
+TABLE5.2 <-rbind(TABLE5.2,TABLE5.3)
+TABLE5.2 <- TABLE5.2 %>% dplyr::mutate(hosp_rate = round(n_hosp_icd/n_hosp*100, digits = 2))
+
+TABLE5.2_vis <- TABLE5.2 %>%
+  mutate(n_hosp_icd = str_c(n_hosp_icd, " (", hosp_rate, ")", sep = "")) %>%
+  select(-c(4,5)) %>%
+  spread(key = YEAR, value = n_hosp_icd) %>%
+  dplyr::rename(`Year.` = icd_category) %>% as.data.frame()
+
+TABLE5.2_vis[] <- lapply(TABLE5.2_vis, function(x) ifelse(is.na(x), "0 (0)", x))
+TABLE5.2_vis$`Year.` <- sub("\\..*$", "", TABLE5.2_vis$`Year.`)
+
+
+# Calculate max_values
+max_values <- TABLE1 %>%
+  drop_na() %>%
+  group_by(YEAR_TTO) %>%
+  filter(YEAR >= 2010 & YEAR_TTO >= 2010 & n_hosp == max(n_hosp, na.rm = TRUE)) %>%
+  select(YEAR_TTO, YEAR, n_hosp,percent) 
+
+# Define a custom color palette with a gradient from Blue to Red
+color_palette <- colorRampPalette(c("blue","green", "red"))(length(unique(TABLE1$YEAR_TTO)))
+# Standard linetypes
+standard_linetypes <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
+# Custom linetypes
+custom_linetypes <- c("22", "42", "44", "13", "1343", "73", "2262", "2264", "4422", "1113")
+# Combine into one vector
+all_linetypes <- c(standard_linetypes, custom_linetypes)
+
+
+# Create the line graph with fill colors based on the custom palette
+fig1 <- TABLE1 %>% filter(YEAR >= 2010 & YEAR_TTO >= 2010) %>% 
+  ggplot(., aes(x = YEAR, y = n_hosp, group = as.factor(YEAR_TTO), color = as.factor(YEAR_TTO),linetype = as.factor(YEAR_TTO))) +
+  geom_line(alpha=0.7) +
+  labs(title = "Hospitalizations in SUT patient by year 2010-2022.",
+       x = "Hospitalization Year.",
+       y = "Total Hospitalizations.",
+       color = "Admission SUT year.",
+       linetype = "Admission SUT year.") +
+  scale_linetype_manual(values = all_linetypes) +
+  scale_color_manual(values = setNames(color_palette, unique(TABLE1$YEAR_TTO))) +
+  theme_minimal() +
+  geom_text(data = max_values, aes(label = n_hosp), vjust = 0.5, hjust =-0.1, angle = 90, show.legend=FALSE) +
+  scale_x_continuous(breaks = seq(2010, 2022, by = 1))+
+  ylim(0,2200)
+ggsave("fig1.png", width = 10, height = 6, units = "in", dpi = 1000)
+# Create the plot
+fig2 <- TABLE1 %>% filter(YEAR >= 2010 & YEAR_TTO >= 2010) %>% plotly::plot_ly(., x = ~YEAR, y = ~YEAR_TTO, z = ~n_hosp, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to <br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size = 10), tickfont = list(size = 10)),
+                              yaxis = list(title = 'Admission Year to <br>Drug Rehab. Treatment.', titlefont = list(size = 10), tickfont = list(size = 10)),
+                              zaxis = list(title = 'Total Hospitalizations', titlefont = list(size = 10), tickfont = list(size = 10))))
+
+# Add text annotations as traces
+fig2 <- fig2 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~n_hosp,
+  type = 'scatter3d', mode = 'text',
+  text = ~n_hosp,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+# Create the plot
+fig3 <- TABLE1 %>% filter(YEAR >= 2010 & YEAR_TTO >= 2010) %>% 
+  plotly::plot_ly(., x = ~YEAR, y = ~YEAR_TTO, z = ~percent, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to <br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size =10), tickfont = list(size =10)),
+                              yaxis = list(title = 'Admission Year to <br>Drug Rehab. Treatment.', titlefont = list(size =10), tickfont = list(size =10)),
+                              zaxis = list(title = 'Percentage of hospitalizations <br>in total Drug Rehab admissions.', titlefont = list(size =10), tickfont = list(size =10))))
+
+# Add text annotations as traces
+fig3 <- fig3 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~percent,
+  type = 'scatter3d', mode = 'text',
+  text = ~percent,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+# Calculate max_values
+max_values <- TABLE2 %>%
+  drop_na() %>%
+  group_by(YEAR_TTO) %>%
+  filter(YEAR >= 2010 & YEAR_TTO >= 2010 & hosp_rate == max(hosp_rate, na.rm = TRUE)) %>%
+  select(YEAR_TTO, YEAR, hosp_rate)
+
+# Create the plot
+fig4 <- TABLE2 %>% filter(YEAR >= 2010 & YEAR_TTO >= 2010) %>% 
+  plotly::plot_ly(., x = ~YEAR, y = ~YEAR_TTO, z = ~hosp_rate, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to 1st<br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size =10), tickfont = list(size =10)),
+                              yaxis = list(title = 'Admission Year to 1st<br>Drug Rehab. Treatment.', titlefont = list(size =10), tickfont = list(size =10)),
+                              zaxis = list(title = 'Rate per 100,000 hospitalized', titlefont = list(size =10), tickfont = list(size =10))))
+
+# Add text annotations as traces
+fig4 <- fig4 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~hosp_rate,
+  type = 'scatter3d', mode = 'text',
+  text = ~hosp_rate,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+fig5 <- TABLE3.2 %>% filter(YEAR != "Total") %>%  ggplot(., aes(x = YEAR, y = hosp_rate, group = icd_category, color = icd_category)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "",
+       x = "Year",
+       y = "Hospitalization percentaje in drug rehab patients (%).",
+       color = "Hospitalization due to ICD-10 V00-Y99 External causes of morbidity.") +
+  scale_y_continuous(limits = c(0,6))
+
+fig5.2 <- TABLE5.2 %>% filter(YEAR != "Total") %>% ggplot(., aes(x = YEAR, y = hosp_rate, group = icd_category, color = icd_category)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "",
+       x = "Year",
+       y = "Hospitalization percentaje in general population (%).",
+       color = "Hospitalization due to ICD-10 V00-Y99 External causes of morbidity.") +
+  scale_y_continuous(limits = c(0,6))
+
+# TABLE3.2 %>%
+#   filter(icd_category != "Total") %>% 
+#   ggplot(., aes(x = YEAR, y = hosp_rate, group = icd_category, color = icd_category)) +
+#   geom_line() +
+#   theme_minimal() +
+#   labs(title = "",
+#        x = "Year",
+#        y = "Rate per 100,000 patients who were in drug rehabilitation",
+#        color = "Hospitalization due to ICD-10 V00-Y99 External causes of morbidity.")
+
+TABLE4_vis <- MERGE3 %>% filter(YEAR == YEAR_TTO_1 & YEAR >= 2010) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>%
+  dplyr::group_by(YEAR) %>%
+  dplyr::summarize(
+    Mean = mean(DAY_DIF, na.rm = TRUE),
+    SD = sd(DAY_DIF, na.rm = TRUE),
+    Q1 = quantile(DAY_DIF, 0.25, na.rm = TRUE),
+    Median = median(DAY_DIF, na.rm = TRUE),
+    Q3 = quantile(DAY_DIF, 0.75, na.rm = TRUE),
+    IQR = IQR(DAY_DIF, na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(`Admission year to drug rehab and Hospital discharge year.` = YEAR)
+  
+TABLE4.1_vis <- MERGE3 %>% filter(YEAR == YEAR_TTO_1 & YEAR >= 2010) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>%
+  dplyr::summarize(
+    Mean = mean(DAY_DIF, na.rm = TRUE),
+    SD = sd(DAY_DIF, na.rm = TRUE),
+    Q1 = quantile(DAY_DIF, 0.25, na.rm = TRUE),
+    Median = median(DAY_DIF, na.rm = TRUE),
+    Q3 = quantile(DAY_DIF, 0.75, na.rm = TRUE),
+    IQR = IQR(DAY_DIF, na.rm = TRUE)
+  ) %>% 
+  add_column(`Admission year to drug rehab and Hospital discharge year.` = "Total") %>% 
+  select(7,1,2,3,4,5,6)
+
+TABLE4_vis <- rbind(TABLE4_vis,TABLE4.1_vis)
+
+fig6 <- MERGE3 %>% filter(YEAR == YEAR_TTO_1 & YEAR >= 2010) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>% 
+  ggplot(., aes(x = DAY_DIF, fill=YEAR_TTO_1)) +
+  geom_boxplot(aes(y = -80),width = 50,alpha=0.7) +
+  geom_histogram(aes(y = ..count..),bins = 365, alpha = 0.7) +
+  facet_grid(rows = vars(YEAR_TTO_1), scales = "free_x", space = "free_x") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 100, by = 20))+
+  scale_x_continuous(breaks = seq(-360, 360, by = 20))+
+    theme(
+    axis.text = element_text(size = 5),
+    legend.position = "none"
+  ) +
+  xlab("(Admission day to drug rehab. - Hospital discharge day.)") +
+  ylab("Frequency.")  + 
+  geom_vline(xintercept = -0.5, color = "red", size = 0.05,alpha=0.5)
+
+# Calcular la mediana, Q1 y Q3 de DAY_DIF
+stats_day_dif <- MERGE3 %>% 
+  filter(YEAR == YEAR_TTO_1 & YEAR >= 2010) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>% 
+  summarize(
+    Q1 = quantile(DAY_DIF, 0.25, na.rm = TRUE),
+    median = median(DAY_DIF, na.rm = TRUE),
+    Q3 = quantile(DAY_DIF, 0.75, na.rm = TRUE)
+  )
+
+# Extraer los valores de los cuartiles
+Q1_day_dif <- stats_day_dif$Q1
+median_day_dif <- stats_day_dif$median
+Q3_day_dif <- stats_day_dif$Q3
+
+fig7 <- MERGE3 %>% 
+  filter(YEAR == YEAR_TTO_1 & YEAR >= 2010) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>% 
+  ggplot(aes(x = DAY_DIF)) +
+  geom_boxplot(aes(y = -80), width = 50, alpha = 0.7) +
+  geom_histogram(aes(y = ..count..), bins = 365, alpha = 0.7) +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 1000, by = 20)) +
+  scale_x_continuous(breaks = seq(-360, 360, by = 20)) +
+  theme(
+    axis.text = element_text(size = 6),
+    legend.position = "none"
+  ) +
+  labs(title = "Days between discharge from hospitalization and admission to SUT",
+       x = "(Admission day to drug rehab. - Hospital discharge day.)",
+       y = "Frequency.",
+       caption= "Admission to SUT and Hospitalization in the same year") +
+  geom_vline(xintercept = -0.5, color = "red", size = 0.5, alpha = 0.5) +
+  geom_vline(xintercept = median_day_dif, color = "blue", size = 0.5, alpha = 0.5) +
+  annotate("text", x = median_day_dif, y = 600, label = paste("Median:", median_day_dif), color = "blue", hjust = -0.1) +
+  geom_vline(xintercept = Q1_day_dif, color = "darkgreen", size = 0.5, alpha = 0.5) +
+  annotate("text", x = Q1_day_dif, y = 550, label = paste("Q1:", Q1_day_dif), color = "darkgreen", hjust = -0.1) +
+  geom_vline(xintercept = Q3_day_dif, color = "purple", size = 0.5, alpha = 0.5) +
+  annotate("text", x = Q3_day_dif, y = 550, label = paste("Q3:", Q3_day_dif), color = "purple", hjust = -0.1)
+ggsave("fig7.png", width = 8, height = 8, units = "in", dpi = 1000)
+
+```
+
+# Exploratory analysis
+
+## The total number of patients who were undergoing treatment for drug abuse rehabilitation was hospitalized between 2005 and 2022.
+
+Figures 1 and 2 show that the highest number of hospitalizations of patients who have been in drug abuse rehabilitation treatment occurs approximately in the same year as admission for rehabilitation treatment.
+
+Figure 2 and Table 1 describe the percentage of patients who were undergoing drug abuse rehabilitation treatment and hospitalized. In each year of the total admissions to drug rehabilitation treatment, about 10% to 20% of the total patients were hospitalized in the same year. Likewise, it is observed that this percentage decreases as the years progress. Of the total admissions, 13.8% of patients had a hospitalization.
+
+
+```{r table1}
+kable(TABLE1_vis, format = "latex", table.attr = "class='display'", caption = "Total hospitalized in admission year 2010-2022") %>%
+  kable_styling(font_size = 8)
+```
+
+```{r fig1,fig.cap="Total hospitalized by admission year 2010-2022."}
+#| fig-width: 15
+#| fig-height: 10 
+#| fig-pos: 'H'
+
+fig1
+```
+
+```{r fig2,fig.cap=" Total hospitalized by admission year 2010-2022."}
+#| fig-pos: 'H'
+#| out-width: "80%"
+
+knitr::include_graphics("G:/Mi unidad/Alvacast/SISTRAT 2023/cons/c1_hops_figs/fig2.png")
+```
+
+```{r fig3,fig.cap="Percentege of hospitalized by admission year 2010-2022."}
+#| fig-pos: 'H'
+#| out-width: "80%"
+
+knitr::include_graphics("G:/Mi unidad/Alvacast/SISTRAT 2023/cons/c1_hops_figs/fig3.png")
+```
+In Figure 4 and Table 2, regarding the total number of hospitalized patients, approximately 700 of every 100,000 hospitalizations correspond to patients who have had or are in rehabilitation treatment for drug abuse. This corresponds to 159,369 hospitalizations between 2010 and 2022 involving patients who were or were undergoing rehabilitation treatment. The highest rates occurred when the year of hospitalization coincided with the year of admission for rehabilitation treatment. Figure 4 shows the peaks in 2020 and 2021 (COVID-19).
+
+```{r table2}
+kable(TABLE2_vis, format = "latex", table.attr = "class='display'", caption = "Total of patients who were in drug rehabilitation and have a hopitalization.") %>%
+  kable_styling(font_size = 8)
+```
+
+```{r fig4,fig.cap="Rates per 100,000 hsopitalized years: 2010-2022."}
+#| fig-pos: 'H'
+#| out-width: "80%"
+
+knitr::include_graphics("G:/Mi unidad/Alvacast/SISTRAT 2023/cons/c1_hops_figs/fig4.png")
+```
+
+## Day differences between hospital discharge and admission to drug abuse rehabilitation treatment within the same year.
+
+Difference: day of admission to drug rehabilitation - day of hospital discharge. This indicates that, if the value is positive, hospital discharge occurs before entry into drug rehabilitation treatment; if it is negative, it indicates the opposite. As shown in Figure 5, the difference in days was distributed asymmetrically to the left, and a large number of patients entered rehabilitation treatment on or near the same day as their hospital discharge. For all years, the median duration was 0–8 days. Of the total, that is, between 2010 and 2022, the median between the difference between days is 3.
+
+```{r table4}
+kable(TABLE4_vis, format = "latex", table.attr = "class='display'", caption = "Descriptive statistics for differences between drug rehabilitation admission days and hospital discharge days.") %>%
+  kable_styling( font_size = 8)
+```
+
+```{r fig6, fig.cap="Histogram and boxplot for differences between drug rehabilitation admission day and hospital discharge day: 2010-2022."}
+#| fig-width: 10
+#| fig-height: 10 
+#| fig-pos: 'H'
+
+fig6
+```
+
+```{r fig7, fig.cap="Histogram and boxplot for differences between drug rehabilitation admission day and hospital discharge day: Total."}
+#| fig-width: 8
+#| fig-height: 8 
+#| fig-pos: 'H'
+
+fig7
+
+ggsave("fig6.png", width = 7, height = 7, dpi=800)
+```
+
+## Hospitalization due to ICD-10 V00-Y99 External causes of morbidity.
+
+As seen in Table 4 and Figure 6, hospitalizations for External Causes of Morbidity (ICD-10 V00-Y99) in patients who were in drug rehabilitation increased from 398 in 2010 to 600. 2022. The historical total of this cause of hospitalization is 6336, which corresponds to 3.98% of the total hospitalizations of patients who were in rehabilitation, with the majority being X92-Y09. Assault.
+
+In contrast, in Table 5 and Figure 7, hospitalizations for External Causes of Morbidity (ICD-10 V00-Y99) are observed, but in the general population with an increase not as growing as that of the population undergoing drug rehabilitation treatment. The historical total of this cause of hospitalization is 260,501, which corresponds to 1.26% of the total hospitalizations in the general population
+
+```{r table3}
+kable(t(TABLE3.2_vis), format = "latex", table.attr = "class='display'", caption = "Hospitalization due to ICD-10 V00-Y99 External causes of morbidity in drug rehab patients.") %>%
+  kable_styling(font_size = 6)
+```
+
+```{r table5}
+kable(t(TABLE5.2_vis), format = "latex", table.attr = "class='display'", caption = "Hospitalization due to ICD-10 V00-Y99 External causes of morbidity in drug rehab patients.") %>%
+  kable_styling(font_size = 6)
+```
+
+
+
+```{r fig5, fig.cap="Hospitalization due to ICD-10 V00-Y99 External causes of morbidity in drug rehab patients (%)."}
+#| fig-width: 15
+#| fig-height: 10 
+#| fig-pos: 'H'
+
+fig5
+```
+
+```{r fig5.2, fig.cap="Hospitalization due to ICD-10 V00-Y99 External causes of morbidity in drug rehab patients (%)."}
+#| fig-width: 15
+#| fig-height: 10 
+#| fig-pos: 'H'
+
+fig5.2
+```
+
+## Hospitalization Rates by ICD cap. Standarized by age and sex
+
+```{r}
+# rm(list = ls()[!grepl("MERGE1", ls())])
+censo_conectar()
+censo_descargar()
+CENSO2017 <- censo_tabla("personas")[,c(1,5,6)]
+
+CENSO2017<- CENSO2017 %>% 
+  mutate(p09 = replace(p09, p09 %in% c(132, 131), NA)) %>% 
+  mutate(p08 = replace(p08, p08 %in% c(3,0),NA)) %>% 
+  mutate(SEX = factor(p08, levels = c(1, 2), labels = c("male", "female"))) %>% 
+  mutate(AGE_GROUP = cut(p09, 
+                         breaks = c(-Inf, 4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59, 64, 69, 74, 79, 84, 89, 94, 99, Inf),
+                         labels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", 
+                                    "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", 
+                                    "85-89", "90-94", "95-99", "100+"),
+                         right = FALSE))
+
+STDPOPULATION <- CENSO2017 %>%
+  group_by(AGE_GROUP, SEX) %>%
+  summarise(n = n(), .groups = 'drop') %>%
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(male_std = male*100000/(sum(male)+sum(female))) %>% 
+  mutate(female_std = female*100000/(sum(male)+sum(female)))
+
+#HOSP
+
+icd10_chapter <- function(code) {
+  case_when(
+    code >= "A00" & code <= "B99" ~ "A00-B99 Certain infectious and parasitic diseases",
+    code >= "C00" & code <= "D48" ~ "C00-D48 Neoplasms",
+    code >= "D50" & code <= "D89" ~ "D50-D89 Diseases of the blood and blood-forming organs and certain disorders involving the immune mechanism",
+    code >= "E00" & code <= "E90" ~ "E00-E90 Endocrine, nutritional and metabolic diseases",
+    code >= "F00" & code <= "F99" ~ "F00-F99 Mental and behavioural disorders",
+    code >= "G00" & code <= "G99" ~ "G00-G99 Diseases of the nervous system",
+    code >= "H00" & code <= "H59" ~ "H00-H59 Diseases of the eye and adnexa",
+    code >= "H60" & code <= "H95" ~ "H60-H95 Diseases of the ear and mastoid process",
+    code >= "I00" & code <= "I99" ~ "I00-I99 Diseases of the circulatory system",
+    code >= "J00" & code <= "J99" ~ "J00-J99 Diseases of the respiratory system",
+    code >= "K00" & code <= "K93" ~ "K00-K93 Diseases of the digestive system",
+    code >= "L00" & code <= "L99" ~ "L00-L99 Diseases of the skin and subcutaneous tissue",
+    code >= "M00" & code <= "M99" ~ "M00-M99 Diseases of the musculoskeletal system and connective tissue",
+    code >= "N00" & code <= "N99" ~ "N00-N99 Diseases of the genitourinary system",
+    code >= "O00" & code <= "O99" ~ "O00-O99 Pregnancy, childbirth and the puerperium",
+    code >= "P00" & code <= "P96" ~ "P00-P96 Certain conditions originating in the perinatal period",
+    code >= "Q00" & code <= "Q99" ~ "Q00-Q99 Congenital malformations, deformations and chromosomal abnormalities",
+    code >= "R00" & code <= "R99" ~ "R00-R99 Symptoms, signs and abnormal clinical and laboratory findings, not elsewhere classified",
+    code >= "S00" & code <= "T98" ~ "S00-T98 Injury, poisoning and certain other consequences of external causes",
+    code >= "V01" & code <= "Y98" ~ "V01-Y98 External causes of morbidity and mortality",
+    code >= "Z00" & code <= "Z99" ~ "Z00-Z99 Factors influencing health status and contact with health services",
+    code >= "U00" & code <= "U99" ~ "U00-U99 Codes for special purposes",
+    TRUE ~ NA
+  )
+}
+
+col_DIAG <- grep("^DIAG", names(MERGE1), value = TRUE)
+
+MERGE1 <- MERGE1 %>% 
+  mutate(across(all_of(col_DIAG), ~icd10_chapter(substring(., 1, 3)), .names = "{.col}_CAP")) %>% 
+  mutate(AGE_GROUP = cut(EDAD_ANOS, 
+                         breaks = c(-Inf, 4, 9, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59, 64, 69, 74, 79, 84, 89, 94, 99, Inf),
+                         labels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", 
+                                    "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", 
+                                    "85-89", "90-94", "95-99", "100+"),
+                         right = FALSE)) %>% 
+  mutate(SEX = factor(SEXO, levels = c(1, 2), labels = c("male", "female")))
+
+
+HOSP20102022_DIAG1_RATES <- MERGE1  %>%
+  filter(SISTRAT==0) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG1_CAP) %>% 
+  summarise(n = n(), .groups = 'drop') %>%
+  drop_na(SEX,DIAG1_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+HOSP20102022_DIAG1_RATES_TOTAL <- HOSP20102022_DIAG1_RATES %>%
+  group_by(AGE_GROUP, DIAG1_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+HOSP20102022_DIAG1_RATES <- bind_rows(HOSP20102022_DIAG1_RATES, HOSP20102022_DIAG1_RATES_TOTAL)
+
+HOSP20102022_DIAG2_RATES <- MERGE1  %>%
+  filter(SISTRAT==0) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG2_CAP) %>%
+  summarise(n = n(), .groups = 'drop') %>% 
+  drop_na(SEX,DIAG2_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+HOSP20102022_DIAG2_RATES_TOTAL <- HOSP20102022_DIAG2_RATES %>%
+  group_by(AGE_GROUP, DIAG2_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+HOSP20102022_DIAG2_RATES <- bind_rows(HOSP20102022_DIAG2_RATES, HOSP20102022_DIAG2_RATES_TOTAL)
+
+HOSP20102022_DIAG3_RATES <- MERGE1  %>%
+  filter(SISTRAT==0) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG3_CAP) %>%
+  summarise(n = n(), .groups = 'drop') %>% 
+  drop_na(SEX,DIAG3_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+HOSP20102022_DIAG3_RATES_TOTAL <- HOSP20102022_DIAG3_RATES %>%
+  group_by(AGE_GROUP, DIAG3_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+HOSP20102022_DIAG3_RATES <- bind_rows(HOSP20102022_DIAG3_RATES, HOSP20102022_DIAG3_RATES_TOTAL)
+
+C120102022_DIAG1_RATES <- MERGE1  %>%
+  filter(SISTRAT==1) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG1_CAP) %>% 
+  summarise(n = n(), .groups = 'drop') %>%
+  drop_na(SEX,DIAG1_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+C120102022_DIAG1_RATES_TOTAL <- C120102022_DIAG1_RATES %>%
+  group_by(AGE_GROUP, DIAG1_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+C120102022_DIAG1_RATES <- bind_rows(C120102022_DIAG1_RATES, C120102022_DIAG1_RATES_TOTAL)
+
+C120102022_DIAG2_RATES <- MERGE1  %>%
+  filter(SISTRAT==1) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG2_CAP) %>%
+  summarise(n = n(), .groups = 'drop') %>% 
+  drop_na(SEX,DIAG2_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+C120102022_DIAG2_RATES_TOTAL <- C120102022_DIAG2_RATES %>%
+  group_by(AGE_GROUP, DIAG2_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+C120102022_DIAG2_RATES <- bind_rows(C120102022_DIAG2_RATES, C120102022_DIAG2_RATES_TOTAL)
+
+C120102022_DIAG3_RATES <- MERGE1  %>%
+  filter(SISTRAT==1) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG3_CAP) %>%
+  summarise(n = n(), .groups = 'drop') %>% 
+  drop_na(SEX,DIAG3_CAP) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+C120102022_DIAG3_RATES_TOTAL <- C120102022_DIAG3_RATES %>%
+  group_by(AGE_GROUP, DIAG3_CAP) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+C120102022_DIAG3_RATES <- bind_rows(C120102022_DIAG3_RATES, C120102022_DIAG3_RATES_TOTAL)
+
+TOTALS_HOSP_DIAG1 <- HOSP20102022_DIAG1_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+
+TOTALS_HOSP_DIAG2 <- HOSP20102022_DIAG2_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+
+TOTALS_HOSP_DIAG3 <- HOSP20102022_DIAG3_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+
+TOTALS_C1_DIAG1 <- C120102022_DIAG1_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+
+TOTALS_C1_DIAG2 <- C120102022_DIAG2_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+
+TOTALS_C1_DIAG3 <- C120102022_DIAG3_RATES %>%
+  group_by(YEAR) %>%
+  summarise(
+    total_male = sum(male),
+    total_female = sum(female)
+  )
+#NUEVO
+HOSP20102022_DIAG1_RATES_TOTALS <- HOSP20102022_DIAG1_RATES%>%
+  left_join(TOTALS_HOSP_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG1_CAP) %>%
+  summarise(DSR_HOSP = sum(DSR_total)/100000,
+            v_HOSP = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+HOSP20102022_DIAG2_RATES_TOTALS <- HOSP20102022_DIAG2_RATES%>%
+  left_join(TOTALS_HOSP_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG2_CAP) %>%
+  summarise(DSR_HOSP = sum(DSR_total)/100000,
+            v_HOSP = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+C120102022_DIAG1_RATES_TOTALS <- C120102022_DIAG1_RATES%>%
+  left_join(TOTALS_C1_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG1_CAP) %>%
+  summarise(DSR_C1 = sum(DSR_total)/100000,
+            v_C1 = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+C120102022_DIAG2_RATES_TOTALS <- C120102022_DIAG2_RATES%>%
+  left_join(TOTALS_C1_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG2_CAP) %>%
+  summarise(DSR_C1 = sum(DSR_total)/100000,
+            v_C1 = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+HOSP20102022_DIAG1_RATES_TOTALS <- HOSP20102022_DIAG1_RATES_TOTALS %>% 
+  left_join(C120102022_DIAG1_RATES_TOTALS, by = c("YEAR", "DIAG1_CAP")) %>% 
+  mutate(SRR = DSR_C1/DSR_HOSP,
+         SRR_CI_UP = exp(log(SRR)+1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2))),
+         SRR_CI_LOW = exp(log(SRR)-1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2)))
+         )
+
+HOSP20102022_DIAG2_RATES_TOTALS <- HOSP20102022_DIAG2_RATES_TOTALS %>% 
+  left_join(C120102022_DIAG2_RATES_TOTALS, by = c("YEAR", "DIAG2_CAP")) %>% 
+  mutate(SRR = DSR_C1/DSR_HOSP,
+         SRR_CI_UP = exp(log(SRR)+1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2))),
+         SRR_CI_LOW = exp(log(SRR)-1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2)))
+         )
+
+ICD10_ALLCAPS_TOTAL<- HOSP20102022_DIAG1_RATES_TOTALS %>%
+  rename(DIAG2_CAP = DIAG1_CAP) %>% 
+  rbind(.,HOSP20102022_DIAG2_RATES_TOTALS) %>% 
+  filter(YEAR == "Total" &
+         !str_starts(DIAG2_CAP, "S00")) %>% drop_na() 
+
+ICD10_ALLCAPS_SUMM_YEARS<- HOSP20102022_DIAG1_RATES_TOTALS %>%
+  rename(DIAG2_CAP = DIAG1_CAP) %>% 
+  rbind(.,HOSP20102022_DIAG2_RATES_TOTALS) %>% 
+    filter(!str_starts(YEAR, "Total") & 
+             !str_starts(YEAR, "200") &
+         !str_starts(DIAG2_CAP, "S00")) %>% 
+  drop_na() %>% 
+  group_by(DIAG2_CAP) %>% 
+   summarise(
+    Median_SRR = median(SRR, na.rm = TRUE),
+    Min_SRR = min(SRR, na.rm = TRUE),
+    Max_SRR = max(SRR, na.rm = TRUE)
+  )
+
+ICD10_ALLCAPS_YEARS<- HOSP20102022_DIAG1_RATES_TOTALS %>%
+  rename(DIAG2_CAP = DIAG1_CAP) %>% 
+  rbind(.,HOSP20102022_DIAG2_RATES_TOTALS) %>% 
+    filter(!str_starts(YEAR, "Total") & 
+             !str_starts(YEAR, "200") &
+         !str_starts(DIAG2_CAP, "S00")) %>% 
+  mutate(YEAR = as.integer(YEAR)) %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) 
+
+summary_2022 <- ICD10_ALLCAPS_YEARS %>%
+  filter(YEAR == 2022) %>%
+  group_by(DIAG2_CAP) %>%
+  summarise(SRR_Summary = mean(SRR, na.rm = TRUE)) %>%
+  arrange(desc(SRR_Summary))
+
+ICD10_ALLCAPS_YEARS$DIAG2_CAP <- factor(ICD10_ALLCAPS_YEARS$DIAG2_CAP, levels = summary_2022$DIAG2_CAP)
+
+
+```
+```{r}
+#| fig-width: 10
+#| fig-height: 6 
+#| fig-pos: 'H'
+ggplot(ICD10_ALLCAPS_TOTAL, aes(x = SRR, y = reorder(DIAG2_CAP, SRR))) +
+  geom_point(size = 2, alpha = 1, shape = "|", color="darkblue")  + 
+  geom_errorbarh(aes(xmin = SRR_CI_LOW, xmax = SRR_CI_UP), height = 0.5, alpha = 0.35, color="blue") + 
+  geom_vline(xintercept = 1, linetype = "dashed", color = "red") + 
+  labs(x = "Standardized Rate Ratio", y = "", title = "") +
+  scale_x_break(c(2.1, 11.6), scales = .25) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 8))
+
+ggplot(ICD10_ALLCAPS_SUMM_YEARS, aes(x = Median_SRR, y = reorder(DIAG2_CAP, Median_SRR))) +
+  geom_point(size = 2, alpha = 1, shape = "|", color="darkblue") + 
+  geom_errorbarh(aes(xmin = Min_SRR, xmax = Max_SRR), height = 0.5, alpha = 0.35, color="blue") +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "red") + 
+  labs(x = "Standardized Rate Ratio", y = "", title = "") +
+  scale_x_break(c(2.5, 8), scales = .5) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 8))
+
+# Define a custom color palette with a gradient from Blue to Red
+color_palette <- colorRampPalette(c("blue","green", "red"))(length(unique(ICD10_ALLCAPS_YEARS$DIAG2_CAP)))
+# Standard linetypes
+standard_linetypes <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
+# Custom linetypes
+custom_linetypes <- c("22", "42", "44", "13", "1343", "73", "2262", "2264", "4422", "1113","22", "42", "44", "13", "1343")
+
+# Combinar los nuevos con los existentes
+all_linetypes <- c(standard_linetypes, custom_linetypes)
+
+# Create the line graph with fill colors based on the custom palette
+ggplot(ICD10_ALLCAPS_YEARS, aes(x = as.factor(YEAR), y = SRR, group = DIAG2_CAP, color = DIAG2_CAP,linetype = DIAG2_CAP)) +
+  geom_hline(yintercept = 1, color = "red") +
+  geom_line(alpha = 0.8) +
+  labs(x = "Year.",
+       y = "Standardized Rate Ratio",
+       color = "ICD 10") +
+  scale_linetype_manual(values = all_linetypes) +
+  scale_color_manual(values = setNames(color_palette, unique(ICD10_ALLCAPS_YEARS$DIAG2_CAP))) +
+  labs(linetype = "ICD 10")  +
+  scale_y_break(c(2.5, 8), scales = .5) +
+  guides(color = guide_legend(ncol = 1),
+         linetype = guide_legend(ncol = 1)) +
+  theme_minimal()
+
+```
+
+## Hospitalization Rates of F00-F99 Standarized by age and sex
+```{r}
+# recode_f00_f99 <- function(code) {
+#   case_when(
+#     code == "F00" ~ "F00 Dementia in Alzheimer's disease",
+#     code == "F01" ~ "F01 Vascular dementia",
+#     code == "F02" ~ "F02 Dementia in other diseases classified elsewhere",
+#     code == "F03" ~ "F03 Unspecified dementia",
+#     code == "F04" ~ "F04 Amnestic disorder due to known physiological condition",
+#     code == "F05" ~ "F05 Delirium, not induced by alcohol and other psychoactive substances",
+#     code == "F06" ~ "F06 Other mental disorders due to known physiological condition",
+#     code == "F07" ~ "F07 Personality and behavioral disorders due to known physiological condition",
+#     code == "F10" ~ "F10 Alcohol related disorders",
+#     code == "F20" ~ "F20 Schizophrenia",
+#     code == "F30" ~ "F30 Manic episode",
+#     code == "F31" ~ "F31 Bipolar affective disorder",
+#     code == "F32" ~ "F32 Depressive episode",
+#     code == "F33" ~ "F33 Recurrent depressive disorder",
+#     code == "F40" ~ "F40 Phobic anxiety disorders",
+#     code == "F41" ~ "F41 Other anxiety disorders",
+#     code == "F42" ~ "F42 Obsessive-compulsive disorder",
+#     code == "F43" ~ "F43 Reaction to severe stress, and adjustment disorders",
+#     code == "F44" ~ "F44 Dissociative [conversion] disorders",
+#     code == "F45" ~ "F45 Somatoform disorders",
+#     code == "F46" ~ "F46 Other neurotic disorders",
+#     code == "F47" ~ "F47 Other sleep disorders",
+#     code == "F48" ~ "F48 Other neurotic disorders",
+#     code == "F50" ~ "F50 Eating disorders",
+#     code == "F51" ~ "F51 Non-organic sleep disorders",
+#     code == "F52" ~ "F52 Sexual dysfunction, not caused by organic disorder or disease",
+#     code == "F53" ~ "F53 Mental and behavioral disorders associated with the puerperium, not elsewhere classified",
+#     code == "F54" ~ "F54 Psychological and behavioral factors associated with disorders or diseases classified elsewhere",
+#     code == "F55" ~ "F55 Abuse of non-dependence-producing substances",
+#     code == "F59" ~ "F59 Unspecified behavioral syndromes associated with physiological disturbances and physical factors",
+#     code == "F60" ~ "F60 Specific personality disorders",
+#     code == "F61" ~ "F61 Mixed and other personality disorders",
+#     code == "F62" ~ "F62 Enduring personality changes, not attributable to brain damage and disease",
+#     code == "F63" ~ "F63 Impulse disorders",
+#     code == "F64" ~ "F64 Gender identity disorders",
+#     code == "F65" ~ "F65 Disorders of sexual preference",
+#     code == "F66" ~ "F66 Psychological and behavioral disorders associated with sexual development and orientation",
+#     code == "F68" ~ "F68 Other disorders of adult personality and behavior",
+#     code == "F69" ~ "F69 Unspecified disorder of adult personality and behavior",
+#     code == "F70" ~ "F70 Mild intellectual disabilities",
+#     code == "F71" ~ "F71 Moderate intellectual disabilities",
+#     code == "F72" ~ "F72 Severe intellectual disabilities",
+#     code == "F73" ~ "F73 Profound intellectual disabilities",
+#     code == "F78" ~ "F78 Other intellectual disabilities",
+#     code == "F79" ~ "F79 Unspecified intellectual disabilities",
+#     code == "F80" ~ "F80 Specific developmental disorders of speech and language",
+#     code == "F81" ~ "F81 Specific developmental disorders of scholastic skills",
+#     code == "F82" ~ "F82 Specific developmental disorder of motor function",
+#     code == "F83" ~ "F83 Mixed specific developmental disorders",
+#     code == "F84" ~ "F84 Pervasive developmental disorders",
+#     code == "F88" ~ "F88 Other disorders of psychological development",
+#     code == "F89" ~ "F89 Unspecified disorder of psychological development",
+#     code == "F90" ~ "F90 Attention-deficit hyperactivity disorders",
+#     code == "F91" ~ "F91 Conduct disorders",
+#     code == "F92" ~ "F92 Mixed disorders of conduct and emotions",
+#     code == "F93" ~ "F93 Emotional disorders with onset specific to childhood",
+#     code == "F94" ~ "F94 Disorders of social functioning with onset specific to childhood and adolescence",
+#     code == "F95" ~ "F95 Tic disorders",
+#     code == "F98" ~ "F98 Other behavioral and emotional disorders with onset usually occurring in childhood and adolescence",
+#     code == "F99" ~ "F99 Unspecified mental disorder",
+#     TRUE ~ NA
+#   )
+# }
+
+recode_f00_f99 <- function(code) {
+  case_when(
+    code >= "F00" & code <= "F09" ~ "F01-F09  Mental disorders due to known physiological conditions",
+    code >= "F10" & code <= "F19" ~ "F10-F19  Mental and behavioral disorders due to psychoactive substance use",
+    code >= "F20" & code <= "F29" ~ "F20-F29  Schizophrenia, schizotypal, delusional, and other non-mood psychotic disorders",
+    code >= "F30" & code <= "F39" ~ "F30-F39  Mood [affective] disorders",
+    code >= "F40" & code <= "F48" ~ "F40-F48  Anxiety, dissociative, stress-related, somatoform and other nonpsychotic mental disorders",
+    code >= "F50" & code <= "F59" ~ "F50-F59  Behavioral syndromes associated with physiological disturbances and physical factors",
+    code >= "F60" & code <= "F69" ~ "F60-F69  Disorders of adult personality and behavior",
+    code >= "F70" & code <= "F79" ~ "F70-F79  Intellectual disabilities",
+    code >= "F80" & code <= "F89" ~ "F80-F89  Pervasive and specific developmental disorders",
+    code >= "F90" & code <= "F98" ~ "F90-F98  Behavioral and emotional disorders with onset usually occurring in childhood and adolescence",
+    code >= "F99" & code <= "F99" ~ "F99-F99  Unspecified mental disorder",
+    TRUE ~ NA
+  )
+}
+
+MERGE1 <- MERGE1 %>% 
+  mutate(across(all_of(col_DIAG), ~recode_f00_f99(substring(., 1, 3)), .names = "{.col}_f00_f99"))
+
+HOSP20102022_DIAG1_f00_f99_RATES <- MERGE1  %>%
+  filter(SISTRAT==0) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG1_f00_f99) %>% 
+  summarise(n = n(), .groups = 'drop') %>%
+  drop_na(SEX,DIAG1_f00_f99) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+HOSP20102022_DIAG1_f00_f99_RATES_TOTAL <- HOSP20102022_DIAG1_f00_f99_RATES %>%
+  group_by(AGE_GROUP, DIAG1_f00_f99) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+HOSP20102022_DIAG1_f00_f99_RATES <- bind_rows(HOSP20102022_DIAG1_f00_f99_RATES, HOSP20102022_DIAG1_f00_f99_RATES_TOTAL)
+
+C120102022_DIAG1_f00_f99_RATES <- MERGE1  %>%
+  filter(SISTRAT==1) %>% 
+  group_by(YEAR,AGE_GROUP,SEX, DIAG1_f00_f99) %>% 
+  summarise(n = n(), .groups = 'drop') %>%
+  drop_na(SEX,DIAG1_f00_f99) %>% 
+  pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+  mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+  mutate(YEAR = as.character(YEAR))
+
+C120102022_DIAG1_f00_f99_RATES_TOTAL <- C120102022_DIAG1_f00_f99_RATES %>%
+  group_by(AGE_GROUP, DIAG1_f00_f99) %>%
+  summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+  mutate(YEAR = "Total")
+
+C120102022_DIAG1_f00_f99_RATES <- bind_rows(C120102022_DIAG1_f00_f99_RATES, C120102022_DIAG1_f00_f99_RATES_TOTAL)
+
+HOSP20102022_DIAG1_f00_f99_RATES_TOTALS <- HOSP20102022_DIAG1_f00_f99_RATES%>%
+  left_join(TOTALS_HOSP_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG1_f00_f99) %>%
+  summarise(DSR_HOSP = sum(DSR_total)/100000,
+            v_HOSP = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+C120102022_DIAG1_f00_f99_RATES_TOTALS <- C120102022_DIAG1_f00_f99_RATES%>%
+  left_join(TOTALS_C1_DIAG1, by = "YEAR") %>%
+  left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+  mutate(
+    male_rates = (male / total_male),
+    female_rates = (female / total_female)
+  ) %>% 
+  mutate(
+    DSR_male = male_std*male_rates,
+    DSR_female = female_std*female_rates,
+    male_v = male_std^2*(male_rates/total_male),
+    female_v = male_std^2*(female_rates/total_female)
+  ) %>% 
+  mutate(DSR_total = DSR_male + DSR_female,
+         v_total = male_v + female_v) %>% 
+  group_by(YEAR,DIAG1_f00_f99) %>%
+  summarise(DSR_C1 = sum(DSR_total)/100000,
+            v_C1 = sum(v_total)/100000^2, 
+            .groups = 'drop')
+
+
+HOSP20102022_DIAG1_f00_f99_RATES_TOTALS <- HOSP20102022_DIAG1_f00_f99_RATES_TOTALS %>% 
+  left_join(C120102022_DIAG1_f00_f99_RATES_TOTALS, by = c("YEAR", "DIAG1_f00_f99")) %>% 
+  mutate(SRR = DSR_C1/DSR_HOSP,
+         SRR_CI_UP = exp(log(SRR)+1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2))),
+         SRR_CI_LOW = exp(log(SRR)-1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2)))
+         )
+
+DIAG1_f00_f99_TOTAL<- HOSP20102022_DIAG1_f00_f99_RATES_TOTALS %>% 
+  filter(YEAR == "Total" ) %>% drop_na() 
+
+DIAG1_f00_f99_SUMM_YEARS<- HOSP20102022_DIAG1_f00_f99_RATES_TOTALS  %>% 
+    filter(!str_starts(YEAR, "Total") & 
+             !str_starts(YEAR, "200") &
+             !str_starts(DIAG1_f00_f99, "F66") &
+             !str_starts(DIAG1_f00_f99, "F81") &
+             !str_starts(DIAG1_f00_f99, "F53")) %>% 
+  drop_na() %>% 
+  group_by(DIAG1_f00_f99) %>% 
+   summarise(
+    Median_SRR = median(SRR, na.rm = TRUE),
+    Min_SRR = min(SRR, na.rm = TRUE),
+    Max_SRR = max(SRR, na.rm = TRUE)
+  )
+
+
+ggplot(DIAG1_f00_f99_TOTAL, aes(x = SRR, y = reorder(DIAG1_f00_f99, SRR))) +
+  geom_point(size = 1.5, alpha = 1, shape = "|", color="darkblue")  + 
+  geom_errorbarh(aes(xmin = SRR_CI_LOW, xmax = SRR_CI_UP), height = 0.5, alpha = 0.35, color="blue") + 
+  geom_vline(xintercept = 1, linetype = "dashed", color = "red") + 
+  labs(x = "Standardized Rate Ratio", y = "", title = "") +
+  # scale_x_break(c(2.1, 11.6), scales = .25) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 6))
+
+ggplot(DIAG1_f00_f99_SUMM_YEARS, aes(x = Median_SRR, y = reorder(DIAG1_f00_f99, Median_SRR))) +
+  geom_point(size = 1.5, alpha = 1, shape = "|", color="darkblue") + 
+  geom_errorbarh(aes(xmin = Min_SRR, xmax = Max_SRR), height = 0.5, alpha = 0.35, color="blue") +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "red") + 
+  labs(x = "Standardized Rate Ratio", y = "", title = "") +
+  # scale_x_break(c(2.5, 8), scales = .5) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 6))
+
+```
+## Hospitalization Rates of F00-F99 Standarized by age and sex
+```{r}
+# 
+# recode_v00_y99 <- function(code) {
+#   case_when(
+#     code >= "V00" & code <= "X59" ~ "V00-X59. Accidents (including traffic, falls, fire, and drowning)",
+#     code >= "X60" & code <= "X84" ~ "X60-X84. Self-harm",
+#     code >= "X85" & code <= "Y09" ~ "X85-Y09. Assault",
+#     code >= "Y10" & code <= "Y34" ~ "Y10-Y34. Event of undetermined intent",
+#     code >= "Y35" & code <= "Y36" ~ "Y35-Y36. Legal intervention and operations of war",
+#     code >= "Y40" & code <= "Y84" ~ "Y40-Y84. Complications of medical and surgical care",
+#     code >= "Y85" & code <= "Y89" ~ "Y85-Y89. Sequelae of external causes of morbidity and mortality",
+#     code >= "Y90" & code <= "Y99" ~ "Y90-Y99. External causes status and supplemental information",
+#     TRUE ~ NA
+#   )
+# }
+# 
+# MERGE1 <- MERGE1 %>% 
+#   mutate(across(all_of(col_DIAG), ~recode_v00_y99(substring(., 1, 3)), .names = "{.col}_v00_y99"))
+# 
+# HOSP20102022_DIAG1_v00_y99_RATES <- MERGE1  %>%
+#   filter(SISTRAT==0) %>% 
+#   group_by(YEAR,AGE_GROUP,SEX, DIAG1_v00_y99) %>% 
+#   summarise(n = n(), .groups = 'drop') %>%
+#   drop_na(SEX,DIAG1_v00_y99) %>% 
+#   pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+#   mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+#   mutate(YEAR = as.character(YEAR))
+# 
+# HOSP20102022_DIAG1_v00_y99_RATES_TOTAL <- HOSP20102022_DIAG1_v00_y99_RATES %>%
+#   group_by(AGE_GROUP, DIAG1_v00_y99) %>%
+#   summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+#   mutate(YEAR = "Total")
+# 
+# HOSP20102022_DIAG1_v00_y99_RATES <- bind_rows(HOSP20102022_DIAG1_v00_y99_RATES, HOSP20102022_DIAG1_v00_y99_RATES_TOTAL)
+# 
+# C120102022_DIAG1_v00_y99_RATES <- MERGE1  %>%
+#   filter(SISTRAT==1) %>% 
+#   group_by(YEAR,AGE_GROUP,SEX, DIAG1_v00_y99) %>% 
+#   summarise(n = n(), .groups = 'drop') %>%
+#   drop_na(SEX,DIAG1_v00_y99) %>% 
+#   pivot_wider(names_from = SEX, values_from = n, names_prefix = "") %>% 
+#   mutate(across(everything(), ~na_if(., NA) %>% replace_na(0))) %>% 
+#   mutate(YEAR = as.character(YEAR))
+# 
+# C120102022_DIAG1_v00_y99_RATES_TOTAL <- C120102022_DIAG1_v00_y99_RATES %>%
+#   group_by(AGE_GROUP, DIAG1_v00_y99) %>%
+#   summarise(male = sum(male), female = sum(female), .groups = 'drop') %>%
+#   mutate(YEAR = "Total")
+# 
+# C120102022_DIAG1_v00_y99_RATES <- bind_rows(C120102022_DIAG1_v00_y99_RATES, C120102022_DIAG1_v00_y99_RATES_TOTAL)
+# 
+# HOSP20102022_DIAG1_v00_y99_RATES_TOTALS <- HOSP20102022_DIAG1_v00_y99_RATES%>%
+#   left_join(TOTALS_HOSP_DIAG1, by = "YEAR") %>%
+#   left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+#   mutate(
+#     male_rates = (male / total_male),
+#     female_rates = (female / total_female)
+#   ) %>% 
+#   mutate(
+#     DSR_male = male_std*male_rates,
+#     DSR_female = female_std*female_rates,
+#     male_v = male_std^2*(male_rates/total_male),
+#     female_v = male_std^2*(female_rates/total_female)
+#   ) %>% 
+#   mutate(DSR_total = DSR_male + DSR_female,
+#          v_total = male_v + female_v) %>% 
+#   group_by(YEAR,DIAG1_v00_y99) %>%
+#   summarise(DSR_HOSP = sum(DSR_total)/100000,
+#             v_HOSP = sum(v_total)/100000^2, 
+#             .groups = 'drop')
+# 
+# C120102022_DIAG1_v00_y99_RATES_TOTALS <- C120102022_DIAG1_v00_y99_RATES%>%
+#   left_join(TOTALS_C1_DIAG1, by = "YEAR") %>%
+#   left_join(STDPOPULATION[,c(1,4,5)], by = "AGE_GROUP") %>% 
+#   mutate(
+#     male_rates = (male / total_male),
+#     female_rates = (female / total_female)
+#   ) %>% 
+#   mutate(
+#     DSR_male = male_std*male_rates,
+#     DSR_female = female_std*female_rates,
+#     male_v = male_std^2*(male_rates/total_male),
+#     female_v = male_std^2*(female_rates/total_female)
+#   ) %>% 
+#   mutate(DSR_total = DSR_male + DSR_female,
+#          v_total = male_v + female_v) %>% 
+#   group_by(YEAR,DIAG1_v00_y99) %>%
+#   summarise(DSR_C1 = sum(DSR_total)/100000,
+#             v_C1 = sum(v_total)/100000^2, 
+#             .groups = 'drop')
+# 
+# 
+# HOSP20102022_DIAG1_v00_y99_RATES_TOTALS <- HOSP20102022_DIAG1_v00_y99_RATES_TOTALS %>% 
+#   left_join(C120102022_DIAG1_v00_y99_RATES_TOTALS, by = c("YEAR", "DIAG1_v00_y99")) %>% 
+#   mutate(SRR = DSR_C1/DSR_HOSP,
+#          SRR_CI_UP = exp(log(SRR)+1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2))),
+#          SRR_CI_LOW = exp(log(SRR)-1.96*sqrt((v_HOSP/DSR_HOSP^2)+(v_C1/DSR_C1^2)))
+#          )
+# 
+# DIAG1_v00_y99_TOTAL<- HOSP20102022_DIAG1_v00_y99_RATES_TOTALS %>% 
+#   filter(YEAR == "Total" ) %>% drop_na() 
+# 
+# DIAG1_v00_y99_SUMM_YEARS<- HOSP20102022_DIAG1_v00_y99_RATES_TOTALS  %>% 
+#     filter(!str_starts(YEAR, "Total") & 
+#              !str_starts(YEAR, "200") &
+#              !str_starts(DIAG1_v00_y99, "F66") &
+#              !str_starts(DIAG1_v00_y99, "F81") &
+#              !str_starts(DIAG1_v00_y99, "F53")) %>% 
+#   drop_na() %>% 
+#   group_by(DIAG1_v00_y99) %>% 
+#    summarise(
+#     Median_SRR = median(SRR, na.rm = TRUE),
+#     Min_SRR = min(SRR, na.rm = TRUE),
+#     Max_SRR = max(SRR, na.rm = TRUE)
+#   )
+
+```
+
+```{r}
+
+MERGE3 <- MERGE3 %>% 
+  mutate(across(all_of(col_DIAG), ~icd10_chapter(substring(., 1, 3)), .names = "{.col}_CAP")) %>% 
+  mutate(across(all_of(col_DIAG), ~recode_f00_f99(substring(., 1, 3)), .names = "{.col}_f00_f99"))
+
+DATES <- MERGE3 %>%
+  select(matches("^fecha|^FECHA|^HASH", ignore.case = FALSE)) %>%
+  mutate(FECHA_INGRESO = case_when(
+    year(FECHA_INGRESO) == 1905 ~ FECHA_INGRESO %m+% years(100),
+    year(FECHA_INGRESO) == 1906 ~ FECHA_INGRESO %m+% years(100),
+    TRUE ~ FECHA_INGRESO
+  ))
+# Definir las columnas de fechas de tratamiento
+fecha_cols <- grep("^fecha_egresode_tratamiento_", names(DATES), value = TRUE)
+
+# Calcular las diferencias en días
+# DATES <- DATES %>%
+#   mutate(across(all_of(fecha_cols), ~ as.integer(FECHA_EGRESO - .), .names = "diff_{col}"))
+# 
+# # Encontrar el índice de la menor diferencia
+# DATES <- DATES %>%
+#   mutate(across(all_of(fecha_cols), ~ as.integer(FECHA_EGRESO - .), .names = "diff_{col}")) %>%
+#   rowwise() %>%
+#   mutate(min_diff_index = if (all(is.na(c_across(starts_with("diff_fecha_ingresoa_tratamiento_"))))) NA_integer_ else which.min(c_across(starts_with("diff_fecha_ingresoa_tratamiento_"))))
+
+# DATES_C1_DISCHARGE_HOSP_ADMISSION <- DATES %>%
+#   mutate(across(all_of(fecha_cols), ~ as.integer(FECHA_INGRESO - .), .names = "diff_{col}")) %>%
+#   mutate(across(starts_with("diff"), ~ ifelse(. < 0, NA_integer_, .))) %>%
+#   rowwise() %>%
+#   mutate(closest_to_zero_index = {
+#     # Obtener todos los valores de las columnas que comienzan con 'diff'
+#     diffs = c_across(starts_with("diff"))
+#     # Calcular el valor absoluto de las diferencias
+#     abs_diffs = abs(diffs)
+#     # Identificar el índice del valor absoluto más pequeño
+#     if (all(is.na(abs_diffs))) NA_integer_ else which.min(abs_diffs)
+#   }) %>%
+#   ungroup() 
+
+DATES_C1_DISCHARGE_HOSP_ADMISSION <- DATES %>%
+  # Calcula las diferencias y maneja los valores negativos
+  mutate(across(all_of(fecha_cols), ~ as.integer(FECHA_INGRESO - .), .names = "diff_{col}")) %>%
+  mutate(across(starts_with("diff"), ~ ifelse(. < 0, NA_integer_, .))) %>%
+  # Calcula el índice y la diferencia mínima absoluta más cercana a cero en una sola mutación
+  rowwise() %>%
+  mutate(
+    closest_to_zero_index = {
+      diffs = c_across(starts_with("diff"))
+      abs_diffs = abs(diffs)
+      if (all(is.na(abs_diffs))) NA_integer_ else which.min(abs_diffs)
+    },
+    closest_to_zero_value = {
+      diffs = c_across(starts_with("diff"))
+      abs_diffs = abs(diffs)
+      if (is.na(closest_to_zero_index) || all(is.na(abs_diffs))) NA_real_ else min(abs_diffs, na.rm = TRUE)
+    }
+  ) %>%
+  ungroup()
+
+
+C1_DISCHARGE_HOSP_ADMISSION <- cbind(MERGE3,DATES_C1_DISCHARGE_HOSP_ADMISSION[,79:80]) %>% drop_na(closest_to_zero_index)
+
+new_DF <- NULL
+
+for (i in 1:15) {
+  # Filtrar y procesar datos
+  temp_DF <- C1_DISCHARGE_HOSP_ADMISSION %>%
+    filter(closest_to_zero_index == i) %>%
+    {
+      # # Imprime cuántas filas se están filtrando por cada 'i'
+      # print(paste("Filtrando index", i, "con", nrow(.), "filas"))
+      
+      general_cols <- names(.)[!str_detect(names(.), "_\\d+$")]
+      specific_cols <- names(.)[str_detect(names(.), paste0("_", i, "$"))]
+      
+      # Verifica que realmente estás seleccionando columnas correctamente
+      # print(paste("Columnas generales seleccionadas:", length(general_cols)))
+      # print(paste("Columnas específicas para i =", i, ":", length(specific_cols)))
+      
+      select(., all_of(c(general_cols, specific_cols)))
+    } %>%
+    rename_with(~ gsub(paste0("_", i, "$"), "", .), matches(paste0(".*_", i, "$")))
+
+  # Si new_DF es NULL, inicialízalo con la estructura de temp_DF
+  if (is.null(new_DF)) {
+    new_DF <- temp_DF
+  } else {
+    new_DF <- bind_rows(new_DF, temp_DF)
+  }
+}
+
+C1_DISCHARGE_HOSP_ADMISSION <- new_DF %>%
+  group_by(HASH_KEY, closest_to_zero_index) %>%
+  filter(closest_to_zero_value == min(closest_to_zero_value)) %>%
+  ungroup()
+
+fig8 <- C1_DISCHARGE_HOSP_ADMISSION %>%
+  drop_na(motivode_egreso) %>% 
+  ggplot(., aes(x = closest_to_zero_value, fill=motivode_egreso)) +
+  geom_boxplot(aes(y = -80),width = 50,alpha=0.7) +
+  geom_histogram(aes(y = ..count..),bins = 365, alpha = 0.7) +
+  facet_grid(rows = vars(motivode_egreso), scales = "free_x", space = "free_x") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 360, by = 20))+
+  scale_x_continuous(breaks = seq(0, 4680, by = 360))+
+    theme(
+    axis.text = element_text(size = 5),
+    legend.position = "none"
+  ) +
+  xlab("(Discharge day to drug rehab. - Hospital admission day.)") +
+  ylab("Frequency.")
+
+fig9 <- C1_DISCHARGE_HOSP_ADMISSION %>%
+  drop_na(motivode_egreso) %>%
+  filter(str_starts(DIAG1_CAP, "F00")) %>%
+  ggplot(aes(x = closest_to_zero_value, fill = motivode_egreso)) +
+  geom_boxplot(aes(y = -80), width = 50, alpha = 0.7) +
+  geom_histogram(aes(y = ..count..), bins = 365, alpha = 0.7) +
+  facet_grid(rows = vars(motivode_egreso), scales = "free_x", space = "free_x") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 360, by = 20)) +
+  scale_x_continuous(breaks = seq(0, 4680, by = 360)) +
+  theme(
+    axis.text = element_text(size = 5),
+    legend.position = "none"
+  ) +
+  xlab("(Hospital admission day.-Discharge day to drug rehab.)") +
+  ylab("Frequency.") +
+  scale_fill_manual(values = colorRampPalette(c("lightblue", "blue"))(length(unique(C1_DISCHARGE_HOSP_ADMISSION$motivode_egreso))))
+
+fig10 <- C1_DISCHARGE_HOSP_ADMISSION %>%
+  drop_na(motivode_egreso) %>%
+  filter(str_starts(DIAG2_CAP, "V0")) %>%
+  ggplot(aes(x = closest_to_zero_value, fill = motivode_egreso)) +
+  geom_boxplot(aes(y = -80), width = 50, alpha = 0.7) +
+  geom_histogram(aes(y = ..count..), bins = 365, alpha = 0.7) +
+  facet_grid(rows = vars(motivode_egreso), scales = "free_x", space = "free_x") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, 360, by = 20)) +
+  scale_x_continuous(breaks = seq(0, 4680, by = 360)) +
+  theme(
+    axis.text = element_text(size = 5),
+    legend.position = "none"
+  ) +
+  xlab("(Hospital admission day.-Discharge day to drug rehab.)") +
+  ylab("Frequency.") +
+  scale_fill_manual(values = colorRampPalette(c("lightblue", "blue"))(length(unique(C1_DISCHARGE_HOSP_ADMISSION$motivode_egreso))))
+
+# DATES <- DATES %>%
+#   mutate(across(all_of(fecha_cols), ~ {
+#     diff = as.integer(. - FECHA_EGRESO)
+#     ifelse(diff > 0, diff, NA_integer_)
+#   }, .names = "diff_{col}"))
+
+# Encontrar el índice de la diferencia más cercana a cero
+# DATES_C1_DISCHARGE_HOSP_ADMISSION <- DATES_C1_DISCHARGE_HOSP_ADMISSION %>%
+#   rowwise() %>%
+#   mutate(closest_to_zero_index = {
+#     diffs = abs(c_across(starts_with("diff_fecha_ingresoa_tratamiento_")))
+#     if (all(is.na(diffs))) NA_integer_ else which.min(diffs)
+#   }) %>%
+#   ungroup()  # Remover el efecto de 'rowwise' después de modificar
+
+
+# DATES <- DATES %>%
+#   rowwise() %>%
+#   mutate(
+#     min_positive_diff_index = {
+#       diffs = c_across(starts_with("diff_fecha_ingresoa_tratamiento_"))
+#       valid_indices = which(diffs > 0)
+#       if (length(valid_indices) > 0) {
+#         valid_indices[which.min(diffs[valid_indices])]
+#       } else {
+#         NA_integer_
+#       }
+#     },
+#     min_negative_diff_index = {
+#       negative_indices = which(diffs < 0)
+#       if (length(negative_indices) > 0) {
+#         negative_indices[which.max(diffs[negative_indices])]
+#       } else {
+#         NA_integer_
+#       }
+#     }
+#   ) %>%
+#   ungroup() 
+
+
+
+```

@@ -1,0 +1,107 @@
+# Confidential data files
+*.csv
+*.xls
+*.sav
+*.dta
+*.sas7bdat
+*.parquet
+#*.json
+*.sqlite
+*.db
+*.sql
+*.rds
+*.RData
+#*.Rhistory
+
+# Exceptions (negating previous ignores)
+_input/!2_ndp_2025_03_08.Rdata.7z.001
+_input/!2_ndp_2025_03_08.Rdata.7z.002
+_input/!2_ndp_2025_03_08.Rdata.7z.003
+_input/!2_ndp_2025_03_08.Rdata.7z.004
+
+# Sensitive or personal data directories
+data/
+raw_data/
+private/
+credentials/
+secrets/
+passwords/
+keys/
+token*
+
+# Configuration and credentials files
+.env
+.Renviron
+.gitcreds
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+
+# Generated or temporary files
+freeze/
+tmp/
+temp/
+output/
+results/
+reports/
+logs/
+log/
+*.tmp
+*.bak
+*.old
+*~
+
+# Cache files and intermediate files
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints
+
+# R Markdown and Quarto output (that may contain sensitive data)
+*.nb.html
+*_cache/
+_site/
+docs/
+*_files/
+
+# Large datasets
+*.feather
+
+# OS-generated files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+Desktop.ini
+$RECYCLE.BIN/
+
+# Sensitive directories specific to your project
+cons/private/
+cons/confidential/
+cons/raw/
+.Rproj.user
+/.quarto/
+
+# Specific files to ignore
+paquetes_sar.tar.gz
+_out/more_one_overlaps_after_center_id_sep25_long.xlsx
+_out/more_one_overlaps_after_center_id_mod.xlsx
+_out/more_one_overlaps_after_center_id_sep25.xlsx
+_out/more_one_overlaps_after_center_id.xlsx
+_out/_multiple_overlappings.xlsx
+_out/_overlaps_dup_after_manual_imp.xlsx
+_out/_overlaps_dup_after_manual_imp_mod (1).xlsx
+_out/_overlaps_dup_after_manual_imp_mod.xlsx
+_out/~$more_one_overlaps_after_center_id.xlsx
+_out/~$_multiple_overlappings.xlsx
+_out/more_one_overlaps_after_center_idd.xlsx
+_out/more_one_overlaps_after_center_idd (1).xlsx
+cons/_out/more_one_overlaps_after_center_id.xlsx
+/cons/_out

@@ -1,0 +1,84 @@
+project:
+  type: website #if not, it will render every QMD file in the directory; but keeps structure
+  output-dir: .
+  preview:
+    browser: false
+    watch-inputs: false
+website:
+  announcement: 
+    icon: info-circle
+    content: "**In construction**" 
+    position: below-navbar 
+  title: "Index"
+  back-to-top-navigation: true
+  navbar:
+    background: dark
+    search: true
+    left:
+      - icon: envelope
+        href: mailto:gonzalez.santacruz.andres@gmail.com
+      - icon: github
+        aria-label: GitHub
+        href: https://github.com/cons2025
+      #- about.qmd
+    right:
+        - text: Previous repositories
+          menu:
+            - text: FONDECYT 1191282
+              href: https://fondecytacc.github.io/SUD_health_Chile.github.io/
+            - text: nDP 2022-2023
+              href: https://fondecytacc.github.io/nDP/
+  page-footer:  
+    border: true
+    background: dark
+    center: 
+      - text: >- 
+           Millennium Nucleus for Drug Policies
+    right:
+      - text: Made with *Quarto*
+        href: https://quarto.org
+format:
+  html:
+    css: _lib/custom_light.scss #toc: false
+    theme: 
+      - journal
+      - _lib/custom_light.scss
+    clean-remove-only-on-error: true # Solo eliminar archivos en caso de error
+# include CSS style for title blocks
+include-in-header:
+  - text: |
+      <style>
+      .quarto-title-block .quarto-title-banner {
+        flex-direction: row;
+        display: flex;
+        justify-content: flex-start; /* Cambiado para alinear el logo con el texto */
+        align-items: center;
+        height: 350px;
+        z-index: 2;
+        padding: 0;
+        background-image: url("");
+        background-repeat: no-repeat;
+        background-position: top;
+        background-size: 350px 60px;
+      }
+      .quarto-title-block .quarto-title-banner::before {
+        content: '';
+        background-image: url("_style/Logo nDP_negativo_vertical_en.png"); /* Corregido el separador de ruta */
+        background-repeat: no-repeat;
+        background-position: left; /* Cambiado para que el logo esté más cerca del texto */
+        background-size: 225px 99px;
+        width: 350px;
+        height: 350px;
+        margin-right: 70px; /* Ajuste para alinear con el texto */
+      }
+      .quarto-title-block .quarto-title-banner h1.title {
+        margin-left: 60px; /* Ajuste el margen izquierdo para mover el título */
+        text-align: left;
+        font-size: 2.5em;
+      }
+      .quarto-title-banner .subtitle.lead {
+        margin-left: 60px; /* Adjusts the left margin of the subtitle */
+        text-align: left;
+        font-size: 1.5em;
+      }      
+      </style>

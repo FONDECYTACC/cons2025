@@ -1,0 +1,86 @@
+Nivel	Categoría	General (n=88,695)	p	SMD	Miss
+De predisposicion					
+Admission age (log) (median [IQR])		3.6 [3.3, 3.8]			
+Admission age ^2 (median [IQR])		1,171.7 [753.0, 1,855.5]			
+Admission age ^3 (median [IQR])		40,107.0 [20,661.0, 79,923.8]			
+Admission age (centered) (median [IQR])		-1.6 [-8.4, 7.3]			
+Admission age, three groups (%)	18-29	30634 (34.5)			
+	30-44	39637 (44.7)			
+	45-65	18424 (20.8)			
+Sex (biological categorization) (%)	woman	22736 (25.6)	<0.001	2.372	0.0
+Housing situation (%)	illegal settlement	951 (1.1)	<0.001	0.200	5.1
+	others	2384 (2.8)			
+	owner/transferred dwellings/pays dividends	30792 (36.6)			
+	renting	15502 (18.4)			
+	stays temporarily with a relative	34584 (41.1)			
+Employment status (%)	employed	43435 (49.0)	<0.001	0.791	0.0
+	inactive	14374 (16.2)			
+	unemployed	30886 (34.8)			
+Marital status (%)	married/cohabiting	29864 (33.7)	<0.001	0.211	0.2
+	separated/divorced/annulled/widowed	10332 (11.7)			
+	single	48335 (54.6)			
+Poverty index of commune of residence*100 (median [IQR])		12.4 [9.1, 17.0]	<0.001	0.140	0.0
+Poverty index (log1p) (median [IQR])		0.1 [0.1, 0.2]	<0.001	0.138	0.0
+Poverty index (centered) (median [IQR])		0.0 [-0.1, 0.0]	<0.001	0.140	0.0
+Urbanization level of the commune of residence (%)	1.Rural	7699 (8.7)	<0.001	0.176	0.0
+	2.Mixed	8682 (9.8)			
+	3.Urban	72314 (81.5)			
+Educational attainment (%)	1-More than high school	16181 (18.3)	<0.001	0.085	0.4
+	2-Completed high school or less	48848 (55.3)			
+	3-Completed primary school or less	23284 (26.4)			
+Cohabitation status (harmonized) (%)	alone	8461 (9.5)	<0.001	0.466	0.0
+	with couple/children	39836 (44.9)			
+	family of origin	32738 (36.9)			
+	Others	7660 (8.6)			
+(*)Housing type (recoded & simplified) (%)	formal housing	73925 (89.9)	<0.001	0.200	7.3
+	other/unknown	8337 (10.1)			
+(*)Nationallity (Chile) (%)	other (vs. Chile)	569 (0.6)	0.020	0.020	0.0
+(*)Ethnicity (%)		5644 (6.4)	0.003	0.028	0.0
+De necesidad					
+Psychiatric comorbidity (ICD-10, in-study) (%)		15499 (17.5)	<0.001	0.118	0.0
+Psychiatric comorbidity (ICD-10, diagnosis record) (%)		39578 (44.6)	<0.001	0.257	0.0
+Psychotic disorders (F2) (%)		1361 (1.5)	<0.001	0.103	0.0
+Mood disorders (F3) (%)		9100 (10.3)	<0.001	0.065	0.0
+Anxiety & stress-related (F4-F5) (%)		2090 (2.4)	<0.001	0.052	0.0
+Personality disorders (F6) (%)		25167 (28.4)	<0.001	0.236	0.0
+Neurocog & neurodevelopmental (F0,F7-F9) (%)		3002 (3.4)	<0.001	0.072	0.0
+SUD severity (ICD-10) (%)	drug dependence	64549 (72.8)	<0.001	0.477	0.0
+Primary substance of use (recoded) (%)	cocaine paste	33445 (37.7)	<0.001	0.470	0.0
+	cocaine powder	17228 (19.4)			
+	alcohol	30389 (34.3)			
+	marijuana	6030 (6.8)			
+	others	1603 (1.8)			
+Primary-substance use frequency at admission (simplified) (%)	1.<=1 day/wk	10253 (11.6)	<0.001	0.554	0.5
+	2.2-6 days/wk	39096 (44.3)			
+	3.Daily	38932 (44.1)			
+Polysubstance use (strict) (%)		64586 (72.8)	<0.001	0.210	0.0
+(*)Domestic violence/Sexual abuse (%)		19828 (28.0)	<0.001	0.344	20.1
+(*)Physical Dx: Under Study (%)		49404 (55.8)	<0.001	0.083	0.2
+(*)Physical Dx: Other Med Conditions (%)		3966 (4.5)	<0.001	0.083	0.2
+(*)Physical Dx: Organ-System Diseases (%)		2487 (2.8)	<0.001	0.097	0.2
+(*)Physical Dx: Injuries & Sequelae (%)		1345 (1.5)	<0.001	0.120	0.2
+(*)Physical Dx: Infectious Diseases (%)		709 (0.8)	<0.001	0.086	0.2
+Facilitadores de atencion					
+Length of stay in treatment (months) (median [IQR])		5.6 [3.0, 10.0]	<0.001	0.145	0.0
+Length of stay (log1p months) (median [IQR])		1.9 [1.4, 2.4]	<0.001	0.229	0.0
+Length of stay (months)^2 (median [IQR])		31.1 [9.0, 100.0]	<0.001	0.085	0.0
+Length of stay (months)^3 (median [IQR])		173.8 [27.0, 1,000.0]	<0.001	0.058	0.0
+Treatment length < 90 days (indicator) (%)		21012 (23.7)	<0.001	0.210	0.0
+Treatment outcome (%)	adm discharge - adm reasons	1325 (1.5)	<0.001	0.278	0.0
+	adm discharge - rule violation/undet	6468 (7.3)			
+	completion	23505 (26.5)			
+	dropout	47115 (53.1)			
+	other	216 (0.2)			
+	referral	10066 (11.3)			
+Admission motive (%)	another SUD facility/FONODROGAS/SENDA Previene	8297 (9.4)	<0.001	0.458	0.0
+	justice sector	8483 (9.6)			
+	other	4584 (5.2)			
+	sanitary sector	27555 (31.1)			
+	spontaneous consultation	39776 (44.8)			
+(*)Court-referred to drug treatment (1 = yes) (%)	si	1669 (2.0)	<0.001	0.068	4.4
+Respuesta diferencial a tto.					
+Modalidad de tratamiento	m-pai	5270 (5.9)			
+	m-pr	3548 (4.0)			
+	pg-pab	32532 (36.7)			
+	pg-pai	37611 (42.4)			
+	pg-pr	9734 (11.0)			
