@@ -1,0 +1,2014 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022"
+description: |
+  Load administrative data from SENDAs patient, compare information with previous databases and explore new data.
+date: "`r withr::with_locale(new = c('LC_TIME' = 'C'), code =format(Sys.time(),'%B %d, %Y'))`"
+author: "Andrés González Santa Cruz"
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+editor: source
+---
+
+`r message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))`
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+
+$('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+
+// onClick function for all plots (img's)
+
+$('img:not(.zoomImg)').click(function() {
+$('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+$('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+});
+
+// onClick function for zoomImg
+
+$('img.zoomImg').click(function() {
+$('.zoomDiv').css({opacity: '0', width: '0%'});
+});
+});
+```
+
+```{css hideOutput-lib-src, echo = FALSE}
+<script src="https://github.com/AGSCL/gine_brechas_pandemia/blob/main/hideOutput.js"></script>
+```
+
+```{js hideOutput, echo = FALSE}
+$(document).ready(function() {
+
+\$chunks = \$('.fold');
+
+\$chunks.each(function () { // add button to source code chunks
+if ( \$(this).hasClass('s') ) {
+    \$('pre.r', this).prepend("\<div class=\\"showopt\\"\>Show Source\</div\>\<br style=\\"line-height:22px;\\"/\>");
+    \$('pre.r', this).children('code').attr('class', 'folded');
+    } // add button to output chunks
+
+    if ( \$(this).hasClass('o') ) {
+        \$('pre:not(.r)', this).has('code').prepend("\<div class=\\"showopt\\"\>Show Output\</div\>\<br style=\\"line-height:22px;\\"/\>");
+        \$('pre:not(.r)', this).children('code:not(r)').addClass('folded'); // add button to plots
+        \$(this).find('img').wrap('\<pre class=\\"plot\\"\>\</pre\>');
+        \$('pre.plot', this).prepend("\<div class=\\"showopt\\"\>Show Plot\</div\>\<br style=\\"line-height:22px;\\"/\>");
+        \$('pre.plot', this).children('img').addClass('folded');
+        }
+}); // hide all chunks when document is loaded
+
+\$('.folded').css('display', 'none') // function to toggle the visibility
+\$('.showopt').click(function() {
+        var label = \$(this).html();
+        if (label.indexOf("Show") \>= 0) {
+            \$(this).html(label.replace("Show", "Hide"));
+        } else {
+        \$(this).html(label.replace("Hide", "Show"));
+        }
+
+\$(this).siblings('code, img').slideToggle('fast', 'swing');
+});
+});
+```
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+Proceed to load the necessary packages.
+
+```{r packages-and-fuctions}
+#| message: false
+#| include: false
+#| warning: false
+
+#clean enviroment
+rm(list = ls()); gc()
+
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#check if rstools is installed
+try(installr::install.Rtools(check_r_update=F))
+
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+unlink("*_cache", recursive=T)
+
+#Package to bring packages in development
+if(!require(devtools)){install.packages("devtools")}
+
+#Package to install packages
+if (!require("pacman")) install.packages("pacman")
+#Package administration
+if(!require(renv)){install.packages("renv")}
+#To manipulate data 
+if(!require(tidyverse)){install.packages("tidyverse")}
+if(!require(janitor)){install.packages("janitor")}
+if(!require(plyr)){install.packages("plyr")}
+#For contingency tables
+if(!require(kableExtra)){install.packages("kableExtra")}
+#For connections with python
+if(!require(reticulate)){install.packages("reticulate")}
+#To manipulate big data
+if(!require(polars)){install.packages("polars", repos = "https://rpolars.r-universe.dev")}
+#code completion
+try(polars_code_completion_activate())
+#To bring big databases
+if(!require(nanoparquet)){install.packages("nanoparquet")}
+
+
+# pacman::p_load(
+#   altair, arrow, biostat3, car, caret, chilemapas, choroplethr, choroplethrAdmin1,
+#   choroplethrMaps, codebook, compareGroups, DiagrammeR, DiagrammeRsvg, DT, epiR, epitools,
+#   factoextra, FactoMineR, finalfit, flexsurv, fmsb, ggfortify, ggiraph, ggiraphExtra,
+#   ggpubr, ggrepel, glca, gridExtra, here, Hmisc, htmlwidgets, installr, janitor, kableExtra,
+#   lsmeans, magick, matrixStats, Metrics, muhaz, naniar, neuralnet, NeuralNetTools, pagedown,
+#   panelr, patchwork, pdp, plotly, plyr, plotly, posterdown, polycor, pROC, psych, radiant,
+#   rateratio.test, reshape, reshape2, reticulate, rio, ROCit, rnaturalearth, rsvg, sf, sjPlot,
+#   sqldf, Statamarkdown, survminer, survMisc, tableone, tidylog, tidyverse, treemapify, VIM,
+#   webshot, xaringanthemer, zoo, install=T
+# )
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+copiar_nombres <- function(x,row.names=FALSE,col.names=TRUE,dec=",",...) {
+  if(class(try(dplyr::ungroup(x)))[1]=="tbl_df"){
+    if(options()$OutDec=="."){
+      options(OutDec = dec)
+      write.table(format(data.frame(x)),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ".")
+      return(x)
+    } else {
+      options(OutDec = ",")
+      write.table(format(data.frame(x)),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ",")
+      return(x)    
+    }
+  } else {
+    if(options()$OutDec=="."){
+      options(OutDec = dec)
+      write.table(format(x),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ".")
+      return(x)
+    } else {
+      options(OutDec = ",")
+      write.table(format(x),"clipboard",sep="\t",row.names=FALSE,col.names=col.names,...)
+      options(OutDec = ",")
+      return(x)       
+    }
+  }
+}  
+
+#WINDOWS do not restrict memory size
+if(.Platform$OS.type == "windows") withAutoprint({
+  memory.size()
+  memory.size(TRUE)
+  memory.limit()
+})
+memory.limit(size=56000)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+ 
+irrs<-function(x, y="event", z="person_days",db){
+  #x= variable que agrupa
+  #y= evento explicado
+  #z= person days
+  #db= base de datos
+  fmla <- as.formula(paste0(y,"~",x))
+  fmla2 <- as.formula(paste0(z,"~",x))
+assign(paste0("irr_",y,"_por_",x),
+       rateratio.test::rateratio.test(
+     x=as.numeric(xtabs(fmla, data=get(db)))[c(2,1)],
+     n=as.numeric(xtabs(fmla, data=get(db)))[c(2,1)]
+    )
+   )
+return(
+  rateratio.test::rateratio.test(
+     x=as.numeric(xtabs(fmla, data=get(db)))[c(2,1)],
+     n=as.numeric(xtabs(fmla2, data=get(db)))[c(2,1)]
+      )
+    )
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#ENCODING#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+conv_chars <- data.frame(
+    ANSI = c("Á", "á", "É", "é", "Í", "í", "Ó", "ó", "Ú", "ú", "Ñ", "ñ", "¿", "ó"),
+    UTF_8 = c("Ã", "Ã¡", "Ã‰", "Ã©", "Ã", "Ã­", "Ã“", "Ã³", "Ãš", "Ãº", "Ã‘", "Ã±", "Â¿", "Ã²"),
+    JAVASCRIPT = c("u00c1", "u00e1", "u00c9", "u00e9", "u00cd", "u00ed", "u00d3", "u00f3", "u00da", "u00fa", "u00d1", "u00f1", "u00bf", "0xF2"),
+    HTML = c("&#193;", "&#225;", "&#201;", "&#233;", "&#205;", "&#237;", "&#211;", "&#243;", "&#218;", "&#250;", "&#209;", "&#241;", "&#191;", "")
+)
+
+convert_chars <- function(x) {
+    x <- gsub("ÃƒÂ³", "ó", x)  # ó
+    x <- gsub("ÃƒÂ¡", "á", x)  # á
+    x <- gsub("ÃƒÂ©", "é", x)  # é
+    x <- gsub("ÃƒÂº", "ú", x)  # ú
+    x <- gsub("ÃƒÂ±", "ñ", x)  # ñ
+    x <- gsub("Ãƒâ€˜", "Ñ", x) # Ñ (mayúscula)
+    x <- gsub("ÃƒÂ", "Á", x)   # Á
+    x <- gsub("Ã‚Âº", "º", x)  # º
+    x <- gsub("Ã‚Â°", "°", x)  # °
+    x <- gsub("Ã‚Âª", "ª", x)  # ª
+    x <- gsub("Ã‚Â¡", "¡", x)  # ¡
+    x <- gsub("Ã‚Â¿", "¿", x)  # ¿
+    x <- gsub("ÃƒÂ­", "í", x)  # í
+    x <- gsub("Ãƒâ€œ", "Ó", x)  # Ó
+    x <- gsub("Ãƒâ€š", "Ê", x)  # Ê
+    x <- gsub("Ãƒâ€", "É", x)  # É
+    x <- gsub("ÃƒÂ¼", "ü", x)  # ü
+    x <- gsub("ÃƒÂ¯", "ï", x)  # ï
+    x <- gsub("ÃƒÂ¶", "ö", x)  # ö
+    x <- gsub("Ã‚Â«", "«", x)  # «
+    x <- gsub("Ã‚Â»", "»", x)  # »
+    x <- gsub("Ãƒâ€¡", "Ç", x)  # Ç
+    x <- gsub("ÃƒÂ§", "ç", x)  # ç
+    x <- gsub("Ã‚Â", "", x)    # Otros casos residuales
+    x <- gsub("Ãƒ", "", x)     # Otros casos residuales
+    return(x)
+}
+
+sum_dates <- function(x){
+  
+  cbind.data.frame(
+min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+```
+
+<br>
+
+### C1 Oct 2023
+
+Load the C1 data 2023. We defined the directory `r paste0(gsub("cons", "", dirname(rstudioapi::getActiveDocumentContext()$path)), "data/20231018_original_data/")`; given that there are many misfits in the Latin or UTF-8 codifications in databases, we also define what is a missing value (i.e., "", "NA, "null"), we defined a flexible approach to tell R how to define what value has a database (from 1e5th row to infinite), position the HASH KEY (individual masked ID) and TABLE (year of the database) columns in the first places. If a yearly database consists in more than one database and contains the characters "dup1", then the databases will be formatted as objects that started with the  "SISTRAT23dup1_" characters; if contains the characters "dup2", then the characters will be "SISTRAT23dup2_"; the rest will start with the following characters: "SISTRAT23_". From the folder of the databases, we excluded the files that contained the characters "TOP" and "erronea". Then we grouped the databases from 2010 to 2013, 2019 and 2020 (single databases by year) into `C1_dup1`, then the first databases (dup1) of yearly databases from 2014 to 2019, 2021 and 2022 were grouped into `C1_dup1`, and the second databases of the same years were grouped into `C1_dup2`.
+
+::: center-table
+```{r import-c1}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+invisible("Para homologar nombres")
+iconv_xlsx<-rio::import("iconv.xlsx")
+
+replacements <- setNames(as.character(iconv_xlsx[, 2]), iconv_xlsx[, 1])
+
+
+# Define the directories
+dir_c1_oct <- paste0(gsub("cons", "", 
+                          dirname(rstudioapi::getActiveDocumentContext()$path)
+                          ), "data/20231018_original_data/")
+
+#matches a string that contains _enc.
+SISTRAT23_c14<-list.files(path=toString(dir_c1_oct), pattern="_enc")
+#discard other agreements
+SISTRAT23_c14 <- SISTRAT23_c14[!startsWith(SISTRAT23_c14, "c")]
+
+#Import datasets from Sept 27, 2022
+for (i in 1:length(SISTRAT23_c14)) {
+  #Define cada unidad con el nombre de la lista por posición
+  x<-SISTRAT23_c14[i]
+  #toma los primeros 4 caracteres de una cadena x y luego busca un número que aparezca después de "_dup". Si encuentra ese número, lo añade a la cadena. Si no lo encuentra, simplemente deja los primeros 4 caracteres sin agregar nada más.
+  xn<- paste0(stringr::str_sub(x, 1, 4),ifelse(is.na(str_extract(x,"(?<=_dup)\\d+")),"",str_extract(x, "(?<=_dup)\\d+")))
+
+  #Leer la base de datos
+  dataset<- 
+  readr::read_delim(paste0(dir_c1_oct, x),
+                    na = c("", "NA","null"),
+                    locale = locale(encoding = "windows-1252"),
+                    guess_max = min(1e5, Inf), 
+                    trim_ws=T,
+                    skip=0)
+  
+  colnames(dataset) <- sapply(names(dataset), convert_chars)
+
+  dataset%>%
+    #rename_with(., ~ gsub("'", "", iconv(.x, from = "UTF-8", to='ASCII//TRANSLIT'))) %>% 
+    #Cambiar caracteres erróneos
+    rename_with(~ stringr::str_replace_all(.x, c("\\u009c"="u",
+                                                 "\\u0097"="o",
+                                                 "\\u0087"="a",
+                                                 "\\u0092"="i",
+                                                 "\\u0096"="n")))   %>%
+    janitor::clean_names() %>% 
+    as.data.frame() %>% 
+    dplyr::rename("HASH_KEY"="hashkey") %>% 
+    dplyr::select(HASH_KEY, everything()) %>% 
+    janitor::clean_names() %>% 
+    assign(paste0("OCTSISTRAT_c1_",xn),.,envir = .GlobalEnv)
+}
+
+#Erase datasets
+#rm(list = ls()[grepl("OCTSISTRAT_c1_", ls())])
+
+#MERGE DATABASES
+CONS_C1_2010_22_sub<- ls()[grepl("OCTSISTRAT_c1_",ls())]
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Check availability of variables in multiple datasets")
+# Create an empty list to store column names
+column_list <- list()
+# Iterare in each database, extract column names and store it in the list
+for (dataset_name in CONS_C1_2010_22_sub) {
+  # getDB
+  dataset <- get(dataset_name)
+  # Obtain column names
+  cols <- colnames(dataset)
+  # Store in list
+  column_list[[dataset_name]] <- cols
+}
+# Get a unique vector of column names 
+all_columns <- unique(unlist(column_list))
+# Create a DB w/ columns as rows and DBs as columns
+presence_matrix <- data.frame(Column_Name = all_columns)
+# Fill with X whether present in a DB
+for (dataset_name in CONS_C1_2010_22_sub) {
+  presence_matrix[[dataset_name]] <- ifelse(presence_matrix$Column_Name %in% column_list[[dataset_name]], "X", "")
+}
+#sort by original order
+presence_matrix$Column_Name <- factor(presence_matrix$Column_Name, levels = all_columns)
+# Sort by column name
+presence_matrix <- presence_matrix %>%
+  dplyr::arrange(Column_Name)
+
+colnames(presence_matrix) <- gsub("OCTSISTRAT_c1", "c1", colnames(presence_matrix))
+
+
+presence_matrix %>%
+  knitr::kable("markdown", caption = "Presencia de columnas en cada base de datos")
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Check availability of variables in multiple datasets")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Merge C1 dataset")
+
+SISTRAT23_c1_2010_2022= data.table::rbindlist(mget(CONS_C1_2010_22_sub), idcol="TABLE", fill=T) %>%
+  dplyr::mutate(TABLE = str_extract(TABLE, "(?<=c1_)\\d+")) %>% #distinct(TABLE)
+  dplyr::mutate(TABLE_rec = sub("^(\\d{4}).*dup(\\d*)?.*", "\\1\\2", TABLE)) %>% 
+  dplyr::select(TABLE, hash_key, everything())
+
+```
+::: 
+
+### Clean C1 Oct 2023
+
+Now, we apply to every column and their contents, using `rpolars`.
+
+::: center-table
+```{r import-c12-polars}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# data frame to polars DataFrame 
+#dataset_pl <- polars::pl$DataFrame(SISTRAT23_c1_2010_2022)
+SISTRAT23_c1_2010_2022_pl <- as_polars_df(SISTRAT23_c1_2010_2022)
+
+#get the columns with characters
+char_cols <- names(which(sapply(SISTRAT23_c1_2010_2022, is.character)))
+
+#apply replacements for every column wiht characters
+for (col in char_cols) {
+  SISTRAT23_c1_2010_2022_pl <- SISTRAT23_c1_2010_2022_pl$with_columns(
+    pl$col(col)$
+      str$replace("ÃƒÂ³", "ó")$
+      str$replace("ÃƒÂ¡", "á")$
+      str$replace("ÃƒÂ©", "é")$
+      str$replace("ÃƒÂº", "ú")$
+      str$replace("ÃƒÂ±", "ñ")$
+      str$replace("Ãƒâ€˜", "Ñ")$
+      str$replace("ÃƒÂ", "Á")$
+      str$replace("ÃƒÂ¡", "á")$
+      str$replace("ÃƒÂ©", "é")$
+      str$replace("ÃƒÂº", "ú")$
+      str$replace("ÃƒÂ±", "ñ")$
+      str$replace("Ãƒâ€˜", "Ñ")$
+      str$replace("ÃƒÂ", "Á")$
+      str$replace("Ã‚Âº", "º")$
+      str$replace("Ã‚Â°", "°")$
+      str$replace("Ã‚Âª", "ª")$
+      str$replace("Ã‚Â¡", "¡")$
+      str$replace("Ã‚Â¿", "¿")$
+      str$replace("ÃƒÂ", "í")$
+      str$replace("ÃƒÂ­", "í")$
+      str$replace("Ãƒâ€œ", "Ó")$
+      str$replace("Ãƒâ€š", "Ê")$
+      str$replace("Ãƒâ€", "É")$
+      str$replace("ÃƒÂ¼", "ü")$
+      str$replace("ÃƒÂ¯", "ï")$
+      str$replace("ÃƒÂ¶", "ö")$
+      str$replace("Ã‚Â«", "«")$
+      str$replace("Ã‚Â»", "»")$
+      str$replace("Ãƒâ€¡", "Ç")$
+      str$replace("ÃƒÂ§", "ç")$
+      str$replace("Ã‚Â", "")$
+      str$replace("Ãƒ", "")$
+      str$replace("\u00AD", "")$
+      str$replace("\u00C2\u00AD", "")$
+      str$replace("\u00C2", "")$
+      str$replace("VIÁ‘A", "VIÑA")$
+      str$replace("RELONCAVÁ\u008d", "RELONCAVI")$
+      str$replace("MarÁa", "María")$
+      str$replace("Á‘UBLE", "ÑUBLE")$
+      str$replace("VÁnculos", "Vínculos")$
+      str$replace("CONCEPCIÁ“N", "CONCEPCIÓN")$
+      str$replace("AYSÁ‰N", "AYSÉN")$
+      str$replace("MÁnimo", "Mínimo")$
+      str$replace("M\\?mo", "Mínimo")$
+      str$replace("ClÁnica", "Clínica")$
+      str$replace("Prisionizaci\\?", "Prisionalización")$
+      str$replace("Explotaci\\?omercial", "Explotación comercial")$
+      str$replace("PatologÁa", "Patología")$
+      str$replace("CardiopatÁas", "Cardiopatías")$
+      str$replace("especÁfico", "específico")$
+      str$replace("esquizotÁpico", "esquizotípico")$
+      str$replace("TricotilomanÁa", "Tricotilomanía")$
+      str$replace("hipomanÁaco", "hipomaníaco")$
+      str$replace("lÁmite", "límite")$
+      str$replace("manÁaco", "maníaco")$
+      str$replace("Á\u0081nimo", "Ánimo")$
+      str$replace("CleptomanÁa", "Cleptomanía")$
+      str$replace("HipocondrÁa", "Hipocondría")$
+      str$replace("RAÁ\u008dCES", "RAÍCES")$
+      str$replace("RAÁ\\u008dCES", "RAÍCES")$
+      str$replace("CuracavÁ", "Curacaví")$
+      str$replace("raÁces", "raíces")$
+      str$replace("TERAPÁ‰UTICA", "TERAPÉUTICA")$
+      str$replace("RaÁces", "Raíces")$
+      str$replace("\\?BLE", "ÑUBLE")$
+      str$replace("BÁo-BÁo", "Bío-Bío")$
+      str$replace("IBA\\?S", "IBAÑEZ")$
+      str$replace("ReloncavÁ", "Reloncaví")$
+      str$replace("ValparaÁso", "Valparaíso")$
+      str$replace("AraucanÁa ", "Araucanía")$
+      str$replace("Á‘uble", "Ñuble")$
+      str$replace("EspecÁfico", "Específico")$
+      str$replace("VI\\? DEL MAR", "VIÑA DEL MAR")$
+      str$replace("DO\\?HUE", "DOÑIHUE")$
+      str$replace("HUALA\\?", "HUALAÑÉ")$
+      str$replace("\\?qu\\?", "ÑIQUÉN")$
+      str$replace("CHA\\?RAL", "CHAÑARAL")$
+      str$replace("OLLAG\\?", "OLLAGÜE")$
+      str$replace("VICU\\?", "VICUÑA")$
+      str$replace("CA\\?TE", "CAÑETE")$
+      str$replace("\\?\\?A", "ÑUÑOA")$
+      str$replace("PolicÁa", "Policía")$
+      str$replace("GarantÁa", "Garantía")$
+      str$replace("fiscalÁa", "fiscalía")$
+      str$replace("HaitÁ", "Haití")$
+      str$replace("HungrÁa", "Hungría")$
+      str$replace("PaÁses Bajos", "Países Bajos")$
+      str$replace("Atacame\\?", "Atacameño")$
+      str$replace("Y\\?na", "Yámana")$
+      str$replace("Y\\?gan", "Yagán")$
+      str$replace("Hipn\\?os", "Hipnóticos")$
+      str$replace("Hero\\?", "Heroína")$
+      str$replace("code\\?", "codeína")$
+      str$replace("Analg\\?cos", "Analgésicos")$
+      str$replace("barbit\\?os", "barbitúricos")$
+      str$replace("Alucin\\?os", "Alucinógenos")$
+      str$replace("ãƒâ³n", "ón")$
+      str$replace("ãƒâ©n", "én")$
+      str$replace("ãƒâº", "ú")$
+      str$replace("ãƒâºa", "úa")$
+      str$replace("ãƒâos", "íos")$
+      str$replace("ãƒâuble", "Ñuble")$
+      str$replace("ãƒâ³n general", "ón general")$
+      str$replace("ãƒâ", "í")$
+      str$replace("ãƒâ³n casa", "ón casa")$
+      str$replace("ãƒârbara", "árbara")$
+      str$replace("nãƒâ", "ñ")$
+      str$replace("raãƒâces", "raíces")$
+      str$replace("bãƒâsico", "básico")$
+      str$replace("ãƒâ©utico", "éutico")$
+      str$replace("vãƒânculos", "vínculos")$
+      str$replace("marãƒâa", "maría")$
+      str$replace("inãƒâ©s", "inés")$
+      str$replace("raí\\u008dces", "raíces")$
+      str$replace("chiloí©", "chiloé")$
+      str$replace("terapí©utico", "terapéutico")$
+      str$replace("bísico", "básico")$
+      str$replace("peí±ablanca", "peñablanca")$
+      str$replace("iní©s", "inés")$
+      alias(col)
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column")
+
+
+unique_values_list <- setNames(
+  lapply(char_cols, function(col_name) {
+    # Obtener los valores únicos de la columna
+    unique_values <- SISTRAT23_c1_2010_2022_pl$
+      select(pl$col(col_name)$unique())$  # select unique values
+      to_series()$                        # convert to a polars series
+      to_r()                              # Conver to a vector of R
+    return(unique_values)
+  }),
+  char_cols  # Asignamos los nombres de las columnas a la lista
+)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Crear una lista para almacenar las expresiones de reemplazo
+expr_list <- list()
+
+for (col in char_cols) {
+  # Create the expression with every replacement for the actual column
+  expr <- pl$col(col)$
+    str$replace("\u00AD", "")$
+    str$replace("\u00C2\u00AD", "")$
+    str$replace("\u00C2", "")$
+    str$replace("RÁo Negro", "Río Negro")$
+    str$replace("BÁo-BÁo", "Bío-Bío")$
+    str$replace("PE\\?LOLEN", "PEÑALOLÉN")$
+    str$replace("PE\\?FLOR", "PEÑAFLOR")$
+    str$replace("SAN GREGORIO DE \\?QUEN", "SAN GREGORIO DE ÑIQUÉN")$
+    str$replace("\\?o nitroso", "óxido nitroso")$
+    str$replace("Coca\\?", "Cocaína")$
+    str$replace("Nunca estud¡", "Nunca estudió")$
+    str$replace("T\\?ica Comercial/Industrial/Normalista", "Técnica Comercial/Industrial/Normalista")$
+    str$replace("Profesional \\(4 o m\\?a\\? incompleta", "Profesional (4 o más incompleta)")$
+    str$replace("Profesional \\(4 o m\\?a\\? completa", "Profesional (4 o más completa)")$
+    str$replace("T\\?ica profesional˜", "Técnica profesional")$
+    str$replace("T\\?ico superior \\(1-3 a\\? completa", "Técnico superior (1-3 años completa)")$
+    str$replace("Educaci\\?\\?ca", "Educación básica")$
+    str$replace("T\\?ico superior \\(1-3 a\\? incompleta", "Técnico superior (1-3 años incompleta)")$
+    str$replace("cientÁficos", "científicos")$
+    str$replace("Ášnicamente", "Únicamente")$
+    str$replace("Hospeder\\?", "Hospedería")$
+    str$replace("Residencial, pensi\\?hostal", "Residencial, pensión, hostal")$
+    str$replace("Ocupaci\\?rregular", "Ocupación irregular")$
+    str$replace("CocaÁna", "Cocaína")$
+    str$replace("HeroÁna", "Heroína")$
+    str$replace("codeÁna", "codeína")$
+    str$replace("sintomÁ¡tico", "sintomático")$
+    str$replace("disfunciÁ³n", "disfunción")$
+    str$replace("lesiÁ³n", "lesión")$
+    str$replace("dÁas", "días")$
+    str$replace("orientaciÁ³n", "orientación")$
+    str$replace("especificaciÁ³n", "especificación")$
+    str$replace("\\tCODESAM", "CODESAM")$
+    str$replace("fÁsico", "físico")$
+    str$replace("PsÁquica", "Psíquica")$
+    str$replace("estÁ¡ndar", "estándar")$
+    alias(col)  # Mantain the original name of the column
+  
+  # Add the expression to the list
+  expr_list[[length(expr_list) + 1]] <- expr
+}
+
+# Aplicar todas las correcciones a la vez
+SISTRAT23_c1_2010_2022_pl <- SISTRAT23_c1_2010_2022_pl$with_columns(expr_list)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column, again")
+
+
+unique_values_list <- setNames(
+  lapply(char_cols, function(col_name) {
+    # Obtener los valores únicos de la columna
+    unique_values <- SISTRAT23_c1_2010_2022_pl$
+      select(pl$col(col_name)$unique())$  # select unique values
+      to_series()$                        # convert to a polars series
+      to_r()                              # Conver to a vector of R
+    return(unique_values)
+  }),
+  char_cols  # assign column names to the list
+)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Standardize values (to lower, correct tildes, etc.)")
+
+# Create a list of expressions to apply the transformations
+expr_list <- list()
+
+# Mapping of accented characters to their non-accented equivalents
+accent_replacements <- list(
+  "á" = "a",
+  "é" = "e",
+  "í" = "i",
+  "ó" = "o",
+  "ú" = "u",
+  "Á" = "a",
+  "É" = "e",
+  "Í" = "i",
+  "Ó" = "o",
+  "Ú" = "u",
+  "ñ" = "n",
+  "Ñ" = "n"
+)
+
+for (col in char_cols) {
+  # Create the transformation expressions for each column
+  expr <- pl$col(col)$
+    str$to_lowercase()$  # Similar to tolower
+    str$replace_all("^\\s+|\\s+$", "")$  # Replace leading and trailing spaces (simulating str_trim)
+    str$replace_all("\\s+", " ")$  # Similar to str_replace_all("\\s+", " ")
+    str$replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (optional: remove spaces before the period)
+    
+  # Apply accented character replacements
+  for (accent in names(accent_replacements)) {
+    expr <- expr$str$replace_all(accent, accent_replacements[[accent]])
+  }
+  
+  expr <- expr$alias(col)  # Retain the original column name
+  
+  # Add the expression to the list
+  expr_list[[length(expr_list) + 1]] <- expr
+}
+
+# Apply all transformations at once
+SISTRAT23_c1_2010_2022_pl <- SISTRAT23_c1_2010_2022_pl$with_columns(expr_list)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Get the dataframe to R")
+SISTRAT23_c1_2010_2022_df <- SISTRAT23_c1_2010_2022_pl$to_data_frame()
+```
+::: 
+
+```{r clean-c1, message=F, error=T, eval=T, echo=F}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# Clean col names
+patterns <- c("_a3", "i_a_", "_a_", "_ao", "ac_")
+replacements <- c("o", "ia", "i", "u", "e")
+
+for (i in seq_along(patterns)) {
+  colnames(SISTRAT23_c1_2010_2022_df) <- sub(patterns[i], replacements[i], colnames(SISTRAT23_c1_2010_2022_df))
+}
+
+
+#nombre_centro with unique id_centro#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#exploration: 
+#centers with same id, distinct name
+view(SISTRAT23_c1_2010_2022_df[,c("nombre_centro","i_dcentro")] %>% group_by(nombre_centro,i_dcentro) %>% dplyr::summarise(n=n()) %>% group_by(i_dcentro) %>% filter(n()>1) %>%arrange(i_dcentro))
+
+#rename with unique level nombre_centro
+SISTRAT23_c1_2010_2022_df$nombre_centro_rec <- recode(SISTRAT23_c1_2010_2022_df$nombre_centro,
+                                        "cadem de chillan" = "cosam nuble (cadem de chillan)",
+                                        "centro de tratamiento adicciones esperanza, hospital santa cruzz" = "centro de tratamiento adicciones esperanza, hospital santa cruz",
+                                        "CESFAM Colon" = "CESFAM Colón",
+                                        "comunidad terapeutica orion san bernardo (orion vespertino) pai - mpai pg" ="comunidad terapeutica orion san bernardo (orion vespertino)",
+                                        "cta villa alemana (cta penablanca)" = "cta nancy araya ruiz hospital penablanca (ex cta villa alemana -cta penablanca)",
+                                        "sociedad de profesionales salud integral ltda"="sociedad de profesionales salud integral ltda (mujeres)")
+
+#estado conyugal#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+SISTRAT23_c1_2010_2022_df$estado_conyugal <- recode(SISTRAT23_c1_2010_2022_df$estado_conyugal,
+                                "nocontesta"="no contesta")
+
+```
+
+<br>
+
+### TOP Oct 2023
+
+Load the TOP data
+
+```{r import-top, message=T, error=T, eval=T, echo=T,include=F}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#LOAD DATABASES_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define the directories
+path <- dirname(rstudioapi::getActiveDocumentContext()$path)
+dir_top <- paste0(gsub("cons", "", path), "data/20231018_original_data/TOP/")
+
+# Function to simplify pattern matching
+matches_pattern <- function(x, patterns) {
+  any(sapply(patterns, function(p) grepl(p, x)))
+}
+
+# Create a function to process each file
+process_file_top <- function(x) {
+  # Determine the HASH_KEY index based on file name
+  prefix <- ifelse(matches_pattern(x, "dup1"), "OCTSISTRAT23dup1_top_", 
+                   ifelse(matches_pattern(x, "dup2"), "OCTSISTRAT23dup2_top_", "OCTSISTRAT23_top_"))
+  
+  # Read and process the file
+  readr::read_delim(paste0(dir_top, x),
+                    na = c("", "NA", "null"),
+                    guess_max = min(1e5, Inf),
+                    skip = 0) %>% 
+    janitor::clean_names() %>%
+    dplyr::rename(
+      HASH_KEY = !!names(.[(ncol(.))])) %>%
+    dplyr::mutate(TABLE = rep(x)) %>%
+    dplyr::select(TABLE, HASH_KEY, everything()) %>%
+    assign(paste0(prefix, stringr::str_extract(x,"\\d+")), ., envir = .GlobalEnv)
+}
+
+# Get the list of files and apply the process_file function to each
+files_top_2015_2022_sub <- list.files(path = toString(dir_top))
+lapply(files_top_2015_2022_sub, process_file_top)
+
+#Remove objects that contain "_top_"
+#rm(list= ls()[grep("_top_", ls())])
+
+#MERGE DATABASES
+CONS_TOP_2015_22_sub<-  ls()[grep("OCTSISTRAT23", ls())][grepl("_top_", ls()[grep("OCTSISTRAT23", ls())])]
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Check availability of variables in multiple datasets")
+# Create an empty list to store column names
+column_list <- list()
+# Iterare in each database, extract column names and store it in the list
+for (dataset_name in CONS_TOP_2015_22_sub) {
+  # getDB
+  dataset <- get(dataset_name)
+  # Obtain column names
+  cols <- colnames(dataset)
+  # Store in list
+  column_list[[dataset_name]] <- cols
+}
+# Get a unique vector of column names 
+all_columns <- unique(unlist(column_list))
+# Create a DB w/ columns as rows and DBs as columns
+presence_matrix_top <- data.frame(Column_Name = all_columns)
+# Fill with X whether present in a DB
+for (dataset_name in CONS_TOP_2015_22_sub) {
+  presence_matrix_top[[dataset_name]] <- ifelse(presence_matrix_top$Column_Name %in% column_list[[dataset_name]], "X", "")
+}
+#sort by original order
+presence_matrix_top$Column_Name <- factor(presence_matrix_top$Column_Name, levels = all_columns)
+# Sort by column name
+presence_matrix_top <- presence_matrix_top %>%
+  dplyr::arrange(Column_Name)
+
+colnames(presence_matrix_top) <- gsub("_top_","top",gsub("dup[1-2]_top_", "top",gsub("OCTSISTRAT23", "", colnames(presence_matrix_top))))
+
+
+presence_matrix_top %>%
+  knitr::kable("markdown", caption = "Presencia de columnas en cada base de datos (TOP)")
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Consolidate TOP")
+
+SISTRAT23_top_2015_2022<-plyr::rbind.fill(mget(CONS_TOP_2015_22_sub))%>% 
+  data.table::data.table() %>% 
+ dplyr::mutate(TABLE_rec = sub("^(\\d{4}).*dup(\\d*)?.*", "\\1\\2", TABLE)) %>% 
+ dplyr::mutate(TABLE = sub("^(\\d{4}).*", "\\1", TABLE))
+
+for (i in seq_along(patterns)) {
+  colnames(SISTRAT23_top_2015_2022) <- sub(patterns[i], replacements[i], colnames(SISTRAT23_top_2015_2022))
+}
+
+invisible("corregir nombres erroneos de la base")
+SISTRAT23_top_2015_2022<-
+SISTRAT23_top_2015_2022%>%
+  rename_with(~gsub("da3sis", "dosis", .x), contains("da3sis")) %>%
+  rename_with(~gsub("fa_sica", "fisica", .x), contains("fa_sica")) %>% 
+  rename_with(~gsub("riaa", "rina", .x), contains("riaa"))
+
+
+rm(list = ls()[grepl("OCTSISTRAT23", ls())])
+```
+
+<br>
+
+
+### Clean TOP Oct 2023
+
+Now, we apply to every column and their contents, using `rpolars`.
+
+::: center-table
+```{r import-top2-polars}
+#| echo: true
+#| error: true
+#| warning: false
+#| message: true
+#| results: "hold"
+
+# data frame to polars DataFrame 
+#dataset_pl <- polars::pl$DataFrame(SISTRAT23_c1_2010_2022)
+SISTRAT23_top_2015_2022_pl <- as_polars_df(SISTRAT23_top_2015_2022)
+
+#get the columns with characters
+char_cols_top <- names(which(sapply(SISTRAT23_top_2015_2022, is.character)))
+
+char_cols_top_filter<-
+setdiff(char_cols_top, c("TABLE", "HASH_KEY", "TABLE_rec"))
+
+#apply replacements for every column wiht characters
+for (col in char_cols_top) {
+  SISTRAT23_top_2015_2022_pl <- SISTRAT23_top_2015_2022_pl$with_columns(
+    pl$col(col)$
+      str$replace("\u00C2\u00AD", "")$
+      str$replace("\u00AD", "")$
+      str$replace("\u00C2", "")$      
+    # Reemplazos para las vocales acentuadas y la Ñ en mayúsculas
+      str$replace("Ãƒâ€˜", "Ñ")$
+      str$replace("Ãƒâ€", "É")$
+      str$replace("Ãƒâ€š", "Ê")$
+      str$replace("Ãƒâ€œ", "Ó")$
+      str$replace("Ãƒâ€¡", "Ç")$
+      str$replace("Ãƒâ€¹", "Ë")$
+      str$replace("Ãƒâ€º", "Ù")$
+      str$replace("Ãƒâ€�", "Ô")$
+      str$replace("Ãƒâ€¢", "Õ")$
+      str$replace("Ãƒâ€œ", "Ó")$
+      str$replace("ÃƒÂ", "Á")$
+      str$replace("ÃƒÂ©", "É")$
+      str$replace("ÃƒÂ­", "Í")$
+      str$replace("ÃƒÂ³", "Ó")$
+      str$replace("ÃƒÂº", "Ú")$
+      str$replace("ÃƒÂ¡", "á")$
+      str$replace("ÃƒÂ©", "é")$
+      str$replace("ÃƒÂ­", "í")$
+      str$replace("ÃƒÂ³", "ó")$
+      str$replace("ÃƒÂº", "ú")$
+      str$replace("MÃnimo", "Mínimo")$
+      str$replace("DerivaciÃ³n", "Derivación")$
+      str$replace("TerapÃ©utica", "Terapéutica")$
+      str$replace("Ã\u0091UBLE", "ÑUBLE")$
+      str$replace("IBAÃ\u0091ES", "IBANEZ")$
+      str$replace("Ã³xido", "Óxido")$
+      str$replace("codeÃna", "codeína")$
+      str$replace("CocaÃna", "Cocaína")$
+      str$replace("AnabÃ³licos", "Anabólicos")$
+      str$replace("AlucinÃ³genos", "Alucinógenos")$
+      str$replace("barbitÃºricos", "barbitúricos")$
+      str$replace("HipnÃ³ticos", "Hipnóticos")$
+      str$replace("AnalgÃ©sicos", "Analgésicos")$
+      str$replace("ReloncavÃ", "Reloncaví")$
+      str$replace("Mejillones \\t", "Mejillones")$
+      str$replace("ChiloÃ©", "Chiloé")$
+      str$replace("ConchalÃ", "Conchalí")$
+      str$replace("poblaciÃ³n", "población")$
+      str$replace("ViÃ±a", "VIña")$
+      str$replace("BÃ¡rbara", "Bárbara")$
+      str$replace("RAÃ\u008dCES", "RAÍCES")$
+      str$replace("BÃ¡sico", "Básico")$
+      str$replace("FÃ©nix", "Féniz")$
+      str$replace("CuracavÃ", "Curacaví")$
+      str$replace("VÃnculos", "Vínculos")$
+      str$replace("TERAPÃ\u0089UTICA", "TERAPÉUTICA")$
+      str$replace("RÃos", "Ríos")$
+      str$replace("RehabilitaciÃ³n", "Rehabilitación")$
+      str$replace("rehabilitaciÃ³n", "rehabilitación")$
+      str$replace("AyelÃ©n", "Ayelén")$
+      str$replace("RamÃ³n", "Ramón")$
+      str$replace("Paine\t", "Paine")$
+      str$replace("Batuco\t", "Batuco")$
+      str$replace("JosÃ©", "José")$
+      str$replace("Batuco\t", "Batuco")$
+      str$replace("ColÃ³n", "Colón")$
+      str$replace("Ksorrem Karen' nÃ¡", "Ksorrem Karen' ná")$
+      str$replace("MarÃa", "María")$
+      str$replace("InÃ©s", "Inés")$
+      str$replace("LÃ³pez", "López")$
+      str$replace("PÃ©rez", "Pérez")$
+      str$replace("NuÃ±ez", "Nuñez")$
+      str$replace("FarfÃ¡n", "Farfán")$
+      str$replace("peÃ±ailillo", "peñailillo")$
+      str$replace("FarfÃ¡n", "Farfán")$
+      str$replace("CalderÃ³n", "Calderón")$
+      str$replace("AndrÃ©s", "Andrés")$
+      str$replace("JofrÃ©", "Jofré")$
+      str$replace("CofrÃ©", "Cofré")$
+      str$replace("VÃ\u008dCTOR", "VÍCTOR")$
+      str$replace("RAMÃ\u0093N", "RAMÓN")$
+      str$replace("Hualane\t", "Hualane")$
+      alias(col)
+  )  
+} 
+      
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Obtain unique values by column")
+
+
+unique_values_list_top <- setNames(
+  lapply(char_cols_top_filter, function(col_name) {
+    tryCatch({
+      col_name_lower <- tolower(col_name)
+      SISTRAT23_top_2015_2022_pl$select(
+        pl$col(col_name_lower)$unique()
+      )$to_series()$to_r()
+    }, error = function(e) {
+      warning(paste("Error processing column:", col_name, "-", e$message))
+      return(NULL)
+    })
+  }),
+  char_cols_top_filter
+)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Standardize values (to lower, correct tildes, etc.)")
+
+# Create a list of expressions to apply the transformations
+expr_list <- list()
+
+# Mapping of accented characters to their non-accented equivalents
+accent_replacements <- list(
+  "á" = "a",
+  "é" = "e",
+  "í" = "i",
+  "ó" = "o",
+  "ú" = "u",
+  "Á" = "a",
+  "É" = "e",
+  "Í" = "i",
+  "Ó" = "o",
+  "Ú" = "u",
+  "ñ" = "n",
+  "Ñ" = "n"
+)
+
+for (col in char_cols_top) {
+  # Create the transformation expressions for each column
+  expr <- pl$col(col)$
+    str$to_lowercase()$  # Similar to tolower
+    str$replace_all("^\\s+|\\s+$", "")$  # Replace leading and trailing spaces (simulating str_trim)
+    str$replace_all("\\s+", " ")$  # Similar to str_replace_all("\\s+", " ")
+    str$replace_all("\\s*\\.\\s*$", "")  # Remove periods at the end (optional: remove spaces before the period)
+    
+  # Apply accented character replacements
+  for (accent in names(accent_replacements)) {
+    expr <- expr$str$replace_all(accent, accent_replacements[[accent]])
+  }
+  
+  expr <- expr$alias(col)  # Retain the original column name
+  
+  # Add the expression to the list
+  expr_list[[length(expr_list) + 1]] <- expr
+}
+
+# Apply all transformations at once
+SISTRAT23_top_2015_2022_pl <- SISTRAT23_top_2015_2022_pl$with_columns(expr_list)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+##:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+invisible("Get the dataframe to R")
+SISTRAT23_top_2015_2022_df <- SISTRAT23_top_2015_2022_pl$to_data_frame()
+```
+
+<br>
+
+#### Correct dates of TOP and C1
+
+We started standardizing dates
+
+```{r dates}
+
+SISTRAT23_c1_2010_2022_df<-
+SISTRAT23_c1_2010_2022_df %>% 
+  dplyr::mutate(birth_date= stringr::str_sub(codigo_identificacion, nchar(codigo_identificacion)-7,nchar(codigo_identificacion))) %>% 
+  dplyr::mutate(birth_date= readr::parse_date(birth_date, format="%d%m%Y")) %>% 
+  dplyr::mutate(adm_date = str_replace_all(fecha_ingresoa_tratamiento ,"/","-"),
+  senda_adm_date = str_replace_all(fecha_ingresoa_convenio_senda ,"/","-"),
+  discharge_date= str_replace_all(fecha_egresode_tratamiento,"/","-"))%>% 
+  dplyr::mutate(adm_date= readr::parse_date(adm_date, format="%d-%m-%Y")) %>%
+  dplyr::mutate(senda_adm_date= readr::parse_date(senda_adm_date, format="%d-%m-%Y")) %>% 
+  dplyr::mutate(discharge_date= readr::parse_date(discharge_date, format="%d-%m-%Y")) 
+
+
+invisible("Problemas para rescatar datos")
+problems_birth_date <- problems(SISTRAT23_c1_2010_2022_df$birth_date)
+problems_adm_date <- problems(SISTRAT23_c1_2010_2022_df$adm_date)
+problems_discharge_date <- problems(SISTRAT23_c1_2010_2022_df$discharge_date)
+  
+  
+SISTRAT23_top_2015_2022_df<-
+SISTRAT23_top_2015_2022_df %>% 
+  dplyr::mutate(birth_date = str_replace_all(fecha_nacimiento ,"/","-"),
+  adm_date= str_replace_all(fechade_ingresoa_tratamiento,"/","-"),
+  discharge_date= str_replace_all(fecha_egreso,"/","-"))%>% 
+  dplyr::mutate(birth_date= readr::parse_date(birth_date, format="%d-%m-%Y")) %>%
+  dplyr::mutate(adm_date= readr::parse_date(adm_date, format="%d-%m-%Y")) %>% 
+  dplyr::mutate(discharge_date= readr::parse_date(discharge_date, format="%d-%m-%Y")) 
+  
+#   fecha_aplicacion_top
+# fecha_nacimiento
+# fechade_ingresoa_tratamiento
+# fecha_egreso
+# 
+
+rbind.data.frame(
+  cbind.data.frame(db="C1",name="Birth date", 
+sum_dates(SISTRAT23_c1_2010_2022_df$birth_date)),
+  cbind.data.frame(db="C1",name="Admission date", 
+sum_dates(SISTRAT23_c1_2010_2022_df$adm_date)),
+  cbind.data.frame(db="C1",name="Admission to SENDA date", sum_dates(SISTRAT23_c1_2010_2022_df$senda_adm_date)),
+  cbind.data.frame(db="C1",name="Discharge date", sum_dates(SISTRAT23_c1_2010_2022_df$discharge_date)),
+  cbind.data.frame(db="TOP",name="Application date", sum_dates(SISTRAT23_top_2015_2022_df$fecha_aplicacion_top)),
+  cbind.data.frame(db="TOP",name="Birth date",
+sum_dates(SISTRAT23_top_2015_2022_df$birth_date)),
+cbind.data.frame(db="TOP",name="Admission date",
+sum_dates(SISTRAT23_top_2015_2022_df$adm_date)),
+cbind.data.frame(db="TOP",name="Date of discharge",
+sum_dates(SISTRAT23_top_2015_2022_df$discharge_date))
+) %>% 
+  knitr::kable("markdown", caption="Coded dates")
+```
+
+### Mortality
+
+We took individuals that died from 2007 and took the birth date.
+
+```{r }
+dir_mort <- paste0(gsub("cons", "", 
+                          dirname(rstudioapi::getActiveDocumentContext()$path)
+                          ), "data/20230825_original_data/deis/")
+
+"E:\Mi unidad\Alvacast\SISTRAT 2023\data\20230825_original_data\deis"
+
+
+mortality<-
+  rio::import(paste0(dir_mort,"2023-08-11 DatosDefuncionesEncrip.csv")) %>% 
+  janitor::clean_names() %>% 
+  dplyr::filter(ano_def>2007) %>% 
+  dplyr::mutate(ano_nac_deis= paste0(sprintf("%02.0f",ano1_nac),sprintf("%02.0f",ano2_nac))) %>% 
+  dplyr::mutate(birth_date= readr::parse_date(paste0(dia_nac,"-",mes_nac,"-",ano_nac_deis), format="%d-%m-%Y")) 
+
+problems_birth_date_deis_mort<- problems(mortality$birth_date)
+```
+
+
+### Hosp Nov 2023
+
+```{r import Hosp, message=F, error=T, eval=T, echo=F}
+HOSP <- read_delim("G:/Mi unidad/Alvacast/SISTRAT 2023/data/20231107_egres_hosp/2023-11-07  DatosEgresosHosp_encrip.csv",
+    delim = "~", escape_double = FALSE, trim_ws = TRUE)
+HOSP$YEAR<- lubridate::year(HOSP$FECHA_EGRESO)
+```
+
+### Merge HOSP C1 2023
+
+```{r}
+HOSP20102022_MERGE1<- HOSP %>% dplyr::filter( RUN != "1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464") %>% 
+  dplyr::ilter(RUN != "c5f3fe488faac0ee7e286f44fc5ea62c5c8e41fd7c15b0dbf8fd9178f005af6f") %>% 
+  dplyr::filter(RUN != "82636e7790d5b64e40cb81de8f06d438cfced66ca35bd3953bf05fa73e2ddb81") %>%
+  dplyr::filter(RUN != "e8e014fa3a46c3583e25ba2b45629703a530799199d2cbc8cf5f21ede7fb389c") %>%
+  dplyr::filter(YEAR > 2004) %>% 
+  dplyr::group_by(RUN)  %>%
+  dplyr::mutate(REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(FECHA_INGRESO)) %>% #last hosp
+  dplyr::mutate(LAST_HOSP = row_number()) %>%
+  dplyr::arrange(.,FECHA_INGRESO) %>% 
+  dplyr::mutate(FIRST_HOSP = row_number()) %>% 
+  ungroup() %>% 
+  dplyr::rename("HASH_KEY"="RUN")
+
+# HOSP20102022_MERGE2<- HOSP %>% filter( RUN !="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464") %>% 
+#   group_by(RUN, YEAR)  %>%
+#   arrange(desc(FECHA_INGRESO)) %>% #last hosp
+#   dplyr::mutate(LAST_HOSP = row_number()) %>%
+#   dplyr::mutate(REPETITION_COUNT = n()) %>%
+#   arrange(FECHA_INGRESO) %>% 
+#   dplyr::mutate(FIRST_HOSP = row_number()) %>% 
+#   ungroup() %>% dplyr::rename("HASH_KEY"="RUN")
+# 
+# # Function to add suffix to column names, except for the key column
+# add_suffix_to_colnames <- function(df, suffix, key_column) {
+#   colnames(df) <- sapply(colnames(df), function(colname) {
+#     if (colname != key_column) {
+#       return(paste0(colname, "_", suffix))
+#     } else {
+#       return(colname)
+#     }
+#   })
+#   return(df)
+# }
+# 
+# # Applying the function to each HOSP20102022_MERGE1 dataset
+# HOSP20102022_MERGE1.1 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==1), "1", "HASH_KEY")
+# HOSP20102022_MERGE1.2 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==2), "2", "HASH_KEY")
+# HOSP20102022_MERGE1.3 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==3), "3", "HASH_KEY")
+# HOSP20102022_MERGE1.4 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==4), "4", "HASH_KEY")
+# HOSP20102022_MERGE1.5 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==5), "5", "HASH_KEY")
+# HOSP20102022_MERGE1.6 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==6), "6", "HASH_KEY")
+# HOSP20102022_MERGE1.7 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==7), "7", "HASH_KEY")
+# HOSP20102022_MERGE1.8 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==8), "8", "HASH_KEY")
+# HOSP20102022_MERGE1.9 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==9), "9", "HASH_KEY")
+# HOSP20102022_MERGE1.10 <- add_suffix_to_colnames(HOSP20102022_MERGE1 %>% filter(LAST_HOSP==10), "10", "HASH_KEY")
+# 
+# 
+
+CONS_C1_2010_22_MERGE <- CONS_C1_2010_22 %>% distinct(across(2:99), .keep_all = TRUE) %>% 
+  mutate(TABLE = as.numeric(TABLE)) %>%
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>%
+  group_by(HASH_KEY)  %>%
+  dplyr::mutate(SISTRAT_REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(fecha_ingresoa_tratamiento)) %>% #last hosp
+  dplyr::mutate(LAST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,fecha_ingresoa_tratamiento) %>%
+  dplyr::mutate(FIRST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,TABLE) %>%
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  ungroup() %>% 
+  filter(YEAR_TTO > 2006) %>% 
+  filter(SISTRAT_REPETITION_COUNT < 20) %>%  
+  pivot_wider(.,
+              id_cols = HASH_KEY,
+              names_from = FIRST_SISTRAT,
+              values_from = c(1,3:103))
+
+CONS_C1_2010_22_MERGE1 <- CONS_C1_2010_22 %>%
+  mutate(TABLE = as.numeric(TABLE)) %>%
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>%
+  group_by(HASH_KEY)  %>%
+  dplyr::mutate(SISTRAT_REPETITION_COUNT = n()) %>%
+  dplyr::arrange(.,desc(fecha_ingresoa_tratamiento)) %>% #last hosp
+  dplyr::mutate(LAST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,fecha_ingresoa_tratamiento) %>%
+  dplyr::mutate(FIRST_SISTRAT = row_number()) %>%
+  dplyr::arrange(.,TABLE) %>%
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  ungroup() %>% filter(FIRST_SISTRAT == 1) %>% filter(YEAR_TTO > 2006)
+
+CONS_C1_2010_22_MERGE2 <- CONS_C1_2010_22 %>% 
+  mutate(fecha_ingresoa_tratamiento = dmy(fecha_ingresoa_tratamiento)) %>% 
+  distinct(across(2:99), .keep_all = TRUE) %>% 
+  dplyr::mutate(YEAR_TTO = lubridate::year(fecha_ingresoa_tratamiento)) %>% 
+  group_by(YEAR_TTO) %>% 
+  dplyr::summarise(n_admission=n())
+
+#   
+# 
+# # dplyr::arrange(.,TABLE) %>%
+# #   distinct(HASH_KEY, .keep_all = TRUE)
+# 
+# MERGE1<- CONS_C1_2010_22_MERGE1 %>% 
+#   left_join(., HOSP20102022_MERGE1.1, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.2, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.3, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.4, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.5, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.6, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.7, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.8, by = "HASH_KEY") %>%
+#   left_join(., HOSP20102022_MERGE1.9, by = "HASH_KEY") %>% 
+#   left_join(., HOSP20102022_MERGE1.10, by = "HASH_KEY")
+
+#MERGE 1
+
+MERGE1 <- HOSP20102022_MERGE1 %>% 
+  full_join(.,CONS_C1_2010_22_MERGE1, by = "HASH_KEY") %>% 
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1)) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento - FECHA_EGRESO)) 
+
+#MERGE 2
+
+MERGE2 <- HOSP20102022_MERGE1 %>% 
+  full_join(.,CONS_C1_2010_22_MERGE1, by = "HASH_KEY") %>% 
+  drop_na(TABLE) %>%
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1)) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento - FECHA_EGRESO))
+
+#MERGE 2.1
+
+MERGE2.1 <- MERGE2[,1:29] %>% pivot_wider(.,
+              id_cols = HASH_KEY,
+              names_from = FIRST_HOSP,
+              values_from = c(2:29)) %>% 
+  select(where(~ any(!is.na(.)))) %>%
+  full_join(.,CONS_C1_2010_22_MERGE, by = "HASH_KEY")
+
+MERGE2.2 <- MERGE2.1[,c(1,231:308,2915:2929)]
+#MERGE 3
+
+MERGE3 <- MERGE2[,1:29] %>%
+  full_join(.,CONS_C1_2010_22_MERGE, by = "HASH_KEY") %>%
+  mutate(HOSP = if_else(is.na(REPETITION_COUNT), 0, 1))
+
+
+# MERGE2 %>% filter(LAST_HOSP == 1) %>% 
+#   ggplot(., aes(x = SISTRAT_REPETITION_COUNT, y = REPETITION_COUNT)) +
+#   geom_point() +                            
+#   geom_smooth(method = "lm", se = FALSE)
+
+# MERGE1.1 <- MERGE1 %>% dp
+# 
+# MERGE1.2<- left_join(MERGE1.1, HOSP20102022_MERGE1.2, by = "HASH_KEY")
+# MERGE1.3<- left_join(MERGE1.2, HOSP20102022_MERGE1.3, by = "HASH_KEY")
+# MERGE1.2<- left_join(MERGE1.1, HOSP20102022_MERGE1.2, by = "HASH_KEY")
+# MERGE1.3<- left_join(MERGE1.2, HOSP20102022_MERGE1.3, by = "HASH_KEY")
+# MERGE1.2<- left_join(MERGE1.1, HOSP20102022_MERGE1.2, by = "HASH_KEY")
+# MERGE1.3<- left_join(MERGE1.2, HOSP20102022_MERGE1.3, by = "HASH_KEY")
+# # MERGEtemp<- MERGE %>% 
+# #   filter(LAST_HOSP==1) %>%
+# #   mutate(SEXO = recode(SEXO,
+# #                        "1" = "Hombre",
+# #                        "2" = "Mujer",
+# #                        "9" = NA_character_)) %>% 
+# #   group_by(TABLE,sexo,SEXO) %>% 
+# #   dplyr::summarise(n = n())
+# # 
+# # MERGEtemp<- MERGE %>% 
+# #   filter(POSITION==1) %>%
+# #   mutate(SEXO = recode(SEXO,
+# #                        "1" = "Hombre",
+# #                        "2" = "Mujer",
+# #                        "9" = NA_character_)) %>% dplyr::select(edad,EDAD_ANOS,sexo,SEXO,NOMBRE_ESTAB,serviciode_salud)
+# 
+# for (i in c(3,4)) {
+#   MERGEtemp[,i]<-as.factor(MERGEtemp[,i])
+#   MERGEtemp[,i]<-factor(MERGEtemp[,i], levels = levels(MERGEtemp[,i]), labels = paste0(colnames(MERGEtemp[i]),"_",levels(MERGEtemp[,i])))
+# }
+# 
+# MERGEtemp<-drop_na(MERGEtemp)
+# 
+# res.famd <- FAMD(MERGEtemp, graph = F)
+# fviz_screeplot(res.famd)
+# fviz_famd_var(res.famd, "quanti.var", col.var = "contrib",
+#               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#               repel = TRUE)
+# fviz_famd_var(res.famd, "quali.var", col.var = "contrib",
+#               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#               repel = TRUE,labelsize = 3)
+# fviz_famd_var(res.famd, col.var = "contrib",
+#               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#               repel = TRUE)
+# fviz_famd_ind(res.famd, col.ind = "contrib",
+#               gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#               repel = TRUE,geom = "point")
+# 
+# 
+# length(unique(MERGEtemp$HASH_KEY))
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+# hist(MERGE1$YEAR_1- MERGE1$TABLE)
+# hist(MERGE1$YEAR_7- MERGE1$TABLE)
+# 
+# mean(MERGE1$YEAR_1 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_2 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_3 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_4 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_5 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_6 - MERGE1$TABLE, na.rm = T)
+# mean(MERGE1$YEAR_7 - MERGE1$TABLE, na.rm = T)
+
+TABLE1 <- MERGE1 %>% 
+  group_by(YEAR_TTO, YEAR) %>% 
+  dplyr::summarise(n_hosp = n()) %>% 
+  drop_na() %>% 
+  left_join(.,CONS_C1_2010_22_MERGE2, by = "YEAR_TTO") %>% 
+  dplyr::mutate(percent = round(n_hosp/n_admission*100, digits = 2))
+
+# TABLE1.1 <- MERGE1 %>% 
+#   group_by(YEAR) %>% 
+#   dplyr::summarise("n" = n()) %>% 
+#   drop_na() %>% 
+#   mutate(TABLE = "Total Hosp.") %>% 
+#   select(3,1,2)
+# # 
+# TABLE1 <- MERGE1  %>%
+#   drop_na(TABLE) %>%
+#   filter(HOSP==1) %>%
+#   group_by(YEAR) %>%
+#   dplyr::summarise("n" = n()) %>%
+#   mutate(TABLE = "Total.") %>%
+#   select(3,1,2) %>% rbind(TABLE1,.)
+
+TABLE2.1 <- MERGE1  %>%
+  group_by(YEAR) %>% 
+  dplyr::summarise("total_hosp" = n()) %>% 
+  left_join(.,TABLE1, by = "YEAR") %>% select(3,1,4,2) %>% 
+  mutate(hosp_rate=round(n_hosp/total_hosp*100000,2))
+
+TABLE2.2 <- MERGE1  %>% 
+  group_by(YEAR) %>% 
+  dplyr::summarise("Total Hosp." = n()) %>% 
+  left_join(.,TABLE1, by = "YEAR")
+
+
+# TABLE2.2 <- MERGE1 %>% 
+#   group_by(YEAR_TTO,YEAR) %>% 
+#   dplyr::summarise(n = n()) %>% 
+#   drop_na() %>% 
+#   left_join(.,TABLE1.1, by = "YEAR")
+
+categorize_icd <- function(code) {
+  if (code >= "V00" & code < "X59") {
+    return("V00-X58. Accidents")
+  } else if (code >= "X71" & code < "X84") {
+    return("X71-X83. Intentional self-harm")
+  } else if (code >= "X92" & code < "Y10") {
+    return("X92-Y09. Assault")
+  } else if (code >= "Y21" & code < "Y34") {
+    return("Y21-Y33. Event of undetermined intent")
+  } else if (code >= "Y35" & code < "Y39") {
+    return("Y35-Y38. Legal intervention, operations of war, military operations, and terrorism")
+  } else if (code >= "Y62" & code < "Y85") {
+    return("Y62-Y84. Complications of medical and surgical care")
+  } else if (code >= "Y90" & code <= "Y99") {
+    return("Y90-Y99. Supplementary factors related to causes of morbidity classified elsewhere")
+  } else {
+    return(NA)
+  }
+}
+
+MERGE3.1 <- MERGE3 %>% 
+  filter(substring(DIAG2, 1, 3) >= "V00" & substring(DIAG2, 1, 3) <= "Y99") %>%
+  mutate(
+    icd_category = factor(sapply(substring(DIAG2, 1, 3), categorize_icd), 
+                          levels = c("V00-X58. Accidents", "X71-X83. Intentional self-harm", 
+                                     "X92-Y09. Assault", "Y21-Y33. Event of undetermined intent", 
+                                     "Y35-Y38. Legal intervention, operations of war, military operations, and terrorism", 
+                                     "Y62-Y84. Complications of medical and surgical care", 
+                                     "Y90-Y99. Supplementary factors related to causes of morbidity classified elsewhere"))
+  )
+
+TABLE3 <- MERGE3 %>% 
+  group_by(YEAR) %>% 
+  dplyr::summarise(n_hosp = n()) %>% 
+  drop_na()
+
+TABLE3.1 <- MERGE3.1 %>% 
+  group_by(YEAR) %>% 
+  dplyr::summarise(n_hosp_icd = n()) %>% 
+  mutate(icd_category = "Total") %>% 
+  drop_na()
+
+TABLE3.2 <- MERGE3.1 %>% 
+  group_by(YEAR,icd_category) %>% 
+  dplyr::summarise(n_hosp_icd = n()) %>% 
+  drop_na() %>% 
+  full_join(.,TABLE3.1, by = c("YEAR","icd_category","n_hosp_icd")) %>% 
+  left_join(.,TABLE3, by = "YEAR") %>% 
+  dplyr::mutate(hosp_rate = round(n_hosp_icd/n_hosp*10000, digits = 2))
+
+# TABLE2 <- MERGE2 %>% 
+#   filter(HOSP==1) %>% 
+#   group_by(YEAR,HASH_KEY) %>% 
+#   dplyr::summarise(n = n())
+# 
+# TABLE1.1 <- MERGE2  %>% 
+#   filter(HOSP==1) %>% 
+#   group_by(YEAR_TTO,YEAR) %>% 
+#   dplyr::summarise(n = n())
+# 
+# 
+# TABLE2.2 <- TABLE2 %>% 
+#   group_by(YEAR) %>% 
+#   dplyr::summarise(MEAN_HOSP = mean(n))
+
+TABLE1.3 <- MERGE2  %>% 
+  group_by(YEAR_TTO,DAY_DIF) %>% 
+  dplyr::summarise(n = n())
+
+# mca_results <- FactoMineR::MCA(MERGE2[,c(67,12,15,18)], graph = F)
+
+# Calculate max_values
+max_values <- TABLE1 %>%
+  drop_na() %>%
+  group_by(YEAR_TTO) %>%
+  filter(n_hosp == max(n_hosp, na.rm = TRUE)) %>%
+  select(YEAR_TTO, YEAR, n_hosp,percent)
+
+# Define a custom color palette with a gradient from Blue to Red
+color_palette <- colorRampPalette(c("blue","green", "red"))(length(unique(TABLE1$YEAR_TTO)))
+
+# Create the line graph with fill colors based on the custom palette
+ggplot(TABLE1, aes(x = YEAR, y = n_hosp, group = as.factor(YEAR_TTO), color = as.factor(YEAR_TTO),linetype = as.factor(YEAR_TTO))) +
+  geom_line() +
+  labs(x = "Year.",
+       y = "Total Hospitalizations.",
+       color = "Admission Year to 1st Drug Rehab. Treatment.") +
+  scale_color_manual(values = setNames(color_palette, unique(TABLE1$YEAR_TTO))) +
+  theme_minimal()+
+  labs(linetype = "Admission Year to 1st Drug Rehab. Treatment.") +
+  geom_text(data = max_values, aes(label = n_hosp), vjust = 0.5, hjust =-0.1, angle = 90, show.legend=FALSE)
+
+# Create the plot
+graph1 <- plotly::plot_ly(TABLE1, x = ~YEAR, y = ~YEAR_TTO, z = ~n_hosp, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to 1st<br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              yaxis = list(title = 'Admission Year to 1st<br>Drug Rehab. Treatment.', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              zaxis = list(title = 'Total Hospitalizations', titlefont = list(size = 8), tickfont = list(size = 8))))
+
+# Add text annotations as traces
+graph1 <- graph1 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~n_hosp,
+  type = 'scatter3d', mode = 'text',
+  text = ~n_hosp,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+# Print the plot
+graph1
+
+# Create the plot
+graph1.1 <- plotly::plot_ly(TABLE1, x = ~YEAR, y = ~YEAR_TTO, z = ~percent, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to 1st<br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              yaxis = list(title = 'Admission Year to 1st<br>Drug Rehab. Treatment.', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              zaxis = list(title = 'Total Hospitalizations', titlefont = list(size = 8), tickfont = list(size = 8))))
+
+# Add text annotations as traces
+graph1.1 <- graph1.1 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~percent,
+  type = 'scatter3d', mode = 'text',
+  text = ~percent,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+# Print the plot
+graph1.1
+
+# Calculate max_values
+max_values <- TABLE2.1 %>%
+  drop_na() %>%
+  group_by(YEAR_TTO) %>%
+  filter(hosp_rate == max(hosp_rate, na.rm = TRUE)) %>%
+  select(YEAR_TTO, YEAR, hosp_rate)
+
+# Create the plot
+graph2 <- plotly::plot_ly(TABLE2.1, x = ~YEAR, y = ~YEAR_TTO, z = ~hosp_rate, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 2)) %>%
+  plotly::layout(title = "",legend = list(title = list(text = 'Admission Year to 1st<br>Drug Rehab. Treatment.', font = list(size = 12))),
+                 scene = list(xaxis = list(title = 'Year', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              yaxis = list(title = 'Admission Year to 1st<br>Drug Rehab. Treatment.', titlefont = list(size = 8), tickfont = list(size = 8)),
+                              zaxis = list(title = 'Rate per 100,000 hospitalized', titlefont = list(size = 8), tickfont = list(size = 8))))
+
+# Add text annotations as traces
+graph2 <- graph2 %>% plotly::add_trace(
+  data = max_values,
+  x = ~YEAR, y = ~YEAR_TTO, z = ~hosp_rate,
+  type = 'scatter3d', mode = 'text',
+  text = ~hosp_rate,
+  textposition = 'top center',
+  hoverinfo = 'none',
+  showlegend = FALSE
+)
+
+# Print the plot
+graph2
+
+graph3 <- plotly::plot_ly(TABLE1.3, x = ~DAY_DIF, y = ~YEAR_TTO, z = ~n, color = ~factor(YEAR_TTO), type = 'scatter3d', mode = 'lines', line = list(width = 4))
+
+# Print the plot
+graph3
+
+ggplot(TABLE3.2, aes(x = YEAR, y = hosp_rate, group = icd_category, color = icd_category)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "",
+       x = "Year",
+       y = "Rate per 10,000 hospitalized",
+       color = "ICD-10 V00-Y99 External causes of morbidity")
+
+TABLE3.2 %>%
+  filter(icd_category != "Total") %>% 
+  ggplot(., aes(x = YEAR, y = hosp_rate, group = icd_category, color = icd_category)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "",
+       x = "Year",
+       y = "Rate per 10,000 hospitalized",
+       color = "ICD-10 V00-Y99 External causes of morbidity")
+
+ggplot(MERGE2, aes(x = DAY_DIF, fill=YEAR_TTO)) +
+  # geom_histogram(aes(y = ..count..), bins = 300, fill = "blue", alpha = 0.5) +
+  geom_boxplot(aes(y = -100),width = 100) +
+  geom_histogram(aes(y = ..count..),bins = 300, alpha = 0.5) +
+  facet_grid(rows = vars(YEAR_TTO), scales = "free_x", space = "free_x") +
+  theme_minimal()
+
+MERGE3 %>% filter(YEAR == YEAR_TTO_1) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_1 - FECHA_EGRESO)) %>% 
+  ggplot(., aes(x = DAY_DIF, fill=YEAR_TTO_1)) +
+  # geom_histogram(aes(y = ..count..), bins = 300, fill = "blue", alpha = 0.5) +
+  geom_boxplot(aes(y = -100),width = 100) +
+  geom_histogram(aes(y = ..count..),bins = 365, alpha = 0.5) +
+  facet_grid(rows = vars(YEAR_TTO_1), scales = "free_x", space = "free_x") +
+  theme_minimal()
+
+MERGE3 %>% filter(YEAR == YEAR_TTO_2) %>% 
+  mutate(DAY_DIF = as.numeric(fecha_ingresoa_tratamiento_2 - FECHA_EGRESO)) %>% 
+  ggplot(., aes(x = DAY_DIF, fill=YEAR_TTO_2)) +
+  # geom_histogram(aes(y = ..count..), bins = 300, fill = "blue", alpha = 0.5) +
+  geom_boxplot(aes(y = -100),width = 100) +
+  geom_histogram(aes(y = ..count..),bins = 365, alpha = 0.5) +
+  facet_grid(rows = vars(YEAR_TTO_2), scales = "free_x", space = "free_x") +
+  theme_minimal()
+```
+
+### Summarize
+
+```{r clean-c1, message=F, error=T, eval=T, echo=F}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#COL NAMES#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CLEAN FACTOR LEVELS#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#SUMMARISE By VAR ClASS_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define summarization function
+summarize_vars <- function(data) {
+  res <- list()
+  for (i in 2:ncol(data)){
+    if(is.character(data[[i]]) | is.logical(data[[i]])){
+      res[[paste0("char_", names(data)[i])]] <- 
+        data %>% 
+        group_by_at(vars(i, 1)) %>% 
+        dplyr::summarise(n = n())
+    } else {
+      res[[paste0("num_", names(data)[i])]] <- 
+        data %>% 
+        group_by_at(vars(1)) %>% 
+        dplyr::summarise(
+          min = min(.data[[names(data)[i]]], na.rm = TRUE),
+          max = max(.data[[names(data)[i]]], na.rm = TRUE),
+          na = sum(is.na(.data[[names(data)[i]]]))
+        )
+    }
+  }
+  return(res)
+}
+
+# Apply summarization function to your data frames
+TABLEVARSC1 <- summarize_vars(CONS_C1_2010_22)
+TABLEVARSC2 <- summarize_vars(CONS_C2)
+TABLEVARSC3 <- summarize_vars(CONS_C3)
+TABLEVARSC4 <- summarize_vars(CONS_C4)
+TABLEVARSC5 <- summarize_vars(CONS_C5)
+TABLEVARSC6 <- summarize_vars(CONS_C6)
+TABLEVARSTOP <- summarize_vars(CONS_TOP_2015_22)
+# MAY_TABLEVARSTOP <- summarize_vars(MAY_CONS_TOP_2015_22)
+
+# MAY_2_CONS_TOP_2015_22 <- MAY_CONS_TOP_2015_22[,-46]
+# colnames(CONS_TOP_2015_22)<- colnames(MAY_2_CONS_TOP_2015_22)
+# CONS_TOP_2015_22$fecha_aplicacion_top<-as.Date(CONS_TOP_2015_22$fecha_aplicacion_top)
+# 
+# NUMVARS<-CONS_TOP_2015_22[,sapply(CONS_TOP_2015_22, is.numeric)]
+# 
+# MERGETOP <- left_join(CONS_TOP_2015_22, MAY_2_CONS_TOP_2015_22, by = c(colnames(NUMVARS),"TABLE","id","sexo","fecha_nacimiento","fecha_de_ingreso_a_tratamiento","fecha_aplicacion_top","fecha_egreso","hurto","robo","venta_drogas","rina")) %>% select(1,2,49,3,50,4:48,51:65)
+# TABLEVARSC2 <- summarize_vars(CONS_C2)
+# OLDTABLEVARSC2 <- summarize_vars(SISTRAT_c2)
+
+# length(unique(CONS_C1_2010_22$HASH_KEY))
+# length(unique(SISTRAT_c2$Rut))
+# length(unique(CONS_C3$HASH_KEY))
+# length(unique(SISTRAT_c3$Rut))
+# length(unique(CONS_C4$HASH_KEY))
+# length(unique(SISTRAT_c4$Rut))
+# length(unique(CONS_C5$HASH_KEY))
+# length(unique(SISTRAT_c5$Rut))
+# length(unique(CONS_C6$HASH_KEY))
+# length(unique(SISTRAT_c6$Rut))
+
+BADC1<- CONS_C1_2010_22%>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADC2<- CONS_C2 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADC3<- CONS_C3 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADC4<- CONS_C4 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADC5<- CONS_C5 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADC6<- CONS_C6 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+BADTOP<- CONS_TOP_2015_22 %>% filter(HASH_KEY=="1bad6b8cf97131fceab8543e81f7757195fbb1d36b376ee994ad1cf17699c464")
+
+#unique hash
+length(unique(CONS_C1_2010_22$HASH_KEY))
+length(unique(CONS_TOP_2015_22$HASH_KEY))
+```
+
+We can see the following from C1 database:
+
+-   There are variables that I did not use at any time, such as the reason for administrative discharge (`motivo_de_egreso_alta_administrativa`), which includes a reason such as "death", the consorcio that groups it.
+-   There are other variables incorporated in these databases, such as `servicios_basicos`, `laboral_ingresos`, `perso_dormitorio_vivienda`,`precariedad_vivienda` and `servicios_basicos_99`.
+
+We can see the following from TOP database:
+
+-   Databases from 2019-2022 have more columns: `r paste(setdiff(names(CONS_TOP_2019_22),names(CONS_TOP_2015_19)), collapse=", ")`.
+
+<br>
+
+```{=html}
+<!---
+ #https://github.com/kosukeimai/fastLink
+ 
+  #"aquellos registros que terminaronpor ejemplo, con una sentencia absolutoria o en que no se pudo acreditar un hecho delictual". No tengo la bbdd para revisar si esto aplica a nosotros, pero prefiero dejarlo acá para que no se me olvide.
+  
+  
+  #https://rpolars.github.io/r-polarssql/
+ --->
+```
+<br>
+
+# Session info
+
+```{r session-info, echo=T, error=T, message=TRUE, paged.print=TRUE}
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+) %>% 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '50%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+We erased individual databases.
+
+```{r erase-databases, echo=T}
+rm(list= ls()[!grepl("CONS_", ls())])
+```
+
+Save
+
+```{r save}
+# Save and check if path exists
+if(!dir.exists(dirname(rstudioapi::getActiveDocumentContext()$path))) {
+  cat("Directory does not exist!")
+} else {
+  save.image(file.path(paste0(gsub("cons","",dirname(rstudioapi::getActiveDocumentContext()$path)),"/data/25082023_data_output"),
+                       paste0("1_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata")))
+  cat("Saved in:",
+      file.path(paste0(gsub("cons","",dirname(rstudioapi::getActiveDocumentContext()$path)),"/data/25082023_data_output"),
+                paste0("1_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata")))
+}
+```
