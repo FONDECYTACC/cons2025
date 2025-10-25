@@ -1,0 +1,382 @@
+---
+title: "harmonization_c1_c2_6_top"
+description: |
+  Harmonization data from SENDAs patient (c1, c2-c6 and top).
+date: "`r withr::with_locale(new = c('LC_TIME' = 'C'), code =format(Sys.time(),'%B %d, %Y'))`"
+author: "Andrés González Santa Cruz & Amaru Agüero Jiménez"
+format: 
+  html:
+    code-fold: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+editor: source
+---
+
+`r message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))`
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+
+$('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+
+// onClick function for all plots (img's)
+
+$('img:not(.zoomImg)').click(function() {
+$('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+$('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+});
+
+// onClick function for zoomImg
+
+$('img.zoomImg').click(function() {
+$('.zoomDiv').css({opacity: '0', width: '0%'});
+});
+});
+```
+
+```{css hideOutput-lib-src, echo = FALSE}
+<script src="https://github.com/AGSCL/gine_brechas_pandemia/blob/main/hideOutput.js"></script>
+```
+
+```{js hideOutput, echo = FALSE}
+$(document).ready(function() {
+
+\$chunks = \$('.fold');
+
+\$chunks.each(function () { // add button to source code chunks
+if ( \$(this).hasClass('s') ) {
+    \$('pre.r', this).prepend("\<div class=\\"showopt\\"\>Show Source\</div\>\<br style=\\"line-height:22px;\\"/\>");
+    \$('pre.r', this).children('code').attr('class', 'folded');
+    } // add button to output chunks
+
+    if ( \$(this).hasClass('o') ) {
+        \$('pre:not(.r)', this).has('code').prepend("\<div class=\\"showopt\\"\>Show Output\</div\>\<br style=\\"line-height:22px;\\"/\>");
+        \$('pre:not(.r)', this).children('code:not(r)').addClass('folded'); // add button to plots
+        \$(this).find('img').wrap('\<pre class=\\"plot\\"\>\</pre\>');
+        \$('pre.plot', this).prepend("\<div class=\\"showopt\\"\>Show Plot\</div\>\<br style=\\"line-height:22px;\\"/\>");
+        \$('pre.plot', this).children('img').addClass('folded');
+        }
+}); // hide all chunks when document is loaded
+
+\$('.folded').css('display', 'none') // function to toggle the visibility
+\$('.showopt').click(function() {
+        var label = \$(this).html();
+        if (label.indexOf("Show") \>= 0) {
+            \$(this).html(label.replace("Show", "Hide"));
+        } else {
+        \$(this).html(label.replace("Hide", "Show"));
+        }
+
+\$(this).siblings('code, img').slideToggle('fast', 'swing');
+});
+});
+```
+
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+</style>
+
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+```
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<br>
+
+```{r pre-setup}
+rm(list = ls()) 
+if(!grepl("4.4.0",R.version.string)){stop("Versión diferente (debe ser 4.4.0)")}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+if(!require(devtools)){install.packages("devtools", type = "win.binary", dependencies=T)}
+
+# 
+# paste0("Sys time:", format(Sys.time(), "%Y_%m_%d_%H_00_00"))
+# 
+# 
+# path_in <- paste0(gsub("cons","", getwd()), "data/25082023_data_output")
+# full_path_in <- paste0(path_in,paste0("/1_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+# 
+# unlink("import_c2_c6_files", recursive=T)
+# 
+# load(full_path_in)
+# paste0("Loaded: ",
+#        full_path_in
+#        )
+```
+
+```{r}
+#To manipulate data
+if(!require(tidyverse)){install.packages("tidyverse")}
+#To manipulate big data
+if(!require(polars)){install.packages("polars", repos = "https://rpolars.r-universe.dev")}
+#code completion
+try(polars_code_completion_activate())
+
+if(!require(nanoparquet)){install.packages("nanoparquet")}
+
+# devtools::install_github("bokeh/rbokeh")
+# 
+if (!require("pacman")) install.packages("pacman")
+
+# pacman::p_load(
+#   altair, arrow, biostat3, car, caret, chilemapas, choroplethr, choroplethrAdmin1,
+#   choroplethrMaps, codebook, compareGroups, DiagrammeR, DiagrammeRsvg, DT, epiR, epitools,
+#   factoextra, FactoMineR, finalfit, flexsurv, fmsb, ggfortify, ggiraph, ggiraphExtra,
+#   ggpubr, glca, gridExtra, here, Hmisc, installr, janitor, kableExtra, lsmeans, matrixStats,
+#   Metrics, muhaz, naniar, neuralnet, NeuralNetTools, panelr, patchwork, pdp, plotly, plyr,
+#   polycor, pROC, psych, radiant, rateratio.test, reshape, reshape2,
+#   reticulate, rio, ROCit, rsvg, sf, sjPlot, sqldf, Statamarkdown, survminer, survMisc,
+#   tableone, tidylog, treemapify, VIM, webshot, zoo, install=T
+# )
+```
+
+# Bring DBs
+
+
+```{r}
+
+sistrat <- "E:/Mi unidad/Alvacast/SISTRAT 2022 (github)/"
+
+#fuentes: 
+#https://rpubs.com/georgy_makarov/897844
+load(paste0(sistrat,"1_ndp_2023_07_05_19_00_00.RData"))
+
+#load c1 and top data
+load(paste0(gsub("cons","",getwd()), "data/25082023_data_output",paste0("/1_ndp_", format(Sys.time(), "%Y_%m_%d"),".Rdata")))
+#load c2-c6 data
+load(paste0(gsub("cons","",getwd()), "data/25082023_data_output",paste0("/2_ndp_", format(Sys.time(), "%Y_%m_%d"),".Rdata")))
+```
+
+```{r}
+
+```
