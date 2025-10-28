@@ -1,0 +1,537 @@
+---
+title: "SENDAs Agreement 1 Codebook"
+description: |
+  
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-depth: 5
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.superbigimage {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+.superbigimage img, 
+.superbigimage svg {
+  max-width: none;
+  height: auto;
+}
+</style>
+
+<br>
+
+
+```{r pre-codebook}
+#| include: true
+
+load("G:/My Drive/Alvacast/SISTRAT 2023/data/20241015_out/26_ndp_2025_10_01.Rdata")
+
+library(dplyr)
+library(codebook)
+library(labelled)
+# Manual variable labels definition for the specified main variables
+# Based on TSV descriptions where available, inferred from provided information for others
+# This includes the variables you listed, including hash_key as per your list
+# Apply to SISTRAT23_c1_2010_2024_df_prev1y and generate codebook
+# Manual variable labels definition for the specified main variables
+# Based on TSV descriptions where available, inferred from provided information for others
+# This includes the variables you listed, including hash_key as per your list
+# Apply to SISTRAT23_c1_2010_2024_df_prev1y and generate codebook
+
+labels_map <- list(
+  "TABLE" = "Year of data collection (original SISTRAT table/year identifier). Represents the year the record was entered (e.g., \"2023\", \"2015\"). No transformation applied. Made in import_c1_top_data_adm_25.qmd",
+  "TABLE_rec_series" = "Recoded series of TABLE",
+  "rn" = "Row number or treatment episode sequence per patient. Created by `row_number() over (partition by hash_key order by adm_date)`, Step 1 (SISTRAT23_c1_2010_2024_df2). Identifies first, second, etc., treatment for each user.",
+  "rn_series" = "Series of row number",
+  "num_trat_ant" = "Number of prior treatments reported by patient. Direct import. May not be reliable. Not used.",
+  "fecha_ultimo_tratamiento" = "Patient-reported time since last treatment (e.g., \"3 a 4 anos\"). Direct import. Categorical, not numeric. Many missing values (~50%)",
+  "hash_key" = "Unique anonymized identifier for each individual (user/patient RUT derivative). Direct import from raw SISTRAT C1. Originally in uppercase letter. Generated by hashing the RUT (national ID) by MINSAL. Used to link multiple treatment episodes for the same person across years. No transformation.",
+  "min_adm_age_rec3" = "min(adm_age_rec3) grouped by hash_key. Critical benchmark for validating/imputing onset ages.",
+  "adm_age_rec3" = "Admission age [log1p(x)=adm_age_log, centered= adm_age_c,^2=adm_age_pow2, ^3=adm_age_pow3, three groups= adm_age_rec3_cat]",
+  "birth_date_rec" = "Final authoritative date of birth. Created by selecting/imputing best `birth_date` per `hash_key` (via `kNN`, logic, or min/max validation). Used to recalculate `adm_age_rec`.",
+  "adm_date_num_rec2" = "Numeric admission date recoded version 2",
+  "adm_date_rec2" = "Intermediate admission date Created in Step 2 (0.c) for the resolution of overlaps",
+  "dit_rec6" = "Length of stay in treatment (months) [log1p(x)=treat_log, ^2=treat_days_pow2, ^3=treat_days_pow3, <90days=treat_lt_90]",
+  "disch_date_rec6" = "Final discharge date for longitudinal analysis. Created as selected consistent version for time-to-event modeling.",
+  "disch_date_num_rec6_trans" = "Imputed discharge based on reference date Created in Step 3. Missing discharge dates were filled using a default value calculated from a fixed retrieval date (e.g., May 28, 2025), ensuring consistency across all treatment records and uncovering censorship mechanisms.",
+  "def_date" = "Date of death (if applicable, mostly NA). Created from external mortality linkage (not in provided scripts). Parsed from mortality registry (dia_def, mes_def, ano_def), imputing missing day as 15; earliest date kept when multiple. Used to censor discharges after death. See Duplicates_25_2.qmd (pre-00.a).",
+  "adm_motive" = "Admission motive",
+  "tr_compliance_rec7" = "Treatment compliance category. Created in Step 4. Removed cases (n=3) with an ongoing treatment motive but with a posterior treatment after. Replaced for dropout (they had incomplete discharge information)",
+  "adm_disch_reason" = "Placeholder for administrative discharge reason (mostly empty). Created as copy of `motivo_de_egreso_alta_administrativa`. Derived/translated from motivo_de_egreso_alta_administrativa; listed among deduplication key variables in Step 2. 47%-56% missing in patients with adm. discharge.",
+  "referral_type" = "Recoded type of referral center. Created from `tipo_centro_derivacion` (translation): e.g., \"otro centro\" , \"other facility\", \"cosam\", \"primary health care\".",
+  "plan_type" = "Recoded treatment plan type. Created as copy and translation of `tipo_de_plan` (step 1). Used in collapsing logic and outcome modeling.",
+  "id_centro" = "Center ID number. Direct import. Used to link center attributes, collapse duplicates, and derive `centro_muj` (women-specific centers).",
+  "senda" = "Indicator if treatment was under SENDA agreement (\"si\"/\"no\"). Direct import. Used to derive `senda_adm_date` and flag SENDA-specific episodes. No transformation initially. According to SENDA professionals, patients may be in SENDA Yes programs may anyways part of SENDA programs in some cases",
+  "pub_center" = "Binary indicator for public center. Created as `tipo_centro == \"publico\"`. Used in institutional comparisons.",
+  "primary_sub" = "Primary substance of use",
+  "second_sub1" = "Normalized secondary substances at admission (1)",
+  "second_sub2" = "Normalized secondary substances at admission (2)",
+  "second_sub3" = "Normalized secondary substances at admission (3)",
+  "prim_sub_freq" = "Frequency of primary substance use at admission (recoded: prim_sub_freq_rec)",
+  "prim_sub_route" = "Recoded route of administration. Created from `via_administracion_sustancia_principal` into standardized terms.",
+  "LB_age_primary_onset_rec2" = "Lower bound age of primary substance onset recoded 2",
+  "UB_age_primary_onset_rec2" = "Upper bound age of primary substance onset recoded 2",
+  "age_primary_onset_rec2" = "Created in Step 3.",
+  "first_sub_used" = "Normalized first substance used. Created as `tolower(gsub(\"_\", \" \", sustancia_de_inicio))`. Input for resolving inconsistencies, prioritizing most vulnerable value = `sus_ini_mod_mvv`. Despite this, this variable was normalized in Step 3 for inconsistent values in patients.",
+  "sus_ini_mod_mvv" = "Sus ini mod mvv",
+  "sus_ini_1" = "Sus ini 1",
+  "sus_ini_2" = "Sus ini 2",
+  "sus_ini_3" = "Sus ini 3",
+  "LB_age_subs_onset_rec2" = "Lower bound age of substance onset recoded 2",
+  "UB_age_subs_onset_rec2" = "Upper bound age of substance onset recoded 2",
+  "age_subs_onset_rec2" = "Created in Step 3.",
+  "biopsych_comp" = "Recoded biopsychosocial severity. Created from `compromiso_biopsicosocial`: e.g., \"moderado\", \"2-moderate\".",
+  "mod_psiq_cie_10" = "Created in Step 3, concatenated main and sub-dg to allow multiple diagnoses",
+  "mod_psiq_dsm_iv" = "Created in Step 3, concatenated main and sub-dg to allow multiple diagnoses",
+  "diagnostico_trs_fisico" = "Physical health diagnosis. Direct import. Often concatenated (e.g., \"Hepatitis alcoholica: cardiopatías\"). Preserved as-is for clinical profiling.",
+  "otros_probl_at_sm_or" = "Other mental health issues (e.g., \"abuso sexual\"). Direct import. Recoded to `otros_probl_at_sm_or`. Used in vulnerability and trauma profiling.",
+  "sub_dep_icd10_status" = "Severity of Substance Use Disorder (SUD)",
+  "evaluacindelprocesoteraputico" = "Therapeutic process evaluation (e.g., \"logro alto\"). Direct import. Recoded to standardized categories. Used in outcome and program effectiveness analysis.",
+  "eva_consumo" = "Evaluation of consumption pattern at discharge. Direct import. Part of multi-domain outcome assessment. Recoded similarly.",
+  "eva_fam" = "Family situation evaluation at discharge. Direct import.",
+  "eva_relinterp" = "Interpersonal relations evaluation at discharge. Direct import.",
+  "eva_ocupacion" = "Occupational situation evaluation at discharge. Direct import.",
+  "eva_sm" = "Mental health evaluation at discharge. Direct import.",
+  "eva_fisica" = "Physical health evaluation at discharge. Direct import.",
+  "eva_transgnorma" = "Social norm transgression evaluation at discharge. Direct import.",
+  "dg_global_nec_int_soc_or" = "Global social integration need at admission. Direct import. Recoded to `dg_global_nec_int_soc_or`. Categorized as \"altas\", \"medias\", \"bajas\". Used in social vulnerability index.",
+  "dg_nec_int_soc_cap_hum_or" = "Human capital need at admission. Direct import. Recoded to `dg_nec_int_soc_cap_hum_or`. Part of social integration profile.",
+  "dg_nec_int_soc_cap_fis_or" = "Physical capital need at admission. Direct import. Recoded to `dg_nec_int_soc_cap_fis_or`.",
+  "dg_nec_int_soc_cap_soc_or" = "Social capital need at admission. Direct import. Recoded to `dg_nec_int_soc_cap_soc_or`.",
+  "dg_global_nec_int_soc_egr_or" = "Global social integration need at discharge. Direct import. Recoded similarly to admission version (_60). Used for delta/change analysis.",
+  "dg_nec_int_soc_cap_hum_egr_or" = "Human capital need at discharge. Direct import.",
+  "dg_nec_int_soc_cap_fis_egr_or" = "Physical capital need at discharge. Direct import.",
+  "dg_nec_int_soc_cap_soc_egr_or" = "Social capital need at discharge. Direct import.",
+  "usuario_tribunal_trat_droga" = "Court-referred to drug treatment (very unbalanced, ~1% yes)",
+  "nationality_cons" = "Recoded/standardized from nacionalidad or pais_nacimiento.",
+  "ethnicity_c1_c6_historic" = "Concatenated unique non-Chilean/non-\"no pertenece\" values from etnia (C1) and ethnicity (C6), grouped by hash_key.",
+  "discapacidad" = "Indicator of disability (\"si\"/\"no\"). Direct import. Used with `opcion_discapacidad` for disability profiling. Starts coding in 2019",
+  "opcion_discapacidad" = "Type of disability (e.g., \"de causa psiquica\"). Direct import. Only populated if `discapacidad == \"si\"`. Used in accessibility and needs assessment.Starts coding in 2019",
+  "sex_rec" = "Sex (often used for biological categorization)",
+  "identidad_de_genero" = "Gender identity (e.g., \"masculino\", \"femenino\"). Direct import. Recoded to `identidad_de_genero` factor. Used to validate/override `sexo` in `sex_rec` (Step 2). Starts coding in 2019",
+  "orientacion_sexual" = "Sexual orientation (e.g., \"heterosexual\"). Direct import. Sparse. Preserved for inclusivity analysis.Starts coding in 2022",
+  "pregnant" = "Recoded pregnancy status at admission. Created from `se_trata_de_una_mujer_embarazada` (NA = \"no\"). Used in gender-specific analysis (Step 3). This variable (indicating if a woman is pregnant) seems to beintroduced in 2011.",
+  "pregnant_disch" = "Recoded pregnancy status at discharge. Created from `ha_estado_embarazada_egreso`. Used in gender-specific analysis (Step 3). Sparse. Seems to be only accurately collected starting in 2017. Created to capture pregnancy status specifically at treatment discharge.",
+  "marital_status" = "Marital status",
+  "tiene_menores_de_edad_a_cargo" = "Indicator if responsible for minors (\"si\"/\"no\"). Direct import. Mostly missing before 2015 (Duplicates_25.txt). Recoded to binary flag. Used in family vulnerability index.",
+  "num_hijos_trat_res" = "Number of children entering residential treatment with patient. Direct import. Often missing or 0. Later used to derive binary flag `hijos_trat_res` (\"Had children in treatments\").",
+  "numero_de_hijos" = "Number of children reported by patient. Direct import. Values >11 flagged as implausible (Duplicates_25.txt). Used in `kNN` imputation and to derive `tiene_menores_de_edad_a_cargo`.",
+  "con_quien_vive" = "Living arrangement/Cohabitation status",
+  "tipo_de_vivienda" = "Type of housing",
+  "precariedad_vivienda" = "Precarious housing. Direct import. Available since 2022 databases.",
+  "tenure_status_household" = "Housing situation",
+  "servicios_basicos_95" = "Basic sanitation services. Direct import. Available since 2022 databases.",
+  "perso_dormitorio_vivienda" = "Persons per dwelling bedroom Direct import. Available since 2022 databases.",
+  "ed_attainment" = "Recoded education level. Created from `escolaridad_ultimo_ano_cursado` into standardized categories (e.g., \"media incompleta\" = \"2-Completed high school or less\").",
+  "occupation_condition" = "Recoded employment status. Created from `condicion_ocupacional`: e.g., \"cesante\"= \"unemployed\" (in Step 1).",
+  "occupation_status" = "Recoded employment category. Created from `categoria_ocupacional`. Sparse; often NA.",
+  "rubro_trabaja" = "Occupational sector (e.g., \"trabajadores no calificados\"). Direct import. Recoded to `rubro_trabaja_mod`. 68% missing. 13.8% among employeed",
+  "laboral_ingresos" = "Monthly income. Direct import. Available since 2022 databases.",
+  "yr_block" = "Birth year block (e.g., 1980, 1990) for anonymization or grouping. Created by rounding `birth_date` year to nearest decade (e.g., `floor(year(birth_date)/10)*10`). To look for data similarities (Step 1)",
+  "OBS_series" = "OBS series",
+  "senda_series" = "SENDA series",
+  "pub_center_series" = "Public center series",
+  "id_centro_series" = "Center ID series",
+  "disch_date_num_rec6" = "Numeric discharge date recoded 6",
+  "dg_psiq_cie_10_instudy" = "Psychiatric comorbidity (ICD-10)",
+  "dg_psiq_cie_10_dg" = "Mutually exclusive (as corrected in Step 3)",
+  "dg_psiq_dsm_iv_instudy" = "Psychiatric comorbidity (DSM-IV)",
+  "dg_psiq_dsm_iv_dg" = "Mutually exclusive (as corrected in Step 3)",
+  "plan_type_series" = "Plan type series",
+  "tr_compliance_rec7_series" = "Treatment compliance recoded 7 series",
+  "referral_type_series" = "Referral type series",
+  "adm_age_rec3_series" = "Admission age recoded 3 series",
+  "adm_date_rec2_series" = "Admission date recoded 2 series",
+  "disch_date_rec6_series" = "Discharge date recoded 6 series",
+  "diagnostico_trs_fisico_series" = "Physical diagnosis series",
+  "otros_probl_at_sm_or_series" = "Other mental health problems series",
+  "OBS" = "Observed flags or notes from cleaning (e.g., \"Duplicated Cases\"). Created during duplicate detection and resolution. Contains manual or automated flags for data quality issues, removed entries, etc. It is separated by semi-colons",
+  "occupation_status_corr" = "Corrected employment status Created in Step 4. Only kept for employed; nulled for inactive/unemployed; filled as 'other' if missing. Depends on occupation_condition_inferred, occupation_status.",
+  "occupation_condition_corr24" = "Employment status",
+  "plan_type_corr" = "Treatment modality",
+  "ed_attainment_corr" = "Educational attainment",
+  "polysubstance_strict" = "Polysubstance use",
+  "icd10_diag1" = "ICD10 diagnosis 1 Created in Step 4. Separated from mod_psiq_cie_10 by \"::\". Depends on mod_psiq_cie_10.",
+  "icd10_diag2" = "ICD10 diagnosis 2 Created in Step 4. Separated from mod_psiq_cie_10 by \"::\". Depends on mod_psiq_cie_10.",
+  "icd10_diag3" = "ICD10 diagnosis 3 Created in Step 4. Separated from mod_psiq_cie_10 \"::\". Depends on mod_psiq_cie_10.",
+  "dsmiv_diag1" = "DSMIV diagnosis 1 Created in Step 4. Separated from mod_psiq_dsm_iv \"::\". Depends on mod_psiq_dsm_iv.",
+  "dsmiv_diag2" = "DSMIV diagnosis 2 Created in Step 4. Separated from mod_psiq_dsm_iv \"::\". Depends on mod_psiq_dsm_iv.",
+  "dsmiv_diag3" = "DSMIV diagnosis 3 Created in Step 4. Separated from mod_psiq_dsm_iv \"::\". Depends on mod_psiq_dsm_iv.",
+  "adm_year" = "Admission year",
+  "porc_pobr" = "Poverty index of the commune of residence [log1p(x)=porc_pobr_log, centered= porc_pobr_c, six quantile groups= porc_pobr_c_cat6]",
+  "clasificacion" = "Urbanization level of the commune of residence",
+  "km2_c" = "Centered km^2 Created in Step 4. Created in Step 4. km_2 - mean(km_2). Depends on km_2.km_2 - mean(km_2). Depends on km_2.",
+  "km2_log" = "Log km^2 Created in Step 4. Created in Step 4. km_2 - mean(km_2). Depends on km_2.log1p(km_2). Depends on km_2.",
+  "porc_pobr_log" = "Log poverty Created in Step 3. Re-joined in Step 4. log1p(porc_pobr). Depends on porc_pobr.",
+  "porc_pobr_c" = "Centered poverty Created in Step 3. Re-joined in Step 4. porc_pobr - mean(porc_pobr). Depends on porc_pobr."
+  # Removed "disch_date_real" as it doesn't exist in the dataframe
+)
+
+
+var_label(SISTRAT23_c1_2010_2024_df_prev1y) <- labels_map
+
+# Subset to these variables for codebook (removed disch_date_real)
+main_vars <- c("TABLE", "TABLE_rec_series", "rn", "rn_series", "num_trat_ant", 
+"fecha_ultimo_tratamiento", "hash_key", "min_adm_age_rec3", "adm_age_rec3", 
+"birth_date_rec", "adm_date_num_rec2", "adm_date_rec2", "dit_rec6", 
+"disch_date_rec6", "disch_date_num_rec6_trans", "def_date", "adm_motive", 
+"tr_compliance_rec7", "adm_disch_reason", "referral_type", "plan_type", 
+"id_centro", "senda", "pub_center", "primary_sub", "second_sub1", 
+"second_sub2", "second_sub3", "prim_sub_freq", "prim_sub_route", 
+"LB_age_primary_onset_rec2", "UB_age_primary_onset_rec2", "age_primary_onset_rec2", 
+"first_sub_used", "sus_ini_mod_mvv", "sus_ini_1", "sus_ini_2", 
+"sus_ini_3", "LB_age_subs_onset_rec2", "UB_age_subs_onset_rec2", 
+"age_subs_onset_rec2", "biopsych_comp", "mod_psiq_cie_10", "mod_psiq_dsm_iv", 
+"diagnostico_trs_fisico", "otros_probl_at_sm_or", "sub_dep_icd10_status", 
+"evaluacindelprocesoteraputico", "eva_consumo", "eva_fam", "eva_relinterp", 
+"eva_ocupacion", "eva_sm", "eva_fisica", "eva_transgnorma", "dg_global_nec_int_soc_or", 
+"dg_nec_int_soc_cap_hum_or", "dg_nec_int_soc_cap_fis_or", "dg_nec_int_soc_cap_soc_or", 
+"dg_global_nec_int_soc_egr_or", "dg_nec_int_soc_cap_hum_egr_or", 
+"dg_nec_int_soc_cap_fis_egr_or", "dg_nec_int_soc_cap_soc_egr_or", 
+"usuario_tribunal_trat_droga", "nationality_cons", "ethnicity_c1_c6_historic", 
+"discapacidad", "opcion_discapacidad", "sex_rec", "identidad_de_genero", 
+"orientacion_sexual", "pregnant", "pregnant_disch", "marital_status", 
+"tiene_menores_de_edad_a_cargo", "num_hijos_trat_res", "numero_de_hijos", 
+"con_quien_vive", "tipo_de_vivienda", "precariedad_vivienda", 
+"tenure_status_household", "servicios_basicos_95", "perso_dormitorio_vivienda", 
+"ed_attainment", "occupation_condition", "occupation_status", 
+"rubro_trabaja", "laboral_ingresos", "yr_block", "OBS_series", 
+"senda_series", "pub_center_series", "id_centro_series", "disch_date_num_rec6", 
+"dg_psiq_cie_10_instudy", "dg_psiq_cie_10_dg", "dg_psiq_dsm_iv_instudy", 
+"dg_psiq_dsm_iv_dg", "plan_type_series", "tr_compliance_rec7_series", 
+"referral_type_series", "adm_age_rec3_series", "adm_date_rec2_series", 
+"disch_date_rec6_series", "diagnostico_trs_fisico_series", "otros_probl_at_sm_or_series", 
+"OBS", "occupation_status_corr", "occupation_condition_corr24", 
+"plan_type_corr", "ed_attainment_corr", "polysubstance_strict", 
+"icd10_diag1", "icd10_diag2", "icd10_diag3", "dsmiv_diag1", "dsmiv_diag2", 
+"dsmiv_diag3", "adm_year", "porc_pobr", "clasificacion", "km2_c", 
+"km2_log", "porc_pobr_log", "porc_pobr_c")
+
+df_subset <- SISTRAT23_c1_2010_2024_df_prev1y %>% select(all_of(main_vars))
+
+# Generate HTML codebook
+
+codebook_data <- df_subset
+
+# Add metadata
+metadata(codebook_data)$datePublished <- "2024-01-01"
+metadata(codebook_data)$temporalCoverage <- "2010-2024"
+metadata(codebook_data)$spatialCoverage <- "Chile"
+
+metadata(codebook_data)$creator <- list(
+  list("@type" = "Person",
+       givenName = "Álvaro", familyName = "Castillo-Carniglia",
+       affiliation = list("@type" = "Organization",
+                          name = "Universidad San Sebastián, Chile")),
+  list("@type" = "Person",
+       givenName = "Andrés", familyName = "González-Santa Cruz",
+       email = "gonzalez.santacruz.andres@gmail.com",
+       affiliation = list("@type" = "Organization",
+                          name = "Universidad de Chile, Public Health")),
+  list("@type" = "Person",
+       givenName = "Amaru", familyName = "Agüero Jiménez",
+       affiliation = list("@type" = "Organization",
+                          name = "Universidad del Desarrollo, Chile"))
+)
+metadata(codebook_data)$citation <- "Castillo-Carniglia, Á., González-Santa Cruz, A., & Agüero Jiménez, A. (2024). Workflow of data management and analysis - Chilean substance use treatment administrative data. Consolidation of Agreement 1 Databases from 2010 to 2024. Funded by FONDECYT regular 1191282."
+metadata(codebook_data)$url <- "https://github.com/FONDECYTACC/cons2025"
+metadata(codebook_data)$name <- "Agreement 1 SENDA"
+metadata(codebook_data)$description <- "Information About Agreement 1 of SENDA and MINSAL"
+
+
+```
+
+```{r codebook-print}
+codebook(codebook_data)
+```
+
