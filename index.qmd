@@ -45,7 +45,7 @@ This page is composed by the following main topics:
 
 7. [**Descriptive Glimpse of the Database**](prediction1.html)
 
-8. [**Codebook of C1**](codebook_25.html)
+8. [**Codebook of C1**](codebook.html)
 
 The main processes are summarized in the following figures.
 
