@@ -1,0 +1,18 @@
+$env:MAMBA = "G:\My Drive\Alvacast\SISTRAT 2023\.mamba_root\micromamba.exe"
+$env:MAMBA_ROOT_PREFIX = "G:\My Drive\Alvacast\SISTRAT 2023\.mamba_root"
+
+# (optional) confirm where it’s looking + list envs
+& $env:MAMBA info
+& $env:MAMBA env list
+
+# create the env (first time)
+& $env:MAMBA create -n surv311 -c conda-forge -y python=3.11
+
+# install what you need
+& $env:MAMBA install -n surv311 -c conda-forge -y spyder scikit-survival
+
+# pip packages inside the env (if needed)
+& $env:MAMBA run -n surv311 python -m pip install lifelines miceforest
+
+# launch Spyder from that env
+& $env:MAMBA run -n surv311 spyder
