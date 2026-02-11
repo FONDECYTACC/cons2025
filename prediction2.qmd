@@ -1,0 +1,1474 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022 (Prediction, step 2)"
+description: |
+  This step involves exploring the behavior of the predictors and best subset selection algorithms.
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-depth: 5
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.superbigimage {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+.superbigimage img, 
+.superbigimage svg {
+  max-width: none;
+  height: auto;
+}
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+<div class="scrollable-content">
+```{r load}
+#| message: false
+#| include: true
+#| warning: false
+#| results: "hold"
+
+# invisible("Only run from Ubuntu")
+# if (!(Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv"))) {
+#   if(Sys.info()["sysname"]!="Windows"){
+#     Sys.setenv(RETICULATE_PYTHON = "/home/fondecytacc/.pyenv/versions/3.11.5/bin/python")
+#   }
+# }
+
+#clean enviroment
+rm(list = ls()); gc()
+
+time_before_dedup2<-Sys.time()
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+find_python_rel <- function(start = getwd(),
+                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+    if (file.exists(cand)) return(cand)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+    cur <- parent
+  }
+}
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+if(Sys.info()["sysname"]!="Windows"){
+  Sys.setenv(RETICULATE_PYTHON = "usr/bin/python3")
+  reticulate::py_config()
+} else {
+  py <- find_python_rel()
+  if (is.na(py)) {
+    stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+         "Directorio actual: ", getwd())
+  }
+  # Forzar ese intérprete
+  Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+  Sys.setenv(RETICULATE_PYTHON = py)
+  reticulate::use_python(py, required=T)
+  reticulate::py_config()  # verificación
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# --- Load pred1_ndp_2026_01_05.Rdata (simple, project-root aware, no functions) ---
+
+# 1) Locate the file anywhere under the project root (current WD with a trailing "/cons" trimmed)
+project_root <- sub("(/)?cons/?$", "", normalizePath(getwd(), winslash = "/", mustWork = FALSE))
+fname        <- "pred1_ndp_2026_01_05.Rdata"
+
+hits <- list.files(project_root, pattern = paste0("^", fname, "$"),
+                   recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
+
+if (!length(hits)) stop("File not found: ", fname, "\nSearched under: ", project_root)
+path <- hits[1]  # take first match
+
+message("Loading: ", path)
+
+# 2) Load into a dedicated environment (keeps .GlobalEnv clean)
+env_pred <- new.env(parent = emptyenv())
+loaded_objects <- load(path, envir = env_pred)
+
+message("Loaded ", length(loaded_objects), " object(s): ", paste(loaded_objects, collapse = ", "))
+
+# 3) Quick sanity check for each loaded object
+for (obj_name in loaded_objects) {
+  obj <- get(obj_name, envir = env_pred)
+  message("\n--- ", obj_name, " ---")
+  if (is.data.frame(obj)) {
+    message("Rows: ", nrow(obj), " | Cols: ", ncol(obj))
+  } else {
+    message("Class: ", paste(class(obj), collapse = ", "), " | Length/Size: ", length(obj))
+  }
+  #print(str(obj))
+}
+
+# 4) Extract all loaded objects to global environment
+for (obj_name in loaded_objects) {
+  assign(obj_name, get(obj_name, envir = env_pred), envir = .GlobalEnv)
+}
+
+# Clean up temporary environment
+rm(env_pred)
+# (Optional) If you want it in the global env, uncomment:
+# list2env(env_prev1y, envir = .GlobalEnv)
+```
+</div>
+
+<div class="scrollable-content">
+```{r setup}
+#| results: "hold"
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#only use explicit dependencies (in DESCRIPTION)
+renv::settings$snapshot.type("implicit")
+
+#check if rstools is installed
+if(Sys.info()["sysname"]=="Windows"){
+try(installr::install.Rtools(check_r_update=F))
+}
+
+check_quarto_version <- function(required = "1.7.29", comparator = c("ge","gt","le","lt","eq")) {
+  comparator <- match.arg(comparator)
+  current <- package_version(paste(unlist(quarto::quarto_version()), collapse = "."))
+  req     <- package_version(required)
+
+  ok <- switch(comparator,
+               ge = current >= req,
+               gt = current >  req,
+               le = current <= req,
+               lt = current <  req,
+               eq = current == req)
+
+  if (!ok) {
+    stop(sprintf("Quarto version check failed: need %s %s (installed: %s).",
+                 comparator, required, current), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+check_quarto_version("1.7.29", "ge") 
+
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+if(!require(pak)){install.packages("pak");require(pak)}
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+
+#check docker
+check_docker_running <- function() {
+  # Try running 'docker info' to check if Docker is running
+  system("docker info", intern = TRUE, ignore.stderr = TRUE)
+}
+if(Sys.info()["sysname"]=="Windows"){
+  install_docker <- function() {
+    # Open the Docker Desktop download page in the browser for installation
+    browseURL("https://www.docker.com/products/docker-desktop")
+  }
+  # Main logic
+  if (inherits(try(check_docker_running(), silent = TRUE), "try-error")) {
+    liftr::install_docker()
+  } else {
+    message("Docker is running.")
+  }
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+unlink("*_cache", recursive=T)
+
+# ----------------------------------------------------------------------
+# 2. Use a single pak::pkg_install() call for most CRAN packages
+# ----------------------------------------------------------------------
+
+paks <-
+  c(#"git", 
+    # To connect to github
+    "gh", #interface for  GitHub API from R
+    #
+    "gitcreds", # manages Git credentials (usernames, passwords, tokens)
+    #
+    "usethis", # simplifies common project setup tasks for R developers
+    # Package to bring packages in development
+    "devtools",
+    # Package administration
+    "renv",
+    # To manipulate data
+    "knitr", "pander", "DT",
+    # Join
+    "fuzzyjoin", "RecordLinkage",
+    # For tables
+    "tidyverse", "janitor",
+    # For contingency tables
+    "kableExtra",
+    # For connections with python
+    "reticulate",
+    # To manipulate big data
+    "polars", "sqldf",
+    # To bring big databases
+    "nanoparquet",
+    # Interface for R and RStudio in R
+    "installr", "rmarkdown", "quarto", "yaml", #"rstudioapi",
+    # Time handling
+    "clock",
+    # Combine plots
+    "ggpubr",
+    # Parallelized iterative processing
+    "furrr",
+    # Work like a tibble with a data.table database
+    "tidytable",
+    # Split database into training and testing
+    "caret",
+    # Impute missing data
+    "missRanger", "mice",
+    # To modularize tasks
+    "job",
+    # For PhantomJS install checks
+    "webshot"
+  )
+
+# dplyr
+# janitor
+# reshape2
+# tidytable
+# arrow
+# boot
+# broom
+# car
+# caret
+# data.table
+# DiagrammeR
+# DiagrammeRsvg
+# dplyr
+# epiR
+# epitools
+# ggplot2
+# glue
+# htmlwidgets
+# knitr
+# lubridate
+# naniar
+# parallel
+# polycor
+# pROC
+# psych
+# readr
+# rio
+# rsvg
+# scales
+# stringr
+# tableone
+# rmarkdown
+# biostat3
+# codebook
+# finalfit
+# Hmisc
+# kableExtra
+# knitr
+# devtools
+# tidyr
+# stringi
+# stringr
+# muhaz
+# sqldf
+# compareGroups
+# survminer
+# lubridate
+# ggfortify
+# car
+# fuzzyjoin
+# compareGroups
+# caret
+# job
+# htmltools
+# nanoparquet
+# ggpubr
+# polars
+# installr
+# clock
+# pander
+# reshape
+# mice
+# missRanger
+# VIM
+# withr
+# biostat3
+# broom
+# glue
+# finalfit
+# purrr
+# sf
+
+
+# pak::pkg_install(paks)
+
+pak::pak_sitrep()
+# pak::sysreqs_check_installed(unique(unlist(paks)))
+#pak::lockfile_create(unique(unlist(paks)),  "dependencies_duplicates24.lock", dependencies=T)
+#pak::lockfile_install("dependencies_duplicates24.lock")
+#https://rdrr.io/cran/pak/man/faq.html
+#pak::cache_delete()
+
+library(tidytable)
+library(ggplot2)
+library(readr)
+library(glmulti)
+library(tableone)
+library(survivalmodels)
+#renv::install("patchwork@1.2.0")
+library(survex)
+library(SemiMarkov)
+library(flexsurv)
+library(rms)
+library(survidm)
+library(caret)
+
+# library(shapr)#https://norskregnesentral.github.io/shapr/
+# library(survidm)#https://sci-hub.ee/10.1002/bimj.201700200
+# library(SemiMarkov)#https://www.degruyterbrill.com/document/doi/10.1515/ijb-2020-0083/html?lang=en
+# #https://www.jclinepi.com/article/S0895-4356(24)00142-2/fulltext
+
+# ----------------------------------------------------------------------
+# 3. Activate polars code completion (safe to try even if it fails)
+# ----------------------------------------------------------------------
+#try(polars_code_completion_activate())
+
+# ----------------------------------------------------------------------
+# 4. BPMN from GitHub (not on CRAN, so install via devtools if missing)
+# ----------------------------------------------------------------------
+if (!requireNamespace("bpmn", quietly = TRUE)) {
+  devtools::install_github("bergant/bpmn")
+}
+
+# ----------------------------------------------------------------------
+# 5. PhantomJS Check (use webshot if PhantomJS is missing)
+# ----------------------------------------------------------------------
+# if (!webshot::is_phantomjs_installed()) {
+#   webshot::install_phantomjs()
+# }
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+# NO MORE DEBUGS
+options(error = NULL)        # si antes tenías options(error = recover) o browser)
+options(browserNLdisabled = FALSE)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+
+pander::panderOptions('big.mark', ',')
+pander::panderOptions('decimal.mark', '.')
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+
+  for (r in rows){
+    for(c in cols){
+
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: small !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+
+sum_dates <- function(x){
+  cbind.data.frame(
+    min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+    p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+    p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+    p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+    p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+    p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+    p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+    p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+    p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+    p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+    max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+
+# Custom function for sampling with a seed
+sample_n_with_seed <- function(data, size, seed) {
+  set.seed(seed)
+  dplyr::sample_n(data, size)
+}
+
+# Function to get the most frequent value 
+most_frequent <- function(x) { 
+  uniq_vals <- unique(x)
+  freq_vals <- sapply(uniq_vals, function(val) sum(x == val))
+  most_freq <- uniq_vals[which(freq_vals == max(freq_vals))]
+  
+  if (length(most_freq) == 1) {
+    return(most_freq)
+  } else {
+    return(NA)
+  }
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+options(scipen=2) #display numbers rather scientific number
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Define the function first
+#joins these values with semicolons and optionally truncates the result if it exceeds a specified width.
+toString2 <- function(x, width = NULL, ...) {
+    string <- paste(x, collapse = "; ")
+    if (missing(width) || is.null(width) || width == 0) 
+        return(string)
+    if (width < 0) 
+        stop("'width' must be positive")
+    if (nchar(string, type = "w") > width) {
+        width <- max(6, width)
+        string <- paste0(substr(string, 1, width - 3), "...")
+    }
+    string
+}
+normalize_txt <- function(x) {
+  x|>
+    stringi::stri_trans_general("Latin-ASCII")|>
+    tolower()|>
+    trimws()
+}
+
+pair_str <- function(main, sub) {
+  main <- as.character(main)
+  sub  <- as.character(sub)
+  both_na <- is.na(main) & is.na(sub)
+
+  out <- paste0(
+    tidytable::coalesce(main, "NA"),
+    "::",
+    tidytable::coalesce(sub,  "NA")
+  )
+
+  out[both_na] <- NA_character_
+  out
+}
+
+# ── Helpers ────────────────────────────────────────────────────────────
+mode_pick_int <- function(x){
+  x <- x[!is.na(x)]
+  if(length(x)==0) return(NA_integer_)
+  tx <- sort(table(x), decreasing = TRUE)
+  as.integer(names(tx)[1L])
+}
+
+subkey_to_label <- function(x){
+  y <- gsub("_"," ", tolower(x))
+  y <- gsub("amphetamine type stimulants","amphetamine-type stimulants", y)
+  y <- gsub("tranquilizers hypnotics","tranquilizers/hypnotics", y)
+  y
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Encryption ────────────────────────────────────────────────────────
+
+# Pack: [24-byte nonce][ciphertext] -> hex
+encrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        ct <- sodium::data_encrypt(charToRaw(as.character(v)), key)
+        nonce <- attr(ct, "nonce")                 # 24 bytes
+        sodium::bin2hex(c(nonce, ct))              # pack nonce + ct
+    }, FUN.VALUE = character(1))
+}
+
+# Unpack: hex -> [nonce|ciphertext], restore attr(nonce), then decrypt
+decrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        buf <- sodium::hex2bin(v)
+        if (length(buf) < 25L) stop("Ciphertext too short or corrupted.")
+        nonce <- buf[1:24]
+        ct    <- buf[-(1:24)]
+        attr(ct, "nonce") <- nonce
+        rawToChar(sodium::data_decrypt(ct, key))
+    }, FUN.VALUE = character(1))
+}
+
+# Function to encrypt a character vector
+encrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item) || item == "") {
+      return(NA_character_)
+    }
+    encrypted_raw <- sodium::data_encrypt(charToRaw(item), key)
+    base64enc::base64encode(encrypted_raw)  # Convert to base64 for storage
+  }, USE.NAMES = FALSE)
+}
+
+decrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item)) return(NA_character_)
+    encrypted_raw <- base64enc::base64decode(item)
+    rawToChar(sodium::data_decrypt(encrypted_raw, key))
+  }, USE.NAMES = FALSE)
+}
+
+
+is_stata_ok <- function(x) {
+  nchar(x) <= 32 & grepl("^[A-Za-z][A-Za-z0-9_]*$", x)
+}
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Tidy RMS ────────────────────────────────────────────────────────
+
+tidy_cph <- function(model) {
+  if (!inherits(model, "cph")) stop("Model must be an rms::cph object")
+  
+  # run summary
+  s <- summary(model)
+  df_s <- as.data.frame(unclass(s))
+  df_s$rown <- rownames(s)
+  
+  # find rows that are "Hazard Ratio"
+  hr_rows <- trimws(df_s$rown) == "Hazard Ratio"
+  
+  # build tidy tibble
+  tibble::tibble(
+    term     = trimws(rownames(s)[which(hr_rows) - 1L]), # previous row = variable name
+    estimate = df_s$Effect[hr_rows],                     # Hazard Ratio
+    conf.low = df_s$`Lower 0.95`[hr_rows],
+    conf.high= df_s$`Upper 0.95`[hr_rows],
+    p.value  = df_s$P[hr_rows]
+  )
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- Step 1: Define File Paths ---
+
+# SET THIS to the correct path of your secret text file
+secret_file_path <- "C:/Users/andre/Documents/secret.txt"
+# This locates the user-level .Renviron file automatically
+renviron_path <- file.path(Sys.getenv("HOME"), ".Renviron")
+# --- Step 2: Read the Secret Key from the .txt file ---
+# Read the first line of the file and trim any whitespace
+api_key <- trimws(readLines(secret_file_path, n = 1, warn = FALSE))
+# --- Step 3: Check if the key is already in .Renviron ---
+# Read all existing lines from .Renviron (if it exists)
+if (file.exists(renviron_path)) {
+  existing_lines <- readLines(renviron_path, warn = FALSE)
+} else {
+  existing_lines <- c()
+}
+# Check if a line for OPENAI_API_KEY already exists
+key_exists <- any(grepl("^OPENAI_API_KEY=", existing_lines))
+# --- Step 4: Write to .Renviron if the key isn't already there ---
+if (!key_exists) {
+  # Format the line to be added
+  line_to_add <- sprintf('OPENAI_API_KEY="%s"', api_key)
+  # Append the line to the .Renviron file, adding a newline before it if the file isn't empty
+  cat(line_to_add, "\n", file = renviron_path, append = TRUE)
+  message("✅ Success! OPENAI_API_KEY has been added to your .Renviron file.")
+  message("Please restart your R session for the change to take effect.")
+} else {
+  message("ℹ️ The OPENAI_API_KEY already exists in your .Renviron file. No changes were made.")
+}
+options(.gander_chat = ellmer::chat_openai(model = "o1-mini"))
+```
+</div>
+
+<br>
+
+::: {.callout-note}
+** **
+
+
+**Aims**
+
+- To identify key prognostic and predictive factors associated with the risk of, and time to, the first readmission to treatment among patients aged 18-64 undergoing initial treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+
+- To identify key prognostic and predictive factors associated with the risk of, and time to, all-cause mortality among the same cohort of patients undergoing initial treatment for SUD in Chile.
+
+- To predict the risk and timing of first treatment readmission and all-cause mortality simultaneously, treating these outcomes within a semi-competing risks framework. This will allow for the estimation of cumulative incidence for each event in the presence of the other for patients aged 18-64 who initiated SUD treatment in Chile between 2010 and 2020.
+
+This study has three primary objectives. First, we aim to identify key prognostic and predictive factors associated with the risk and timing of two critical outcomes: (i) first readmission to treatment and (ii) all-cause mortality. Second, using a semi-competing risks framework, we will develop a model to simultaneously predict these two outcomes, accounting for the fact that death precludes the possibility of readmission. Finally, this model will be used to estimate the probability of various patient trajectories over time following initial treatment. The study population includes all patients aged 18-64 who began treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+:::
+
+<br>
+
+## 0. Prepare data
+
+In this step, we imported the center identifiers and then applied a correction procedure across all imputed datasets to ensure consistency in event-time definitions. Specifically, we converted time and event variables to numeric and integer formats, identified cases where death occurred before or at the readmission endpoint (competing risks), and adjusted follow‑up times and event indicators accordingly by censoring readmission in those situations. After cleaning up temporary variables, we added the center ID as a factor to each dataset. We also excluded `high_uncertainty_imps`, which encompassed predictors with were not reliable. Finally, we exported the corrected datasets both individually as `.parquet` files named as `corrected_datasets_nondum` (nondum= not-dummified) and collectively as a single `.Rds` object, creating a clean and reproducible output ready for downstream analyses.
+
+```{r prepare-data}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+id_centro_vec<- 
+rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/id_centro.Rds"))
+
+# 1. Apply Correction to Each Dataset in the List
+corrected_datasets_nondum <- map(filled_datasets, function(df) {
+  # Ensure columns are numeric for comparison
+  df <- df|> 
+    mutate(
+      readmit_time = as.numeric(readmit_time_from_disch_m),
+      death_time   = as.numeric(death_time_from_disch_m),
+      # Ensure events are 0/1 integers
+      readmit_event = as.integer(as.character(readmit_event)), 
+      death_event   = as.integer(as.character(death_event))
+    )
+  # --- THE CORRECTION LOGIC ---
+  df <- df|>
+    dplyr::mutate(
+      # condition: Patient died (death_event==1) AND death happened before (or at) the readmission endpoint
+      is_competing_risk = (death_event == 1) & (death_time <= readmit_time),
+      # 1. Update Time: If competing risk, cut follow-up at death time. Otherwise keep original.
+      readmit_time_from_disch_m = dplyr::if_else(is_competing_risk, death_time, readmit_time),
+      # 2. Update Event: If competing risk, censor readmission (set to 0). Otherwise keep original.
+      readmit_event = dplyr::if_else(is_competing_risk, 0, readmit_event)
+    )|>
+    # Remove temporary helper columns if you want to keep the dataset clean
+    dplyr::select(-readmit_time, -death_time, -is_competing_risk)|>
+    dplyr::select(any_of(
+      setdiff(c(num_vars, cat_vars, "readmit_event", "death_event", "readmit_time_from_disch_m","death_time_from_disch_m"), high_uncertainty_imps)
+    ))|>
+    dplyr::mutate(center_id= factor(id_centro_vec))
+  return(df)
+})
+```
+
+
+```{r prepare-data-exp}
+# 2. Iterate and Export
+# iwalk automatically gives you the object (.x) and its index (.y)
+purrr::iwalk(corrected_datasets_nondum, function(df, i) {
+  # Construct the full file path
+  # e.g. .../data/20241015_out/imputation_1.parquet
+  file_name <- file.path(output_dir, paste0("imputation_nondum_", i, ".parquet"))
+  # Export using rio
+  rio::export(df, file_name)
+  message(paste("Saved:", file_name))
+})
+
+#Export list
+rio::export(corrected_datasets_nondum, paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets_nondum.Rds"))
+#corrected_datasets_nondum<- rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets_nondum.Rds"))
+```
+
+# Proportionality
+
+```{r nonprop-def-models}
+df <- corrected_datasets_nondum[[1]]
+
+# Define the list of predictors based on your provided list
+predictors <- c(
+  "adm_age_rec3", "porc_pobr", "dit_m", "sex_rec", "tenure_status_household", 
+  "cohabitation", "sub_dep_icd10_status", "any_violence", "prim_sub_freq_rec", 
+  "tr_outcome", "adm_motive", "first_sub_used", "primary_sub_mod", 
+  "tipo_de_vivienda_rec2", "national_foreign", 
+  "occupation_condition_corr24", "marital_status_rec", "urbanicity_cat", 
+  "ed_attainment_corr", "evaluacindelprocesoteraputico", "eva_consumo", 
+  "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", 
+  "eva_transgnorma", "ethnicity", "dg_psiq_cie_10_instudy", 
+  "dg_psiq_cie_10_dg", "dx_f3_mood", "dx_f6_personality", 
+  "dx_f_any_severe_mental", "any_phys_dx", "polysubstance_strict"
+)
+
+# Create the formulas
+formula_readmit <- as.formula(paste("Surv(readmit_time_from_disch_m, readmit_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_corr)"))
+
+formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_corr)"))
+```
+
+
+```{r nonprop2-test-coxzph-readm}
+# --- READMISSION MODEL ---
+cox_readmit <- coxph(formula_readmit, data = df)
+ph_test_readmit <- cox.zph(cox_readmit)
+
+ph_test_readmit$table |>
+  data.table::data.table(keep.rownames = TRUE) |>
+  dplyr::arrange(desc(chisq)) |>
+  dplyr::mutate(
+    p_fmt = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
+    chi_fmt = sprintf("χ²(%d)= %.2f, p%s", df, chisq, ifelse(p < 0.001, "<0.001", paste0("=", p_fmt)))) |>
+  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt)|>
+  knitr::kable(caption="Schofeld residuals, readmission")
+
+
+# 1. Identify violators (you already have this part)
+violations_readm <- ph_test_readmit$table |> 
+  data.table::data.table(keep.rownames = T) |> 
+  dplyr::mutate(p = as.numeric(p)) |> 
+  dplyr::filter(p < 0.05) |> 
+  dplyr::pull(rn) |> 
+  setdiff("GLOBAL")
+
+# 2. Generate the combined plot
+# ggcoxzph creates a list of plots if you pass multiple variables
+combined_plots <- ggcoxzph(ph_test_readmit, var = violations_readm)
+
+# Open a PDF device 
+pdf("_figs/ph_test_violations_readm.pdf", width = 16*1.5, height = 12*1.5) 
+# Draw the combined plot 
+print(combined_plots) 
+# Close the device 
+dev.off()
+
+png(
+  filename = "_figs/ph_test_violations_readm.png",
+  width  = 16 * 1.5,
+  height = 12 * 1.5,
+  units  = "in",
+  res    = 300
+)
+print(combined_plots) 
+
+dev.off()
+```
+
+
+```{r nonprop3-test-coxzph}
+library(survminer)
+
+# --- DEATH MODEL ---
+cox_death <- coxph(formula_death, data = df)
+ph_test_death <- cox.zph(cox_death)
+
+ph_test_death$table|>
+  data.table::data.table(keep.rownames = TRUE)|>
+  dplyr::arrange(desc(chisq))|>
+  dplyr::mutate(
+    p_fmt = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
+    chi_fmt = sprintf("χ²(%d)= %.2f, p%s", df, chisq, ifelse(p < 0.001, "<0.001", paste0("=", p_fmt))))|>
+  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt)|>
+  knitr::kable(caption="Schofeld residuals, death")
+
+# 1. Identify violators (you already have this part)
+violations <- ph_test_death$table|> 
+  data.table::data.table(keep.rownames = T)|> 
+  dplyr::mutate(p = as.numeric(p))|> 
+  dplyr::filter(p < 0.05)|> 
+  dplyr::pull(rn)|> 
+  setdiff("GLOBAL")
+
+# 2. Generate the combined plot
+# ggcoxzph creates a list of plots if you pass multiple variables
+combined_plots <- ggcoxzph(ph_test_death, var = violations)
+
+# Open a PDF device 
+pdf("_figs/ph_test_violations_death.pdf", width = 16*1.5, height = 12*1.5) 
+# Draw the combined plot 
+print(combined_plots) 
+# Close the device 
+dev.off()
+png(
+  filename = "_figs/ph_test_violations_death.png",
+  width  = 16 * 1.5,
+  height = 12 * 1.5,
+  units  = "in",
+  res    = 300
+)
+print(combined_plots) 
+
+dev.off()
+```
+
+We should:
+
+ - Stratify `tr_outcome` (Treat the baseline hazard differently for each outcome) for both outcomes
+
+- Stratify by Admission motive (`adm_motive`) have very different risk profiles that evolve differently over time, for time to readmission.
+
+- Add time-interaction in Days in treatment (`dit_m`) has a decaying association ([ function(x, t, ...) x * log(t + 1) ]) for time to readmission.
+
+-  Add time-interaction for `any_phys_dx` (Model the decaying association [ function(x, t, ...) x * log(t + 1) ]) for time to death.
+
+```{r nonprop5-log-log}
+
+message("We had to handle ties")
+
+fit_stratified <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ tr_outcome, data = dplyr::filter(df, tr_outcome!="other")|> 
+  dplyr::mutate(readmit_time_from_disch_m =  ifelse(readmit_time_from_disch_m == 0, 0.001, readmit_time_from_disch_m)))
+
+p <- ggsurvplot(fit_stratified, 
+           fun = "cloglog", 
+           conf.int = TRUE,
+           title = "LML Plot for Treatment Outcome (Readmission)",
+           xlab = "log(Time from discharge)",
+           ylab = "log(-log(Survival))",
+           # Provide clean names here in the correct order
+           legend.labs = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral"),
+           legend.title = "Treatment Outcome"
+)
+p$plot <- p$plot +
+  geom_point(
+    aes(shape = strata, color = strata),
+    size = 2
+  ) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Treatment\nOutcome",
+    labels = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3), 
+    name = "Treatment\nOutcome",
+    labels = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral")
+  ) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    text = element_text(family = "Arial")
+  )
+p$plot
+
+
+p_esp_readm <- ggsurvplot(
+  fit_stratified,
+  fun = "cloglog",
+  conf.int = TRUE,
+  censor = FALSE,   # oculta símbolos de censura
+  xlab = "log(Tiempo desde el alta)",
+  ylab = "log(-log(Supervivencia))",
+  legend.labs = c("Razones\nadministrativas", 
+                  "Violación\nde reglas", 
+                  "Finalización", 
+                  "Abandono", 
+                  "Derivación"),
+  legend.title = "Resultado\ndel tratamiento",
+  palette = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+  ggtheme = theme_minimal(base_family = "Arial")
+)
+
+p_esp_readm$plot <- p_esp_readm$plot +
+    geom_point(
+    aes(shape = strata, color = strata),
+    size = 2
+  ) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3), 
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  theme(
+    text = element_text(family = "Arial"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    plot.title = element_blank()
+  )
+ggsave(
+  filename = "_figs/supervivencia_cloglog_readmision.png",
+  plot = p_esp_readm$plot,
+  dpi = 300,
+  width = 8,
+  height = 6,
+  units = "in"
+)
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+fit_stratified_death <- survfit(Surv(death_time_from_disch_m, death_event) ~ tr_outcome, data = df |> dplyr::filter(tr_outcome!="other") |> 
+  dplyr::mutate(death_time_from_disch_m =  ifelse(death_time_from_disch_m == 0, 0.001, death_time_from_disch_m)))
+
+
+p <- ggsurvplot(
+  fit_stratified_death,
+  fun = "cloglog",
+  conf.int = TRUE,
+  censor = FALSE,
+  xlab = "log(Time from discharge)",
+  ylab = "log(-log(Survival))",
+  legend.labs = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral"),
+  legend.title = "Treatment\nOutcome",
+  palette = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"), # escala azul-gris distinguible
+  #RColorBrewer::brewer.pal(5, "Greys"),
+  ggtheme = theme_minimal(base_family = "Arial") # tipografía Arial
+)
+p$plot <- p$plot +
+  geom_point(
+    aes(shape = strata, color = strata),
+    size = 2
+  ) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Treatment\nOutcome",
+    labels = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3), 
+    name = "Treatment\nOutcome",
+    labels = c("Adm Reasons", "Rule Violation", "Completion", "Dropout", "Referral")
+  ) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    text = element_text(family = "Arial")
+  )
+p$plot
+
+p_esp_death <- ggsurvplot(
+  fit_stratified_death,
+  fun = "cloglog",
+  conf.int = TRUE,
+  censor = FALSE,   # oculta símbolos de censura
+  xlab = "log(Tiempo desde el alta)",
+  ylab = "log(-log(Supervivencia))",
+  legend.labs = c("Razones\nadministrativas", 
+                  "Violación\nde reglas", 
+                  "Finalización", 
+                  "Abandono", 
+                  "Derivación"),
+  legend.title = "Resultado\ndel tratamiento",
+  palette = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+  ggtheme = theme_minimal(base_family = "Arial")
+)
+
+p_esp_death$plot <- p_esp_death$plot +
+    geom_point(
+    aes(shape = strata, color = strata),
+    size = 2
+  ) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3), 
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  theme(
+    text = element_text(family = "Arial"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    plot.title = element_blank()
+  )
+ggsave(
+  filename = "_figs/supervivencia_cloglog_fallecimiento.png",
+  plot = p_esp_death$plot,
+  dpi = 300,
+  width = 8,
+  height = 6,
+  units = "in"
+)
+```
+
+We see that treatment outcome has different baseline shapes.
+
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+)|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#|class-output: center-table
+
+reticulate::py_list_packages()|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out", paste0("pred2_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  password <- Sys.getenv("PASSWORD_SECRET")
+} else {
+  if (interactive()) {
+    utils::savehistory(tempfile())
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+    utils::loadhistory()
+  }
+  Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+}
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+save.image(paste0(rdata_path,".enc"))
+
+# Encriptar el archivo en el mismo lugar
+httr2::secret_encrypt_file(path = paste0(rdata_path,".enc"), key = "PASSWORD_SECRET")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Copy renv lock into cons folder\n")
+
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup2<-Sys.time()
+
+paste0("Time in markdown: ");time_after_dedup2-time_before_dedup2
+```

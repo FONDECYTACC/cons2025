@@ -6883,7 +6883,8 @@ out2|>
 # Preliminary Dataset (n = 150,187)
 #  159,908- 150187= 9721= 4,4%
 # 
-# Debería ser el final, el 150,187, pero tengo 150,046. Bueno, filo. Lo que importa es que lo cuento desde aqui
+# Debería ser el final, el 150,187, pero tengo 150,046. 
+# Bueno, filo. Lo que importa es que lo cuento desde aqui
 #  
 library(DiagrammeR)
 gr<-
@@ -7668,8 +7669,8 @@ c_SISTRAT_c1_transport <- lexpand(clean_df|> left_join(mortality_deduplicated[,c
                                                 #2025-06-11=No filtro por la edad en que fallece la persona, el filtro ya lo hice arriba
                                                 age = c(18, 30, 45, 60, 76)), #, fot = c(0, 1, 3, 5, Inf)
                                   aggre = list(agegroup = age, year = per, sex= sex_rec))
-
-sr_1_accidents_df <- 
+#2025-12-13, corrected
+sr_1_transport_df <- 
 popEpi::sir( coh.data = c_SISTRAT_c1_transport, coh.obs = 'from0to1', coh.pyrs = 'pyrs',
              ref.data = mx_1x1_comp_filt3, #this should be only for people with assaults
              ref.rate = 'haz_transport_accidents', 

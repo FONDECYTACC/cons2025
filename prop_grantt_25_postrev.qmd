@@ -1,0 +1,4138 @@
+---
+title: "Polysubstance and tr. completion (post review)"
+description: |
+  Analyze the association between polysubstance at admission and tr. compleiton longitudinally along treatments, accounting for irregular observations. Answer to the reviewer's comments.
+date: last-modified
+author: "Andrés González Santa Cruz"
+toc: true
+toc-depth: 5
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-depth: 5
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+
+```{=html}
+<style type="text/css">
+
+.showopt {
+
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+
+}
+
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+
+}
+
+pre.plot {
+background-color: white !important;
+}
+
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+
+.centrado {
+text-align: center;
+}
+
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+
+/* Applies to outputs that are not code other than R*/
+
+pre {
+overflow-x: auto !important;
+}
+
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+
+.alert, .message {
+    font-size: 0.7em !important;
+}
+
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+
+section {
+  margin: 0 auto;
+}
+
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+
+.theme-switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+
+```{=html}
+
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.superbigimage {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+.superbigimage img, 
+.superbigimage svg {
+  max-width: none;
+  height: auto;
+}
+</style>
+
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+Proceed to load the necessary packages.
+
+<div class="scrollable-content">
+
+```{r load}
+#| message: false
+#| include: true
+#| warning: false
+#| results: "hold"
+
+# invisible("Only run from Ubuntu")
+# if (!(Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv"))) {
+#   if(Sys.info()["sysname"]!="Windows"){
+#     Sys.setenv(RETICULATE_PYTHON = "/home/fondecytacc/.pyenv/versions/3.11.5/bin/python")
+#   }
+# }
+
+#clean enviroment
+rm(list = ls()); gc()
+
+time_before_dedup3<-Sys.time()
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+suppressPackageStartupMessages(library(reticulate))
+
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+find_python_rel <- function(start = getwd(),
+                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+  repeat {
+    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+    if (file.exists(cand)) return(cand)
+    parent <- dirname(cur)
+    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+    cur <- parent
+  }
+}
+
+py <- find_python_rel()
+
+if (is.na(py)) {
+  stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+       "Directorio actual: ", getwd())
+}
+
+# Forzar ese intérprete
+Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+Sys.setenv(RETICULATE_PYTHON = py)
+reticulate::use_python(py, required=T)
+
+py_config()  # verificación
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+
+gc()
+if(grepl("SISTRAT 2023",getwd())){
+  wdpath<-
+    paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+} else {
+  wdpath<-
+    paste0(paste0(gsub("/SISTRAT 2022 \\(github\\)/_proposal_grant/2023","",getwd())),"/SISTRAT 2023/")
+}
+
+load(paste0(wdpath, 
+  "data/20241015_out/psu/psu_ndp_2025_10_02.Rdata"))
+
+```
+</div>
+
+<div class="scrollable-content">
+
+```{r setup}
+#| results: "hold"
+
+#https://github.com/rstudio/renv/issues/544
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+
+#only use explicit dependencies (in DESCRIPTION)
+renv::settings$snapshot.type("implicit")
+
+#check if rstools is installed
+try(installr::install.Rtools(check_r_update=F))
+
+check_quarto_version <- function(required = "1.7.29", comparator = c("ge","gt","le","lt","eq")) {
+  comparator <- match.arg(comparator)
+  current <- package_version(paste(unlist(quarto::quarto_version()), collapse = "."))
+  req     <- package_version(required)
+
+  ok <- switch(comparator,
+               ge = current >= req,
+               gt = current >  req,
+               le = current <= req,
+               lt = current <  req,
+               eq = current == req)
+
+  if (!ok) {
+    stop(sprintf("Quarto version check failed: need %s %s (installed: %s).",
+                 comparator, required, current), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+check_quarto_version("1.7.29", "ge") 
+
+#change repository to CL
+options(repos = c(CRAN = "https://cran.dcc.uchile.cl/"))
+
+
+unlink("*_cache", recursive=T)
+
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+if(!require(pak)){install.packages("pak");require(pak)}
+if(!require(UpSetR)){install.packages("UpSetR");require(UpSetR)}
+
+
+
+# Base R way: explicitly reference the pipe
+`%>%` <- magrittr::`%>%`
+
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#
+#HELPERS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#
+
+as.data.frame.TableOne <- function(x, ...) {
+  capture.output(print(x, showAllLevels = TRUE, varLabels = T,...) -> x)
+  y <- as.data.frame(x)
+  y$characteristic <- dplyr::na_if(rownames(x), "")
+  y <- y|> 
+    tidyr::fill(characteristic, .direction = "down")|>
+    dplyr::select(characteristic, everything())
+  rownames(y) <- NULL
+  y}
+
+
+tidy_iiw_by_plan <- function(models_by_plan,
+                             conf.level = 0.95,
+                             digits = 3,
+                             drop_cluster = TRUE,
+                             sort = c("none","plan_term"),
+                             return_tidytable = FALSE) {
+  sort <- match.arg(sort)
+
+  # preserve the incoming order of plan types
+  plan_levels <- names(models_by_plan) %||% seq_along(models_by_plan)
+
+  out <- purrr::imap_dfr(models_by_plan, function(x, plan_lbl) {
+    fit <- if (!is.null(x$m)) x$m else x
+
+    tbl <- broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE,
+                       conf.level = conf.level)
+
+    if (drop_cluster) {
+      tbl <- dplyr::filter(tbl, !grepl("cluster\\(", term))
+    }
+
+    # keep broom's original row order
+        tbl <- tbl %>%
+          dplyr::mutate(
+            .term_order = dplyr::row_number(),
+            plan_type   = plan_lbl,
+            HR          = round(estimate, digits),
+            CI_low      = round(conf.low, digits),
+            CI_high     = round(conf.high, digits),
+            CI95 = sprintf( paste0("%.", digits, "f (%.", digits, "f, %.", digits, "f)"), as.numeric(HR), as.numeric(CI_low), as.numeric(CI_high) ),
+            p           = sprintf("%1.4f", signif(p.value, 3)),
+          ) %>%
+          dplyr::select(plan_type, .term_order, term, CI95, p)
+
+  })
+
+  # optional sorting
+  if (sort == "plan_term") {
+    out <- out %>%
+      dplyr::mutate(plan_type = factor(plan_type, levels = plan_levels)) %>%
+      dplyr::arrange(plan_type, .term_order)
+  } else {
+    # no reordering: keep original list order & term order
+    out <- out %>%
+      dplyr::mutate(plan_type = factor(plan_type, levels = plan_levels)) %>%
+      dplyr::arrange(as.integer(plan_type), .term_order)
+  }
+
+  out <- out %>% tidytable::select(-.term_order)
+
+  if (return_tidytable) {
+    out <- tidytable::as_tidytable(as.data.frame(out))  # robust conversion
+  }
+
+  out
+}
+```
+</div>
+
+<br>
+&lt;/div&gt;
+
+## Upset plot
+
+```{r upset_plot}
+#| echo: true
+#| results: "hold"
+
+# 2. assume your data.frame is called `df`
+#    with columns: hash_key, otras_sus1_mod, otras_sus2_mod, otras_sus3_mod
+
+# 3. pivot to long (one row per participant–substance), drop NAs
+df_long <- dat_with_weights_stab_cons |>
+  tidytable::arrange(hash_key, adm_age_rec3) |>
+  tidytable::slice_head(n = 1, .by = hash_key) |>
+  dplyr::mutate(
+    susprindum = dplyr::case_when(
+      susprindum_mar == 1 ~ "Marijuana",
+      susprindum_oh  == 1 ~ "Alcohol",
+      susprindum_pbc == 1 ~ "Cocaine paste",
+      susprindum_coc == 1 ~ "Cocaine hydrochloride",
+      susprindum_oth == 1 ~ "Other",
+      TRUE               ~ NA_character_
+    )
+  ) |>
+  dplyr::select(
+    hash_key,
+    primary_sub,
+    second_sub1,
+    second_sub2,
+    second_sub3
+  ) |>
+  dplyr::mutate_at(
+    c(
+      "primary_sub",
+      "second_sub1",
+      "second_sub2",
+      "second_sub3"
+    ),
+    ~ dplyr::if_else(
+      . %in% c(
+        "dissociatives",
+        "hallucinogens",
+        "inhalants",
+        "amphetamine-type stimulants",
+        "opioids",
+        "tranquilizers/hypnotics",
+        "sin sustancia principal (cip-crc)",
+        "others"
+      ),
+      "others",
+      .
+    )
+  ) |>
+  tidyr::pivot_longer(
+    cols = -hash_key,
+    names_to = "which_other",
+    values_to = "substance",
+    values_drop_na = TRUE
+  )
+
+# 4. make an incidence (wide) matrix of 0/1
+df_incidence <- df_long %>% 
+  dplyr::distinct(hash_key, substance) %>%      # one row per use
+  dplyr::mutate(present = 1) %>% 
+  tidyr::pivot_wider(
+    names_from   = substance,
+    values_from  = present,
+    values_fill  = list(present = 0)
+  )
+
+df_upset <- df_incidence %>%
+  dplyr::select(-hash_key) %>%            # remove the ID column
+  as.data.frame()                  # coerce tibble → base data.frame
+
+names(df_upset) <- make.names(names(df_upset))
+
+
+# 5. run upset()
+library(UpSetR)
+upset(
+  df_upset,
+  sets        = names(df_upset), # all columns
+  order.by    = "freq",
+  mb.ratio    = c(0.6, 0.4),
+  main.bar.color = "black",
+  sets.bar.color = "black",
+  matrix.color   = "black",
+  text.scale     = c(2, 2, 2, 1.5, 1.5, 1)
+)
+
+png("my_upset_plot_26.png", width = 10, height = 6, units = "in", res = 600)
+upset(
+  df_upset,
+  sets        = names(df_upset), # all columns
+  order.by    = "freq",
+  mb.ratio    = c(0.6, 0.4),
+  main.bar.color = "black",
+  sets.bar.color = "black",
+  matrix.color   = "black",
+  text.scale     = c(2, 2, 2, 1.5, 1.5, 1)
+)
+dev.off()
+```
+
+## Sens 2: One tr or more
+
+```{r table_one}
+#| echo: true
+#| results: "hold"
+
+# database cons, one tr or more -------------------------------------------
+
+
+as.data.frame.TableOne <- function(x, ...) {
+  capture.output(print(x, showAllLevels = TRUE, varLabels = T,...) -> x)
+  y <- as.data.frame(x)
+  y$characteristic <- dplyr::na_if(rownames(x), "")
+  y <- y|> 
+    tidyr::fill(characteristic, .direction = "down")|> 
+    dplyr::select(characteristic, everything())
+  rownames(y) <- NULL
+  y}
+
+
+cat("After discarding Any treatment w/ death or ongoing tr")
+length(unique(SISTRAT_clean_drop_patient$hash_key))
+#[1] 118594
+
+##_#_#_#_#_#_#_#_#_#_#_#_#
+## TableOne (polysubstance strata) — tidy + applied to SISTRAT_clean_drop_patient
+##_#_#_#_#_#_#_#_#_#_#_#_#
+
+
+df <- SISTRAT_clean_drop_patient
+
+# 1) Pick strata variable automatically
+strata_var <- if ("polysubstance_strict" %in% names(df)) "polysubstance_strict" else "polysubstance"
+
+# 2) Variables of interest
+vars_interest <- c(
+  "tr_noncompletion",
+  "biopsych_comp_severe",
+  "treat_lt_90",
+  "treat_log_days",
+  "adm_age_rec3",
+  "year_decimal",
+  "sus_ini_mod_mvv",
+  "dg_psiq_cie_10_dg",
+  "dg_psiq_cie_10_instudy",
+  "prim_sub_daily",
+  "occupation_condition_corr24",
+  "primary_sub_mod"
+)
+
+# 3) Which of those should be treated as categorical
+factorVars_interest <- c(
+  "biopsych_comp_severe",
+  "sus_ini_mod_mvv",
+  "dg_psiq_cie_10_dg",
+  "dg_psiq_cie_10_instudy",
+  "prim_sub_daily",
+  "occupation_condition_corr24",
+  "primary_sub_mod",
+  "tr_noncompletion",
+  "treat_lt_90"
+)
+
+# 4) Labels (stored as attributes in the data; CreateTableOne doesn’t consume them directly)
+attr(df$tr_noncompletion,           "label") <- "Non-completion status of treatment (Dropout / Misspelled)"
+attr(df$biopsych_comp_severe,       "label") <- "Biopsychosocial compromise (Severe)"
+attr(df$treat_lt_90,                "label") <- "Treatment duration (binary) (<90 days)"
+attr(df$treat_log_days,             "label") <- "Treatment duration (log-scaled days)"
+attr(df$adm_age_rec3,               "label") <- "Age at admission to treatment"
+attr(df$year_decimal,               "label") <- "Birth year"
+attr(df$sus_ini_mod_mvv,            "label") <- "Primary substance (initial diagnosis)"
+attr(df$dg_psiq_cie_10_instudy,     "label") <- "Psychiatric comorbidity (ICD-10): In study"
+attr(df$dg_psiq_cie_10_dg,          "label") <- "Psychiatric comorbidity (ICD-10): Diagnosis"
+attr(df$prim_sub_daily,             "label") <- "Daily frequency of primary substance used at admission"
+attr(df$occupation_condition_corr24,"label") <- "Occupational Status"
+attr(df$primary_sub_mod,            "label") <- "Primary substance at admission to treatment"
+
+# 5) Build analysis frame (NO slice_head; keep one row per hash_key if needed)
+vars_needed <- unique(c(vars_interest, strata_var))
+
+data_tbone <- df |>
+  tidytable::select(tidytable::all_of(vars_needed)) |>
+  (\(x) if ("hash_key" %in% names(x)) tidytable::distinct(x, hash_key, .keep_all = TRUE) else x)()
+
+# 6) Create TableOne
+tbone_interest <- tableone::CreateTableOne(
+  vars         = vars_interest,
+  data         = data_tbone,
+  factorVars = factorVars_interest,
+  strata     = strata_var,
+  addOverall = TRUE,
+  includeNA  = TRUE,
+  smd        = TRUE,
+  test       = TRUE
+)
+
+# 7) Export as data.frame
+df_tbone <- as.data.frame.TableOne(
+  tbone_interest,
+  nonnormal = c("adm_age_rec3", "year_decimal", "treat_log_days"),
+  smd        = TRUE
+)
+
+# 8) Desired order (characteristic + level)
+order_df <- tibble::tribble(
+  ~characteristic, ~level,
+  "n", "",
+  "Non-completion status of treatment (Dropout / Misspelled) (%)", "0",
+  "Non-completion status of treatment (Dropout / Misspelled) (%)", "1",
+  "Biopsychosocial compromise (Severe) (%)", "0",
+  "Biopsychosocial compromise (Severe) (%)", "1",
+  "Biopsychosocial compromise (Severe) (%)", NA,
+  "Treatment duration (binary) (<90 days) (%)", "0",
+  "Treatment duration (binary) (<90 days) (%)", "1",
+  "Treatment duration (log-scaled days) (median [IQR])", "",
+  "Age at admission to treatment (median [IQR])", "",
+  "Birth year (median [IQR])", "",
+  "Primary substance (initial diagnosis) (%)", "cocaine powder",
+  "Primary substance (initial diagnosis) (%)", "cocaine paste",
+  "Primary substance (initial diagnosis) (%)", "marijuana",
+  "Primary substance (initial diagnosis) (%)", "alcohol",
+  "Primary substance (initial diagnosis) (%)", "others",
+  "Primary substance (initial diagnosis) (%)", NA,
+  "Psychiatric comorbidity (ICD-10): In study (%)", "TRUE",
+  "Psychiatric comorbidity (ICD-10): In study (%)", "FALSE",
+  "Psychiatric comorbidity (ICD-10): Diagnosis (%)", "TRUE",
+  "Daily frequency of primary substance used at admission (%)", "0",
+  "Daily frequency of primary substance used at admission (%)", "1",
+  "Daily frequency of primary substance used at admission (%)", NA,
+  "Occupational Status (%)", "inactive",
+  "Occupational Status (%)", "unemployed",
+  "Occupational Status (%)", "employed",
+  "Primary substance at admission to treatment (%)", "cocaine powder",
+  "Primary substance at admission to treatment (%)", "cocaine paste",
+  "Primary substance at admission to treatment (%)", "marijuana",
+  "Primary substance at admission to treatment (%)", "alcohol",
+  "Primary substance at admission to treatment (%)", "others"
+) |>
+  tidytable::mutate(order_id = dplyr::row_number())
+
+# 9) Join order + arrange (keep only rows that exist in order_df; drop the helper column)
+df_tbone_ordered <- df_tbone |>
+  tidytable::left_join(order_df, by = c("characteristic", "level")) |>
+  tidytable::arrange(order_id) |>
+  tidytable::select(-order_id)
+
+# df_tbone_ordered is your final ordered table
+
+head(df_tbone_ordered)
+```
+
+### Imputation
+
+This script selects which variables to impute, builds a multivariate formula to impute them using random forest + PMM, runs missRanger on a safe subset, then merges back only the imputed columns into the full dataset, and finally displays an OOB summary of the error by variable.
+
+```{r imputation}
+#| echo: true
+#| results: "hold"
+
+set.seed(2125)
+
+# Keep only variables that actually exist to avoid errors
+vars_impute <- intersect(vars_impute, names(df))
+if (length(vars_impute) == 0) stop("None of the vars in vars_interest/polysubstance_strict/plan_type_mod exist in the data.")
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 1) Predictors (you can expand/trim this list as you prefer)
+#    Tip: include easy, generally-available covariates to make MAR more plausible
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+predictor_pool <- c(
+  # strong helpers already in your dataset
+  "adm_age_rec3", "year_decimal", "treat_log_days", "treat_lt_90",
+  "biopsych_comp_severe", "tr_noncompletion", "prim_sub_daily",
+  "primary_sub_mod", "occupation_condition_corr24",
+  "pub_center", "type_center", "episodes",
+  "sex_rec", "plan_type_mod", "primary_sub_std", "tr_completion",
+  "dg_psiq_cie_10_dg", "dg_psiq_cie_10_instudy", 
+  "episodes", "age_subs_onset_rec2", "age_primary_onset_rec2",
+  "tenure_status_household", "macrozone_center", "adm_motive",
+  "marital_status", "ed_attainment", "sub_dep_icd10_status", "pub_center", "senda", "num_trat_ant", 
+  "fecha_ultimo_tratamiento"
+)
+
+# Use only columns that exist
+predictor_pool <- intersect(unique(c(predictor_pool, vars_impute)), names(df))
+
+# Make sure we still have something on the RHS
+if (length(predictor_pool) == 0) stop("No predictors found in the data. Please add some predictor names that exist.")
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 2) Build formula: (targets) ~ (predictors)
+#    missRanger will impute ONLY the LHS variables
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+lhs <- paste(vars_impute, collapse = " + ")
+rhs <- paste(predictor_pool, collapse = " + ")
+form_miss <- as.formula(paste(lhs, "~", rhs))
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 3) Arrange for reproducibility and run missRanger
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+post_df_ord <- dplyr::arrange(df, hash_key, adm_date_num_rec2)
+
+# columns to pass to missRanger = targets (impute) + predictors
+post_cols_mr <- unique(c(vars_impute, predictor_pool))
+
+# subset safely whether dat_ord is data.table/tidytable or data.frame
+if (inherits(post_df_ord, "data.table")) {
+  post_df_sub <- post_df_ord[, ..post_cols_mr]
+} else {
+  # fallback for data.frame / tibble
+  post_df_sub <- post_df_ord[, post_cols_mr, drop = FALSE]
+}
+
+# (optional) force to plain data.frame to avoid method dispatch surprises
+post_df_sub <- as.data.frame(post_df_sub)
+
+post_SISTRAT_imputed_only <- missRanger::missRanger(
+  data      = post_df_sub,         # << use the safe subset
+  formula   = form_miss,        # ONLY LHS vars in vars_impute will be imputed
+  num.trees = 100,
+  pmm.k     = 5,
+  maxiter   = 50,
+  returnOOB = TRUE,
+  verbose   = 2,
+  seed      = 2125
+)
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 4) Write imputed values back to your full data
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# Make safe copies as data.frame
+post_SISTRAT_clean_drop_patient_multiple_imp <- as.data.frame(post_df_ord)
+post_SISTRAT_imputed_only_df <- as.data.frame(post_SISTRAT_imputed_only)
+
+# Regular data.frame column replacement works with a character vector of names
+post_SISTRAT_clean_drop_patient_multiple_imp[vars_impute] <- post_SISTRAT_imputed_only_df[vars_impute]
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 5) OOB error summary → kable
+#    (missRanger stores per-target OOB error in the "oob" attribute)
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+post_oob_vec <- attr(post_SISTRAT_imputed_only, "oob")
+if (!is.null(post_oob_vec)) {
+  post_df_oob <- data.frame(
+    Variable = names(post_oob_vec),
+    OOB_Error = round(as.numeric(post_oob_vec),3)
+  )
+  post_df_oob <- post_df_oob[order(post_df_oob$Variable), , drop = FALSE]
+  knitr::kable(post_df_oob, format = "markdown", align = c("l","r"),
+               col.names = c("Variable", "OOB error (1 - R² or class error)"))
+} else {
+  message("No OOB error attribute returned by missRanger.")
+}
+# |  |Variable              | OOB error (1 - R² or class error)|
+# |:--|:--------------------|---------------------------------:|
+# |3  |biopsych_comp_severe |                             0.779|
+# |1  |prim_sub_daily       |                             0.839|
+# |2  |sus_ini_mod_mvv      |                             0.344|
+
+# post_oob_vec
+# treat_lt_90        treat_log_days        prim_sub_daily biopsych_comp_severe       sus_ini_mod_mvv 
+# 0.0008214128          0.3522101134          0.8405593966          0.7624347156          0.3418216406 
+
+saveRDS(
+  post_SISTRAT_clean_drop_patient_multiple_imp,
+  file = file.path(wdpath, "data/20241015_out/psu", "post_SISTRAT_clean_drop_patient_multiple_imp.rds")
+)
+# post_SISTRAT_clean_drop_patient_multiple_imp <-
+#   readRDS(file.path(wdpath, "data/20241015_out/psu", "post_SISTRAT_clean_drop_patient_multiple_imp.rds"))
+```
+
+
+### Survival prep
+
+```{r survival_prep}
+#| echo: true
+#| results: "hold"
+
+# Censor date you specified
+censor_date <- as.Date("2025-05-28")
+
+post_SISTRAT_traj <-
+  post_SISTRAT_clean_drop_patient_multiple_imp|>
+  tidytable::ungroup()|> 
+  # Canonical ordering within each patient
+  tidytable::arrange(hash_key, adm_date_rec2, disch_date_rec6)|>
+  tidytable::group_by(hash_key)|> 
+  # Treatment sequence and entry date
+  tidytable::mutate(
+    treatment     = tidytable::row_number(),
+    is_first_occurrence = tidytable::if_else(treatment == 1, 1, 0),
+    max_treatment = max(treatment, na.rm = TRUE),
+    enter_date    = min(adm_date_rec2, na.rm = TRUE)
+  )|>
+  tidytable::mutate(id = cumsum(is_first_occurrence))|>
+  tidytable::ungroup()|>
+  # Durations in MONTHS via lubridate::time_length (no 30.5 division)
+  tidytable::mutate(
+    time      = lubridate::time_length(lubridate::interval(enter_date, disch_date_rec6),  unit = "months"),
+    cens_time = lubridate::time_length(lubridate::interval(enter_date, censor_date),       unit = "months")
+  )|>
+  # Tie-breaker for identical times within person: add small offsets 0.001, 0.002, ...
+  tidytable::mutate(dup_idx = tidytable::row_number(), .by = c(hash_key, time))|>
+  tidytable::mutate(time = time + (dup_idx - 1L) * 0.001)|>
+  # Lag (optional diagnostic)
+  tidytable::mutate(lag_time = tidytable::lag(time), .by = hash_key)|>
+  # Survival time: use censoring if no event (tr_noncompletion == 0)
+  tidytable::mutate(
+    surv_time = tidytable::if_else(tidytable::coalesce(tr_noncompletion, 0L) == 0L, cens_time, time), 
+    id = as.numeric(factor(hash_key))
+  )|>
+  # Clean up helper
+  tidytable::select(-dup_idx, -is_first_occurrence)
+
+
+
+# clean memory
+gc()
+
+# --- Prepare data: plain data.frame for IrregLong ---
+post_sdat <- as.data.frame(post_SISTRAT_traj)
+
+# ID as factor; time must be numeric; create visit indicator (every row is a visit)
+post_sdat$id         <- as.numeric(factor(post_sdat$hash_key))
+post_sdat$time       <- as.numeric(post_sdat$time)
+post_sdat$event_vis  <- 1L
+
+# Dummified vars
+post_sdat$occ24_inactive <-  as.integer(post_sdat$occupation_condition_corr24 == "inactive")
+post_sdat$occ24_unemployed <-  as.integer(post_sdat$occupation_condition_corr24 == "unemployed")
+post_sdat$occ24_employed <-  as.integer(post_sdat$occupation_condition_corr24 == "employed")
+
+post_sdat$susinidum_oh <-  as.integer(post_sdat$sus_ini_mod_mvv == "alcohol")
+post_sdat$susinidum_coc <-  as.integer(post_sdat$sus_ini_mod_mvv == "cocaine powder")
+post_sdat$susinidum_pbc <-  as.integer(post_sdat$sus_ini_mod_mvv == "cocaine paste")
+post_sdat$susinidum_mar <-  as.integer(post_sdat$sus_ini_mod_mvv == "marijuana")
+post_sdat$susinidum_oth <-  as.integer(post_sdat$sus_ini_mod_mvv == "others")
+
+post_sdat$susprindum_oh <-  as.integer(post_sdat$primary_sub_mod == "alcohol")
+post_sdat$susprindum_coc <-  as.integer(post_sdat$primary_sub_mod == "cocaine powder")
+post_sdat$susprindum_pbc <-  as.integer(post_sdat$primary_sub_mod == "cocaine paste")
+post_sdat$susprindum_mar <-  as.integer(post_sdat$primary_sub_mod == "marijuana")
+post_sdat$susprindum_oth <-  as.integer(post_sdat$primary_sub_mod == "others")
+
+post_sdat$year_c   <- post_sdat$year_decimal - 2015
+post_sdat$age_c10  <- (post_sdat$adm_age_rec3 - mean(post_sdat$adm_age_rec3, na.rm=TRUE)) / 10
+
+#Ensure treat_log_days exists, is numeric, and finite
+#keep NA for non-positive so the lagger can handle it
+stopifnot(post_sdat$treat_log_days[!is.finite(post_sdat$treat_log_days)]|> length()==0)
+
+post_sdat$treat_log_days[!is.finite(post_sdat$treat_log_days)] <- NA_real_
+
+
+post_sdat$tr_outcome <- as.integer(post_sdat$tr_noncompletion)
+
+post_maxfu_df <- aggregate(cens_time ~ id, data = post_sdat, FUN = function(x) max(x, na.rm = TRUE))
+names(post_maxfu_df) <- c("maxfu.id", "maxfu.time")
+```
+
+
+### Weighting
+
+```{r weighting}
+#| echo: true
+#| results: "hold"
+
+post_i0 <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag, time, event_vis) ~ tr_outcome.lag + survival::cluster(id),
+  # If you want stabilized weights, uncomment and provide a null model (often just cluster):
+  # formulanull = ~ survival::cluster(id),
+  data       = post_sdat,
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",           # each row is a visit
+  lagvars    = c("time", "tr_outcome"),
+  invariant  = "id",
+  maxfu      = post_maxfu_df,             # per-ID maximum follow-up (same units as 'time': months)
+  lagfirst   = c(0, 0),              # time.lag = 0 at first visit; tr_outcome.lag = 0 at first visit
+  first      = TRUE                  # baseline visit observed with prob = 1
+)
+
+post_mf_all <- stats::model.frame(post_i0$m, data = post_i0$datacox, na.action = stats::na.pass)
+post_keep_idx <- stats::complete.cases(post_mf_all)
+post_drop_idx <- which(!post_keep_idx)
+
+cat("Filtered without events with ties")
+post_sdat_filt<- subset(post_sdat, !id %in% post_i0$datacox[which(!post_keep_idx),"id"])
+post_maxfu_df_filt <- subset(post_maxfu_df, !maxfu.id %in% post_i0$datacox[which(!post_keep_idx),"id"])
+
+post_i1_adj <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag,time,event_vis) ~ 
+    tr_noncompletion.lag+ biopsych_comp_severe.lag+ treat_lt_90.lag+ 
+    treat_log_days.lag+ polysubstance_strict.lag+ 
+    age_c10+ year_c+ 
+    susinidum_oh+ susinidum_coc+ susinidum_pbc+ susinidum_mar+ 
+    dg_psiq_cie_10_instudy+ dg_psiq_cie_10_dg+  prim_sub_daily+ 
+    occ24_inactive+ occ24_unemployed+ 
+    susprindum_oh+ susprindum_coc+ susprindum_pbc+ susprindum_mar+ 
+    survival::cluster(id),
+  # If you want stabilized weights, uncomment and provide a null model (often just cluster):
+  # formulanull = ~ survival::cluster(id),
+  data       = post_sdat,#[,model_vars],
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",           # each row is a visit
+  lagvars= c("time", "tr_noncompletion", "biopsych_comp_severe", "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+  invariant  = "id",
+  maxfu      = post_maxfu_df,             # per-ID maximum follow-up (same units as 'time': months)
+  lagfirst   = c(5.149111,1,1,1,4.51086,1),              # time.lag = 0 at first visit; tr_outcome.lag = 0 at first visit  #90/30.5 4.51086 es 90 días
+  first      = TRUE                  # baseline visit observed with prob = 1
+)
+
+# Call iiw.weights w/0s
+post_i1_adj_0 <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag, time, event_vis) ~
+    tr_noncompletion.lag + biopsych_comp_severe.lag + treat_lt_90.lag +
+    treat_log_days.lag + polysubstance_strict.lag +
+    age_c10+ year_c+ 
+    susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+    dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+    occ24_inactive + occ24_unemployed +
+    susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+    survival::cluster(id),
+  data       = post_sdat,
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",
+  # include *all* variables you want lagged (and in the same order for lagfirst)
+  lagvars    = c("time", "tr_noncompletion", "biopsych_comp_severe",
+                 "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+  invariant  = "id",
+  maxfu      = post_maxfu_df,
+  # use zeros to avoid integer/double coercion warnings
+  lagfirst   = c(5.149111/2, 0, 0, 0, 2.772589, 0),
+   
+  first      = TRUE
+)
+# In survival::Surv(time.lag, time, event_vis) :
+#   Stop time must be > start time, NA created
+
+## Start from i0$datacox
+post_dat <- data.table::as.data.table(post_sdat)  # ensure data.table
+
+invisible({
+  
+  ## Sort
+  data.table::setorder(post_dat, id, time)
+  
+  ## Make intervals strictly positive & ordered
+  eps <- 1e-3
+  post_dat[, .idx := seq_len(.N) - 1L, by = .(id, time)]
+  post_dat[, time := time + eps * .idx][, .idx := NULL]
+  post_dat[, time.lag := data.table::shift(time, type = "lag", fill = 0), by = .(id)]
+  post_dat[time <= time.lag, time := time.lag + eps]
+  
+  ## Lagged covariate with baseline = 0 (no NAs on first row)
+  post_dat[, tr_outcome_lag0 := data.table::shift(tr_outcome, type = "lag"), by = .(id)]
+  post_dat[is.na(tr_outcome_lag0), tr_outcome_lag0 := 0L]
+  
+  ## Per-id max follow-up (keep id types consistent)
+  post_dat[, id := as.character(id)]
+  post_maxfu_df <- post_dat[, .(maxfu.time = max(cens_time, na.rm = TRUE)),
+                   by = .(maxfu.id = id)]
+  
+  post_dat[, id := as.character(id)]
+  data.table::setDF(post_dat); post_maxfu_df <- as.data.frame(post_maxfu_df)
+
+})
+
+
+## Refit: only let IrregLong lag time; use our tr_outcome_lag0 in the formula
+post_i0_3 <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag, time, event_vis) ~ tr_outcome_lag0 + 
+    survival::cluster(id),
+  data       = post_dat,
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",
+  lagvars    = c("time"),   # we already created tr_outcome_lag0
+  invariant  = "id",
+  maxfu      = post_maxfu_df,
+  lagfirst   = c(0),        # first time.lag = 0
+  first      = TRUE
+)
+sum(is.na(post_i0_3$iiw.weight))
+#0
+
+## Sanity check: how many rows would coxph drop now?
+post_mf3 <- stats::model.frame(post_i0_3$m, 
+                               data = post_i0_3$datacox, 
+                               na.action = stats::na.pass)
+sum(!stats::complete.cases(post_mf3))  # should be ~0 (or just the true oddballs), not ~31928
+
+table(is.na(post_i0_3$iiw.weight))
+invisible("didnt change, despite no more NAs in weights")
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+cat("$:$:$:$:$:$:$:$:$:$:$:$:$:$:\n")
+cat("Weights by plan type\n")
+cat("$:$:$:$:$:$:$:$:$:$:$:$:$:$:\n")
+
+post_iiw_by_plan0 <- lapply(plan_types, function(pt) {
+  cat("Running for:", pt, "\n")
+  # Subset as plain data.frame
+  post_dat_sub <- post_dat|> dplyr::filter(plan_type_mod == pt)|> as.data.frame()
+  # Subset maxfu_df to only the ids in dat_sub
+  post_maxfu_sub <- post_maxfu_df[post_maxfu_df$maxfu.id %in% dat_sub$id, , drop = FALSE]
+  IrregLong::iiw.weights(
+    formulaph  = survival::Surv(time.lag, time, event_vis) ~ 
+      tr_noncompletion.lag + biopsych_comp_severe.lag + 
+      treat_lt_90.lag + treat_log_days.lag + polysubstance_strict.lag +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+      occ24_inactive + occ24_unemployed +
+      susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+      survival::cluster(id),
+    data       = post_dat_sub,
+    id         = "id",
+    time       = "time",
+    event      = "event_vis",
+    lagvars    = c("time", "tr_noncompletion", "biopsych_comp_severe",
+                   "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+    invariant  = "id",
+    maxfu      = post_maxfu_sub,  # stratified by subset IDs
+    lagfirst   = c(5.149111, 0, 0, 0, 2.772589, 0),
+    first      = TRUE
+  )
+})
+names(post_iiw_by_plan0) <- plan_types
+
+post_iiw_by_plan1 <- lapply(plan_types, function(pt) {
+  cat("Running for:", pt, "\n")
+  # Subset as plain data.frame
+  post_dat_sub <- post_dat|> dplyr::filter(plan_type_mod == pt)|> as.data.frame()
+  # Subset maxfu_df to only the ids in dat_sub
+  post_maxfu_sub <- post_maxfu_df[post_maxfu_df$maxfu.id %in% dat_sub$id, , drop = FALSE]
+  IrregLong::iiw.weights(
+    formulaph  = survival::Surv(time.lag, time, event_vis) ~ 
+      tr_noncompletion.lag + biopsych_comp_severe.lag + 
+      treat_lt_90.lag + treat_log_days.lag + polysubstance_strict.lag +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+      occ24_inactive + occ24_unemployed +
+      susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+      survival::cluster(id),
+    data       = post_dat_sub,
+    id         = "id",
+    time       = "time",
+    event      = "event_vis",
+    lagvars    = c("time", "tr_noncompletion", "biopsych_comp_severe",
+                   "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+    invariant  = "id",
+    maxfu      = post_maxfu_sub,  # stratified by subset IDs
+    lagfirst   = c(5.149111, 1, 1, 1, 4.51086, 1),
+    first      = TRUE
+  )
+})
+names(post_iiw_by_plan1) <- plan_types
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+post_dat_with_weights_stab <- extract_weights(post_iiw_by_plan0, post_dat, 
+                                         weight_name = "iiw.weight", 
+                                         out_col = "iiw_weight0_stab")
+
+
+post_dat_with_weights_stab1 <- extract_weights(post_iiw_by_plan1, post_dat, 
+                                          weight_name = "iiw.weight", 
+                                          out_col = "iiw_weight1_stab")
+
+post_dat_with_weights_stab_cons<- 
+  post_dat_with_weights_stab|> #67957
+  dplyr::left_join(post_dat_with_weights_stab1[,c("rn","iiw_weight1_stab")], 
+                   by="rn")|>
+  dplyr::arrange(hash_key, adm_age_rec3)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+cat("Add weight 1 in case of first treatment for time.lag==0\n")
+table(subset(post_dat_with_weights_stab_cons, treatment==1)$time.lag)
+
+post_dat_with_weights_stab_cons$iiw_weight0_stab <- ifelse(
+  is.na(post_dat_with_weights_stab_cons$iiw_weight0_stab) & post_dat_with_weights_stab_cons$time.lag == 0,
+  1,
+  post_dat_with_weights_stab_cons$iiw_weight0_stab
+)
+post_dat_with_weights_stab_cons$iiw_weight1_stab <- ifelse(
+  is.na(post_dat_with_weights_stab_cons$iiw_weight1_stab) & post_dat_with_weights_stab_cons$time.lag == 0,
+  1,
+  post_dat_with_weights_stab_cons$iiw_weight1_stab
+)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+rbind.data.frame(
+  cbind.data.frame(model= "Primary (after PH, lag=0)",
+                   t(matrix(summary(post_dat_with_weights_stab_cons$iiw_weight0_stab ))) ),
+  cbind.data.frame(model= "Alternative (after PH, lag=1)",  t(matrix(summary(post_dat_with_weights_stab_cons$iiw_weight1_stab)))) )%>% 
+  { 
+    knitr::kable(., digits=2, size=10, format="markdown", caption="Weights (no correction for PHs)", col.names= c("Weight",attr(summary(dat_with_weights_stab_cons$iiw_weight1_stab),"names")) ) 
+  }
+# |Weight                        | Min.| 1st Qu.| Median| Mean| 3rd Qu.| Max.|
+# |:-----------------------------|----:|-------:|------:|----:|-------:|----:|
+# |Primary (after PH, lag=0)     | 0.15|    1.00|   1.02| 1.46|    1.78| 7.35|
+# |Alternative (after PH, lag=1) | 0.08|    0.51|   0.93| 0.78|    1.00| 3.12|
+#NEW!!!!
+# |Weight                        | Min.| 1st Qu.| Median| Mean| 3rd Qu.|  Max.|
+# |:-----------------------------|----:|-------:|------:|----:|-------:|-----:|
+# |Primary (after PH, lag=0)     | 0.35|       1|      1| 1.59|    1.16| 13.56|
+# |Alternative (after PH, lag=1) | 0.10|       1|      1| 0.89|    1.00|  2.31|
+
+post_w_primary_tr <- cap(post_dat_with_weights_stab_cons$iiw_weight0_stab, c(0.025, 0.975))
+post_w_alt_tr     <- cap(post_dat_with_weights_stab_cons$iiw_weight1_stab, c(0.025, 0.975))
+
+post_w0       <- post_dat_with_weights_stab_cons$iiw_weight0_stab
+post_w0_tr    <- cap(post_w_primary_tr, c(0.025, 0.975))
+post_w1       <- post_dat_with_weights_stab_cons$iiw_weight1_stab
+post_w1_tr    <- cap(post_w_alt_tr, c(0.025, 0.975))
+
+post_dat_with_weights_stab_cons$w0_tr <-  post_w0_tr
+post_dat_with_weights_stab_cons$w1_tr <-  post_w1_tr
+```
+
+### Outcome analysis
+
+```{r outcome_analysis}
+#| echo: true
+#| results: "hold"
+
+post_res_by_plan0 <- tidy_iiw_by_plan(post_iiw_by_plan0, 
+                                      digits = 2, 
+                                      return_tidytable = TRUE)
+post_res_by_plan1 <- tidy_iiw_by_plan(post_iiw_by_plan1, 
+                                      digits = 2, 
+                                      return_tidytable = TRUE)
+
+post_tab3_w0<- 
+  split(post_dat_with_weights_stab_cons, post_dat_with_weights_stab_cons$plan_type_mod)|>
+  purrr::imap(~{
+    df <- .x|> dplyr::mutate(id = as.character(id))
+    
+    # Clean formula: NO cluster()/strata()/id inside
+    ff_local <- tr_noncompletion ~ polysubstance_strict +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    # Freeze row universe once
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    # Outcome variation check
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    
+    # Design matrix and term mapping
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec <- attr(X, "assign")                # maps columns -> term index
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    # 1) Drop constant columns (except intercept)
+    const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    # 2) Drop collinear columns via QR
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    X_reduced <- X[, keep_cols, drop = FALSE]
+    assign_kept <- assign_vec[keep_cols]
+    
+    # 3) Map kept columns back to ORIGINAL term labels
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))  # >0 skips intercept
+    if (length(kept_term_idx) == 0L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(no predictors after cleanup)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    kept_terms <- term_labels[kept_term_idx]
+    
+    # 4) Rebuild reduced formula from ORIGINAL terms
+    ff_reduced <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+    
+    # 5) Align id to kept rows (same `keep` mask)
+    id_vec <- df$id[keep]
+    
+    # 6) Fit GEE (intercept-only scale)
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude
+      , weights = df$w0_tr[keep]   # or w1_tr, if you want weights by stratum
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE)|>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", estimate, conf.low, conf.high)
+      )
+  })|>
+  dplyr::bind_rows()|>
+  dplyr::relocate(plan_type_mod, n_rows)
+
+
+
+post_tab3_w1<- 
+  split(post_dat_with_weights_stab_cons, post_dat_with_weights_stab_cons$plan_type_mod)|>
+  purrr::imap(~{
+    df <- .x|> dplyr::mutate(id = as.character(id))
+    
+    # Clean formula: NO cluster()/strata()/id inside
+    ff_local <- tr_noncompletion ~ polysubstance_strict +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    # Freeze row universe once
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    # Outcome variation check
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    
+    # Design matrix and term mapping
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec <- attr(X, "assign")                # maps columns -> term index
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    # 1) Drop constant columns (except intercept)
+    const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    # 2) Drop collinear columns via QR
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    X_reduced <- X[, keep_cols, drop = FALSE]
+    assign_kept <- assign_vec[keep_cols]
+    
+    # 3) Map kept columns back to ORIGINAL term labels
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))  # >0 skips intercept
+    if (length(kept_term_idx) == 0L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(no predictors after cleanup)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    kept_terms <- term_labels[kept_term_idx]
+    
+    # 4) Rebuild reduced formula from ORIGINAL terms
+    ff_reduced <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+    
+    # 5) Align id to kept rows (same `keep` mask)
+    id_vec <- df$id[keep]
+    
+    # 6) Fit GEE (intercept-only scale)
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude
+      , weights = df$w1_tr[keep]   # or w1_tr, if you want weights by stratum
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE)|>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", estimate, conf.low, conf.high)
+      )
+  })|>
+  dplyr::bind_rows()|>
+  dplyr::relocate(plan_type_mod, n_rows)
+
+
+
+rbind.data.frame(
+  cbind.data.frame(w="weight lag=0", dplyr::filter(post_tab3_w0, grepl("poly", term))),
+  cbind.data.frame(w="weight lag=1", dplyr::filter(post_tab3_w1, grepl("poly", term)))
+)|> 
+  tidyr::pivot_wider(
+    names_from = w,
+    values_from = `RR (95% CI)`
+  )|>
+  dplyr::relocate(plan_type_mod, n_rows, term)|> 
+  dplyr::select(-term)|> 
+  (\(df) {
+    cat(paste0("Total cases included in the model: ",
+               formatC(dplyr::summarise(df, sum_n= sum(n_rows)) |> dplyr::pull(sum_n), big.mark = ","), "\n"))
+    utils::write.csv(df, file.path(wdpath, "data/20241015_out/psu", "stratified_results.csv"), row.names = FALSE)
+    df ->> post_stratified_results
+    df
+  })()|>
+  knitr::kable("markdown", caption= "Stratified models by Plan Type", digits = 2)
+
+
+paste0("IDs: ",
+       length(unique(post_dat_with_weights_stab_cons$id))
+)
+```
+
+## Count of deaths
+
+```{r flags_detail}
+#| echo: true
+#| results: "hold"
+
+first_flags_detail <-
+  SISTRAT23_c1_2010_2024_df_prev1w_corr_marked |>
+  tidytable::mutate(
+    discard_1 = grepl("^death$", as.character(adm_disch_reason), ignore.case = TRUE),
+    discard_2 = grepl("^currently\\s*in$", as.character(tr_compliance_rec7), ignore.case = TRUE)
+  ) |>
+  tidytable::select(rn, discard_1, discard_2)
+
+# Percentage of rows discarded (3792 / 162898)
+cat("Percentage of rows discarded:\n")
+print(scales::percent(3792/162898, accuracy=.1))
+
+# Percentage of patients discarded (2705 / 121299)
+cat("Percentage of patients discarded:\n")
+print(scales::percent(2705/121299, accuracy=.1))
+
+cat("Rows with deaths:\n")
+print(first_flags_detail |> dplyr::filter(discard_1==TRUE) |> nrow())
+
+cat("Rows with currently in:\n")
+print(first_flags_detail |> dplyr::filter(discard_2==TRUE) |> nrow())
+
+# Note: 'first_flags' object was not defined in snippet, using sum of counts instead
+# table(first_flags$discard)[[2]]
+message(paste0("Any treatment w/ death or ongoing tr: ", 520 + 3272))
+
+cat("Death patients:\n")
+# Calculate surviving patients then subtract from total (121299)
+survivors_death <- SISTRAT23_c1_2010_2024_df_prev1w_corr_marked |>
+  tidytable::left_join(first_flags_detail |> dplyr::filter(discard_1==TRUE), by = "rn") |>
+  tidytable::filter(!tidytable::coalesce(discard_1, FALSE)) |>
+  tidytable::select(-discard_1) |> 
+  tidytable::group_by(hash_key) |> 
+  tidytable::summarise(n= n()) |> 
+  nrow()
+
+print(121299 - survivors_death)
+
+cat("Currently in patients:\n")
+# Calculate patients not currently in then subtract from total (121299)
+survivors_curr <- SISTRAT23_c1_2010_2024_df_prev1w_corr_marked |>
+  tidytable::left_join(first_flags_detail |> dplyr::filter(discard_2==TRUE), by = "rn") |>
+  tidytable::filter(!tidytable::coalesce(discard_2, FALSE)) |>
+  tidytable::select(-discard_2) |> 
+  tidytable::group_by(hash_key) |> 
+  tidytable::summarise(n= n()) |> 
+  nrow()
+
+print(121299 - survivors_curr)
+#[1] 2332 currently in treatment
+
+#[1] 2705 patients, matches
+```
+
+## MAR
+
+```{r}
+#| echo: true
+#| results: "hold"
+
+vars_miss <- c("biopsych_comp_severe", "prim_sub_daily", "sus_ini_mod_mvv")
+
+dat <- SISTRAT_clean_drop_patient_multiple %>%
+  dplyr::mutate(dplyr::across(all_of(vars_miss), ~ is.na(.x), .names = "miss_{.col}"))
+
+# Quick stratified missingness rates
+dat %>%
+  dplyr::summarise(dplyr::across(starts_with("miss_"), mean)) %>%
+  tidyr::pivot_longer(everything(), names_to="var", values_to="missing_prop")
+
+# Example: does missingness vary by year/center/outcome?
+dat %>%
+  dplyr::group_by(TABLE) %>%
+  dplyr::summarise(dplyr::across(starts_with("miss_"), mean), .groups="drop")
+
+m1 <- glm(miss_biopsych_comp_severe ~ sex_rec + adm_age_rec3 + year_decimal +
+            plan_type_mod + pub_center + primary_sub_mod + tr_noncompletion +
+            treat_log_days + episodes,
+          data = dat, family = binomial())
+
+m2 <- glm(miss_sus_ini_mod_mvv ~ sex_rec + adm_age_rec3 + year_decimal +
+            plan_type_mod + pub_center + primary_sub_mod + tr_noncompletion +
+            treat_log_days + episodes,
+          data = dat, family = binomial())
+
+m3 <- glm(miss_prim_sub_daily ~ sex_rec + adm_age_rec3 + year_decimal +
+            plan_type_mod + pub_center + primary_sub_mod + tr_noncompletion +
+            treat_log_days + episodes,
+          data = dat, family = binomial())
+
+summary(m1); summary(m2); summary(m3)
+```
+
+## Complete case analyses 
+
+```{r cc_prep_vars}
+#| echo: true
+#| warning: false
+#| message: false
+
+# Filter for complete cases based on variables of interest
+post2_SISTRAT_traj <-
+  SISTRAT_clean_drop_patient_multiple[complete.cases(
+    subset(
+      SISTRAT_clean_drop_patient_multiple,
+      select = c(vars_interest, "polysubstance_strict", "plan_type_mod")
+    )
+  ),]|>
+  tidytable::ungroup()|> 
+  # Canonical ordering within each patient
+  tidytable::arrange(hash_key, adm_date_rec2, disch_date_rec6)|>
+  tidytable::group_by(hash_key)|> 
+  # Treatment sequence and entry date
+  tidytable::mutate(
+    treatment     = tidytable::row_number(),
+    is_first_occurrence = tidytable::if_else(treatment == 1, 1, 0),
+    max_treatment = max(treatment, na.rm = TRUE),
+    enter_date    = min(adm_date_rec2, na.rm = TRUE)
+  )|>
+  tidytable::mutate(id = cumsum(is_first_occurrence))|>
+  tidytable::ungroup()|>
+  # Durations in MONTHS via lubridate::time_length (no 30.5 division)
+  tidytable::mutate(
+    time      = lubridate::time_length(lubridate::interval(enter_date, disch_date_rec6),  unit = "months"),
+    cens_time = lubridate::time_length(lubridate::interval(enter_date, censor_date),       unit = "months")
+  )|>
+  # Tie-breaker for identical times within person: add small offsets 0.001, 0.002, ...
+  tidytable::mutate(dup_idx = tidytable::row_number(), .by = c(hash_key, time))|>
+  tidytable::mutate(time = time + (dup_idx - 1L) * 0.001)|>
+  # Lag (optional diagnostic)
+  tidytable::mutate(lag_time = tidytable::lag(time), .by = hash_key)|>
+  # Survival time: use censoring if no event (tr_noncompletion == 0)
+  tidytable::mutate(
+    surv_time = tidytable::if_else(tidytable::coalesce(tr_noncompletion, 0L) == 0L, cens_time, time), 
+    id = as.numeric(factor(hash_key))
+  )|>
+  # Clean up helper
+  tidytable::select(-dup_idx, -is_first_occurrence)
+
+# clean memory
+gc()
+
+# --- Prepare data: plain data.frame for IrregLong ---
+post2_sdat <- as.data.frame(post2_SISTRAT_traj)
+
+# ID as factor; time must be numeric; create visit indicator (every row is a visit)
+post2_sdat$id         <- as.numeric(factor(post2_sdat$hash_key))
+post2_sdat$time       <- as.numeric(post2_sdat$time)
+post2_sdat$event_vis  <- 1L
+
+# Dummified vars
+post2_sdat$occ24_inactive <-  as.integer(post2_sdat$occupation_condition_corr24 == "inactive")
+post2_sdat$occ24_unemployed <-  as.integer(post2_sdat$occupation_condition_corr24 == "unemployed")
+post2_sdat$occ24_employed <-  as.integer(post2_sdat$occupation_condition_corr24 == "employed")
+
+post2_sdat$susinidum_oh <-  as.integer(post2_sdat$sus_ini_mod_mvv == "alcohol")
+post2_sdat$susinidum_coc <-  as.integer(post2_sdat$sus_ini_mod_mvv == "cocaine powder")
+post2_sdat$susinidum_pbc <-  as.integer(post2_sdat$sus_ini_mod_mvv == "cocaine paste")
+post2_sdat$susinidum_mar <-  as.integer(post2_sdat$sus_ini_mod_mvv == "marijuana")
+post2_sdat$susinidum_oth <-  as.integer(post2_sdat$sus_ini_mod_mvv == "others")
+
+post2_sdat$susprindum_oh <-  as.integer(post2_sdat$primary_sub_mod == "alcohol")
+post2_sdat$susprindum_coc <-  as.integer(post2_sdat$primary_sub_mod == "cocaine powder")
+post2_sdat$susprindum_pbc <-  as.integer(post2_sdat$primary_sub_mod == "cocaine paste")
+post2_sdat$susprindum_mar <-  as.integer(post2_sdat$primary_sub_mod == "marijuana")
+post2_sdat$susprindum_oth <-  as.integer(post2_sdat$primary_sub_mod == "others")
+
+post2_sdat$year_c   <- post2_sdat$year_decimal - 2015
+post2_sdat$age_c10  <- (post2_sdat$adm_age_rec3 - mean(post2_sdat$adm_age_rec3, na.rm=TRUE)) / 10
+
+#Ensure treat_log_days exists, is numeric, and finite
+#keep NA for non-positive so the lagger can handle it
+stopifnot(post2_sdat$treat_log_days[!is.finite(post2_sdat$treat_log_days)]|> length()==0)
+
+post2_sdat$treat_log_days[!is.finite(post2_sdat$treat_log_days)] <- NA_real_
+
+post2_sdat$tr_outcome <- as.integer(post2_sdat$tr_noncompletion)
+
+post2_maxfu_df <- aggregate(cens_time ~ id, data = post2_sdat, FUN = function(x) max(x, na.rm = TRUE))
+names(post2_maxfu_df) <- c("maxfu.id", "maxfu.time")
+```
+
+### Initial Weighting and Refit
+
+This chunk runs the initial `iiw.weights` and the refined version handling time lags and ties.
+
+```{r cc_weighting_base}
+#| echo: true
+#| results: "hold"
+
+post2_i0 <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag, time, event_vis) ~ tr_outcome.lag + survival::cluster(id),
+  data       = post2_sdat,
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",           # each row is a visit
+  lagvars    = c("time", "tr_outcome"),
+  invariant  = "id",
+  maxfu      = post2_maxfu_df,             # per-ID maximum follow-up (same units as 'time': months)
+  lagfirst   = c(0, 0),              # time.lag = 0 at first visit; tr_outcome.lag = 0 at first visit
+  first      = TRUE                  # baseline visit observed with prob = 1
+)
+
+post2_mf_all <- stats::model.frame(post2_i0$m, data = post2_i0$datacox, na.action = stats::na.pass)
+post2_keep_idx <- stats::complete.cases(post2_mf_all)
+post2_drop_idx <- which(!post2_keep_idx)
+
+cat("Filtered without events with ties\n")
+post2_sdat_filt<- subset(post2_sdat, !id %in% post2_i0$datacox[which(!post2_keep_idx),"id"])
+post2_maxfu_df_filt <- subset(post2_maxfu_df, !maxfu.id %in% post2_i0$datacox[which(!post2_keep_idx),"id"])
+
+## Start from i0$datacox for REFIT
+post2_dat <- data.table::as.data.table(post2_sdat)  # ensure data.table
+
+## Sort
+data.table::setorder(post2_dat, id, time)
+
+## Make intervals strictly positive & ordered
+eps <- 1e-3
+post2_dat[, .idx := seq_len(.N) - 1L, by = .(id, time)]
+post2_dat[, time := time + eps * .idx][, .idx := NULL]
+post2_dat[, time.lag := data.table::shift(time, type = "lag", fill = 0), by = .(id)]
+post2_dat[time <= time.lag, time := time.lag + eps]
+
+## Lagged covariate with baseline = 0 (no NAs on first row)
+post2_dat[, tr_outcome_lag0 := data.table::shift(tr_outcome, type = "lag"), by = .(id)]
+post2_dat[is.na(tr_outcome_lag0), tr_outcome_lag0 := 0L]
+
+## Per-id max follow-up (keep id types consistent)
+post2_dat[, id := as.character(id)]
+post2_maxfu_df <- post2_dat[, .(maxfu.time = max(cens_time, na.rm = TRUE)),
+                            by = .(maxfu.id = id)]
+
+post2_dat[, id := as.character(id)]
+data.table::setDF(post2_dat); post2_maxfu_df <- as.data.frame(post2_maxfu_df)
+
+## Refit: only let IrregLong lag time; use our tr_outcome_lag0 in the formula
+post2_i0_3 <- IrregLong::iiw.weights(
+  formulaph  = survival::Surv(time.lag, time, event_vis) ~ tr_outcome_lag0 + 
+    survival::cluster(id),
+  data       = post2_dat,
+  id         = "id",
+  time       = "time",
+  event      = "event_vis",
+  lagvars    = c("time"),   # we already created tr_outcome_lag0
+  invariant  = "id",
+  maxfu      = post2_maxfu_df,
+  lagfirst   = c(0),        # first time.lag = 0
+  first      = TRUE
+)
+sum(is.na(post2_i0_3$iiw.weight))
+```
+
+### Stratified Weighting Calculation
+
+This calculates the weights per plan type.
+
+```{r cc_weighting_strat}
+#| echo: true
+#| results: "hold"
+
+post2_iiw_by_plan0 <- lapply(plan_types, function(pt) {
+  cat("Running for:", pt, "\n")
+  # Subset as plain data.frame
+  post2_dat_sub <- post2_dat |> dplyr::filter(plan_type_mod == pt) |> as.data.frame()
+  # Subset maxfu_df to only the ids in dat_sub
+  post2_maxfu_sub <- post2_maxfu_df[post2_maxfu_df$maxfu.id %in% dat_sub$id, , drop = FALSE]
+  IrregLong::iiw.weights(
+    formulaph  = survival::Surv(time.lag, time, event_vis) ~ 
+      tr_noncompletion.lag + biopsych_comp_severe.lag + 
+      treat_lt_90.lag + treat_log_days.lag + polysubstance_strict.lag +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+      occ24_inactive + occ24_unemployed +
+      susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+      survival::cluster(id),
+    data       = post2_dat_sub,
+    id         = "id",
+    time       = "time",
+    event      = "event_vis",
+    lagvars    = c("time", "tr_noncompletion", "biopsych_comp_severe",
+                   "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+    invariant  = "id",
+    maxfu      = post2_maxfu_sub,  # stratified by subset IDs
+    lagfirst   = c(5.149111, 0, 0, 0, 2.772589, 0),
+    first      = TRUE
+  )
+})
+names(post2_iiw_by_plan0) <- plan_types
+
+post2_iiw_by_plan1 <- lapply(plan_types, function(pt) {
+  cat("Running for:", pt, "\n")
+  # Subset as plain data.frame
+  post2_dat_sub <- post2_dat |> dplyr::filter(plan_type_mod == pt) |> as.data.frame()
+  # Subset maxfu_df to only the ids in dat_sub
+  post2_maxfu_sub <- post2_maxfu_df[post2_maxfu_df$maxfu.id %in% dat_sub$id, , drop = FALSE]
+  IrregLong::iiw.weights(
+    formulaph  = survival::Surv(time.lag, time, event_vis) ~ 
+      tr_noncompletion.lag + biopsych_comp_severe.lag + 
+      treat_lt_90.lag + treat_log_days.lag + polysubstance_strict.lag +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+      occ24_inactive + occ24_unemployed +
+      susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+      survival::cluster(id),
+    data       = post2_dat_sub,
+    id         = "id",
+    time       = "time",
+    event      = "event_vis",
+    lagvars    = c("time", "tr_noncompletion", "biopsych_comp_severe",
+                   "treat_lt_90", "treat_log_days", "polysubstance_strict"),
+    invariant  = "id",
+    maxfu      = post2_maxfu_sub,  # stratified by subset IDs
+    lagfirst   = c(5.149111, 1, 1, 1, 4.51086, 1),
+    first      = TRUE
+  )
+})
+names(post2_iiw_by_plan1) <- plan_types
+```
+
+### Stabilization and Merging
+
+This extracts the weights, handles NAs for the first treatment, creates the summary table, and applies truncation/capping.
+
+```{r cc_stab_weights}
+#| echo: true
+#| results: "hold"
+
+post2_dat_with_weights_stab <- extract_weights(post2_iiw_by_plan0, post2_dat, 
+                                               weight_name = "iiw.weight", 
+                                               out_col = "iiw_weight0_stab")
+
+
+post2_dat_with_weights_stab1 <- extract_weights(post2_iiw_by_plan1, post2_dat, 
+                                                weight_name = "iiw.weight", 
+                                                out_col = "iiw_weight1_stab")
+
+post2_dat_with_weights_stab_cons<- 
+  post2_dat_with_weights_stab|> #67957
+  dplyr::left_join(post2_dat_with_weights_stab1[,c("rn","iiw_weight1_stab")], 
+                   by="rn")|>
+  dplyr::arrange(hash_key, adm_age_rec3)
+
+# Add weight 1 in case of first treatment for time.lag==0
+post2_dat_with_weights_stab_cons$iiw_weight0_stab <- ifelse(
+  is.na(post2_dat_with_weights_stab_cons$iiw_weight0_stab) & post2_dat_with_weights_stab_cons$time.lag == 0,
+  1,
+  post2_dat_with_weights_stab_cons$iiw_weight0_stab
+)
+post2_dat_with_weights_stab_cons$iiw_weight1_stab <- ifelse(
+  is.na(post2_dat_with_weights_stab_cons$iiw_weight1_stab) & post2_dat_with_weights_stab_cons$time.lag == 0,
+  1,
+  post2_dat_with_weights_stab_cons$iiw_weight1_stab
+)
+
+# Table summary of weights
+rbind.data.frame(
+  cbind.data.frame(model= "Primary (after PH, lag=0)",
+                   t(matrix(summary(post2_dat_with_weights_stab_cons$iiw_weight0_stab ))) ),
+  cbind.data.frame(model= "Alternative (after PH, lag=1)",  t(matrix(summary(post2_dat_with_weights_stab_cons$iiw_weight1_stab)))) )%>% 
+  { 
+    knitr::kable(., digits=2, size=10, format="markdown", caption="Weights (no correction for PHs)", col.names= c("Weight",attr(summary(dat_with_weights_stab_cons$iiw_weight1_stab),"names")) ) 
+  }
+
+# Truncation / Capping
+post2_w_primary_tr <- cap(post2_dat_with_weights_stab_cons$iiw_weight0_stab, c(0.025, 0.975))
+post2_w_alt_tr     <- cap(post2_dat_with_weights_stab_cons$iiw_weight1_stab, c(0.025, 0.975))
+
+post2_w0       <- post2_dat_with_weights_stab_cons$iiw_weight0_stab
+post2_w0_tr    <- cap(post2_w_primary_tr, c(0.025, 0.975))
+post2_w1       <- post2_dat_with_weights_stab_cons$iiw_weight1_stab
+post2_w1_tr    <- cap(post2_w_alt_tr, c(0.025, 0.975))
+
+post2_dat_with_weights_stab_cons$w0_tr <-  post2_w0_tr
+post2_dat_with_weights_stab_cons$w1_tr <-  post2_w1_tr
+```
+
+### Modeling and Results
+
+This fits the GEE models for both weight sets and produces the final stratified results table.
+
+```{r cc_models_results}
+#| echo: true
+#| warning: false
+#| message: false
+
+post2_res_by_plan0 <- tidy_iiw_by_plan(post2_iiw_by_plan0, 
+                                     digits = 2, 
+                                     return_tidytable = TRUE)
+post2_res_by_plan1 <- tidy_iiw_by_plan(post2_iiw_by_plan1, 
+                                     digits = 2, 
+                                     return_tidytable = TRUE)
+
+
+post2_tab3_w0<- 
+  split(post2_dat_with_weights_stab_cons, post2_dat_with_weights_stab_cons$plan_type_mod)|>
+  purrr::imap(~{
+    df <- .x|> dplyr::mutate(id = as.character(id))
+    
+    # Clean formula: NO cluster()/strata()/id inside
+    ff_local <- tr_noncompletion ~ polysubstance_strict +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    # Freeze row universe once
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    # Outcome variation check
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    
+    # Design matrix and term mapping
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec <- attr(X, "assign")                 # maps columns -> term index
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    # 1) Drop constant columns (except intercept)
+    const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    # 2) Drop collinear columns via QR
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    X_reduced <- X[, keep_cols, drop = FALSE]
+    assign_kept <- assign_vec[keep_cols]
+    
+    # 3) Map kept columns back to ORIGINAL term labels
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))  # >0 skips intercept
+    if (length(kept_term_idx) == 0L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(no predictors after cleanup)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    kept_terms <- term_labels[kept_term_idx]
+    
+    # 4) Rebuild reduced formula from ORIGINAL terms
+    ff_reduced <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+    
+    # 5) Align id to kept rows (same `keep` mask)
+    id_vec <- df$id[keep]
+    
+    # 6) Fit GEE (intercept-only scale)
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude
+      , weights = df$w0_tr[keep]   # or w1_tr, if you want weights by stratum
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE)|>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", estimate, conf.low, conf.high)
+      )
+  })|>
+  dplyr::bind_rows()|>
+  dplyr::relocate(plan_type_mod, n_rows)
+
+
+
+post2_tab3_w1<- 
+  split(post2_dat_with_weights_stab_cons, post2_dat_with_weights_stab_cons$plan_type_mod)|>
+  purrr::imap(~{
+    df <- .x|> dplyr::mutate(id = as.character(id))
+    
+    # Clean formula: NO cluster()/strata()/id inside
+    ff_local <- tr_noncompletion ~ polysubstance_strict +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    # Freeze row universe once
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    # Outcome variation check
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    
+    # Design matrix and term mapping
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec <- attr(X, "assign")                 # maps columns -> term index
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    # 1) Drop constant columns (except intercept)
+    const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    # 2) Drop collinear columns via QR
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    X_reduced <- X[, keep_cols, drop = FALSE]
+    assign_kept <- assign_vec[keep_cols]
+    
+    # 3) Map kept columns back to ORIGINAL term labels
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))  # >0 skips intercept
+    if (length(kept_term_idx) == 0L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(no predictors after cleanup)",
+        estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_
+      ))
+    }
+    kept_terms <- term_labels[kept_term_idx]
+    
+    # 4) Rebuild reduced formula from ORIGINAL terms
+    ff_reduced <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+    
+    # 5) Align id to kept rows (same `keep` mask)
+    id_vec <- df$id[keep]
+    
+    # 6) Fit GEE (intercept-only scale)
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude
+      , weights = df$w1_tr[keep]   # or w1_tr, if you want weights by stratum
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE)|>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", estimate, conf.low, conf.high)
+      )
+  })|>
+  dplyr::bind_rows()|>
+  dplyr::relocate(plan_type_mod, n_rows)
+
+# Combine and Export Results
+rbind.data.frame(
+  cbind.data.frame(w="weight lag=0", dplyr::filter(post2_tab3_w0, grepl("poly", term))),
+  cbind.data.frame(w="weight lag=1", dplyr::filter(post2_tab3_w1, grepl("poly", term)))
+)|> 
+  tidyr::pivot_wider(
+    names_from = w,
+    values_from = `RR (95% CI)`
+  )|>
+  dplyr::relocate(plan_type_mod, n_rows, term)|> 
+  dplyr::select(-term)|> 
+  (\(df) {
+    cat(paste0("Total cases included in the model: ",
+               formatC(dplyr::summarise(df, sum_n= sum(n_rows))|> dplyr::pull(sum_n), big.mark = ","), "\n"))
+    utils::write.csv(df, file.path(wdpath, "data/20241015_out/psu", "stratified_results.csv"), row.names = FALSE)
+    df ->> post2_stratified_results
+    df
+  })()|>
+  knitr::kable("markdown", caption= "Stratified models by Plan Type", digits = 2)
+
+cat(paste0("IDs: ", length(unique(post2_dat_with_weights_stab_cons$id))))
+```
+
+
+<br>
+
+
+## Summarising extreme weight groups
+
+```{r weight_analysis}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+# ------------------------------------------------------------------------------
+# 1. Check for multiple weights per patient
+# ------------------------------------------------------------------------------
+prop_varying <- dat_with_weights_stab_cons |>
+  dplyr::group_by(hash_key) |> 
+  dplyr::summarise(n0 = dplyr::n_distinct(w0_tr), n1 = dplyr::n_distinct(w1_tr), n = dplyr::n()) |> 
+  dplyr::filter(n0 > 1 | n1 > 1) |> nrow() /
+dat_with_weights_stab_cons |>
+  dplyr::group_by(hash_key) |> 
+  dplyr::summarise(n0 = dplyr::n_distinct(w0_tr), n1 = dplyr::n_distinct(w1_tr), n = dplyr::n()) |> 
+  nrow()
+
+cat("Proportion of patients with varying weights:", prop_varying, "\n\n")
+
+
+# ------------------------------------------------------------------------------
+# 2. Define Helper Functions for SMD
+# ------------------------------------------------------------------------------
+calculate_smd_safe <- function(p1, p2) {
+  # Check if values are valid probabilities
+  if (p1 < 0 || p1 > 1 || p2 < 0 || p2 > 1) return(NA)
+  
+  # Variance for proportions
+  v1 <- p1 * (1 - p1)
+  v2 <- p2 * (1 - p2)
+  
+  # Pooled Standard Deviation
+  pooled_sd <- sqrt((v1 + v2) / 2)
+  
+  # Safety check
+  if (is.na(pooled_sd) || pooled_sd == 0) return(0)
+  
+  return((p1 - p2) / pooled_sd)
+}
+
+calc_continuous_smd <- function(m1, m2, s1, s2) {
+  pooled_sd <- sqrt((s1^2 + s2^2) / 2)
+  return((m1 - m2) / pooled_sd)
+}
+
+# ------------------------------------------------------------------------------
+# 3. Analyze Extreme Weights (Lag 0)
+# ------------------------------------------------------------------------------
+
+dat_ag_join<- 
+  dat_ag[, c("rn","hash_key",
+             "tr_noncompletion.lag",
+             "biopsych_comp_severe.lag",
+             "treat_lt_90.lag",
+             "treat_log_days.lag",
+             "polysubstance_strict.lag",
+             "age_c10",
+             "year_c",
+             "susinidum_oh",
+             "susinidum_coc",
+             "susinidum_pbc",
+             "susinidum_mar",
+             "dg_psiq_cie_10_instudy",
+             "dg_psiq_cie_10_dg",
+             "prim_sub_daily",
+             "occ24_inactive",
+             "occ24_unemployed",
+             "susprindum_oh",
+             "susprindum_coc",
+             "susprindum_pbc",
+             "susprindum_mar"
+  )
+  ]
+
+comparison_w0_extreme_wgts<- 
+dat_with_weights_stab_cons[,c("rn", "w0_tr", "w1_tr")] |>
+  dplyr::left_join(dat_ag_join, by="rn") |> 
+  dplyr::mutate(
+    weight_group = dplyr::case_when(
+      w0_tr >= quantile(w0_tr, 0.975, na.rm = TRUE) ~ "Very high weight",
+      w0_tr <= quantile(w0_tr, 0.025, na.rm = TRUE) ~ "Very low weight",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  dplyr::filter(!is.na(weight_group)) |>
+  dplyr::group_by(weight_group) |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    prev_dropout = mean(tr_noncompletion.lag == 1, na.rm = TRUE),
+    prev_short_tr = mean(treat_lt_90.lag == 1, na.rm = TRUE),
+    prev_severe = mean(biopsych_comp_severe.lag == 1, na.rm = TRUE),
+    prev_psu = mean(polysubstance_strict.lag == 1, na.rm=T),
+    age = mean(age_c10, na.rm = TRUE),
+    time = mean(treat_log_days.lag, na.rm= TRUE),
+    sd_time = sd(treat_log_days.lag, na.rm= TRUE),
+    year_cen = mean(year_c, na.rm = TRUE),
+    sd_age = sd(age_c10, na.rm = TRUE),
+    sd_year_c = sd(year_c, na.rm = TRUE),    
+    init_alcohol = mean(susinidum_oh == 1, na.rm = TRUE),
+    init_cocaine = mean(susinidum_coc == 1, na.rm = TRUE),
+    init_pstbase = mean(susinidum_pbc == 1, na.rm = TRUE),
+    init_marihua = mean(susinidum_mar == 1, na.rm = TRUE),
+    dg_psy_inst = mean(dg_psiq_cie_10_instudy == 1, na.rm = TRUE),
+    dg_psy_dg = mean(dg_psiq_cie_10_dg == 1, na.rm = TRUE),
+    inactive = mean(occ24_inactive == 1, na.rm = TRUE),
+    unemployed = mean(occ24_unemployed == 1, na.rm = TRUE),
+    prim_alcohol = mean(susprindum_oh == 1, na.rm = TRUE),
+    prim_cocaine = mean(susprindum_coc == 1, na.rm = TRUE),
+    prim_pstbase = mean(susprindum_pbc == 1, na.rm = TRUE),
+    prim_marihua = mean(susprindum_mar == 1, na.rm = TRUE),
+    daily_freq_use = mean(prim_sub_daily == 1, na.rm = TRUE)
+  ) 
+
+# ------------------------------------------------------------------------------
+# 4. Analyze Extreme Weights (Lag 1)
+# ------------------------------------------------------------------------------
+
+comparison_w1_extreme_wgts<- 
+dat_with_weights_stab_cons[,c("rn", "w0_tr", "w1_tr")] |>
+  dplyr::left_join(dat_ag_join, by="rn") |> 
+  dplyr::mutate(
+    weight_group = dplyr::case_when(
+      w1_tr >= quantile(w1_tr, 0.975, na.rm = TRUE) ~ "Very high weight",
+      w1_tr <= quantile(w1_tr, 0.025, na.rm = TRUE) ~ "Very low weight",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  dplyr::filter(!is.na(weight_group)) |>
+  dplyr::group_by(weight_group) |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    prev_dropout = mean(tr_noncompletion.lag == 1, na.rm = TRUE),
+    prev_short_tr = mean(treat_lt_90.lag == 1, na.rm = TRUE),
+    prev_severe = mean(biopsych_comp_severe.lag == 1, na.rm = TRUE),
+    prev_psu = mean(polysubstance_strict.lag == 1, na.rm=T),
+    age = mean(age_c10, na.rm = TRUE),
+    time = mean(treat_log_days.lag, na.rm= TRUE),
+    sd_time = sd(treat_log_days.lag, na.rm= TRUE),    
+    year_cen = mean(year_c, na.rm = TRUE),
+    sd_age = sd(age_c10, na.rm = TRUE),
+    sd_year_c = sd(year_c, na.rm = TRUE),    
+    init_alcohol = mean(susinidum_oh == 1, na.rm = TRUE),
+    init_cocaine = mean(susinidum_coc == 1, na.rm = TRUE),
+    init_pstbase = mean(susinidum_pbc == 1, na.rm = TRUE),
+    init_marihua = mean(susinidum_mar == 1, na.rm = TRUE),
+    dg_psy_inst = mean(dg_psiq_cie_10_instudy == 1, na.rm = TRUE),
+    dg_psy_dg = mean(dg_psiq_cie_10_dg == 1, na.rm = TRUE),
+    inactive = mean(occ24_inactive == 1, na.rm = TRUE),
+    unemployed = mean(occ24_unemployed == 1, na.rm = TRUE),
+    prim_alcohol = mean(susprindum_oh == 1, na.rm = TRUE),
+    prim_cocaine = mean(susprindum_coc == 1, na.rm = TRUE),
+    prim_pstbase = mean(susprindum_pbc == 1, na.rm = TRUE),
+    prim_marihua = mean(susprindum_mar == 1, na.rm = TRUE),
+    daily_freq_use = mean(prim_sub_daily == 1, na.rm = TRUE)
+  ) 
+
+# ------------------------------------------------------------------------------
+# 5. Process and Format Tables
+# ------------------------------------------------------------------------------
+# Transpose and clean names
+df_compare0 <- as.data.frame(t(comparison_w0_extreme_wgts))
+df_compare1 <- as.data.frame(t(comparison_w1_extreme_wgts))
+
+# Assuming alphabetical order of groups: 1="Very high weight", 2="Very low weight"
+colnames(df_compare1) <- c("Very high weight", "Very low weight")
+colnames(df_compare0) <- c("Very high weight", "Very low weight")
+
+# Convert columns to numeric and drop first 2 rows (Group label and N)
+df_compare1$`Very high weight` <- as.numeric(as.character(df_compare1$`Very high weight`))
+df_compare1$`Very low weight` <- as.numeric(as.character(df_compare1$`Very low weight`))
+df_compare1 <- df_compare1[3:nrow(df_compare1),]
+
+df_compare0$`Very high weight` <- as.numeric(as.character(df_compare0$`Very high weight`))
+df_compare0$`Very low weight` <- as.numeric(as.character(df_compare0$`Very low weight`))
+df_compare0 <- df_compare0[3:nrow(df_compare0),]
+
+# Calculate Binary SMDs
+df_compare1$SMD <- mapply(calculate_smd_safe, df_compare1$`Very high weight`, df_compare1$`Very low weight`)
+df_compare0$SMD <- mapply(calculate_smd_safe, df_compare0$`Very high weight`, df_compare0$`Very low weight`)
+
+# Calculate Continuous SMDs
+# Note: Using index 1 for High, 2 for Low based on alphabetical sort order
+smd_age1  <- calc_continuous_smd(comparison_w1_extreme_wgts$age[1], comparison_w1_extreme_wgts$age[2], comparison_w1_extreme_wgts$sd_age[1], comparison_w1_extreme_wgts$sd_age[2])
+smd_year1 <- calc_continuous_smd(comparison_w1_extreme_wgts$year_cen[1], comparison_w1_extreme_wgts$year_cen[2], comparison_w1_extreme_wgts$sd_year_c[1], comparison_w1_extreme_wgts$sd_year_c[2])
+smd_time1 <- calc_continuous_smd(comparison_w1_extreme_wgts$time[1], comparison_w1_extreme_wgts$time[2], comparison_w1_extreme_wgts$sd_time[1], comparison_w1_extreme_wgts$sd_time[2])
+
+smd_age0  <- calc_continuous_smd(comparison_w0_extreme_wgts$age[1], comparison_w0_extreme_wgts$age[2], comparison_w0_extreme_wgts$sd_age[1], comparison_w0_extreme_wgts$sd_age[2])
+smd_year0 <- calc_continuous_smd(comparison_w0_extreme_wgts$year_cen[1], comparison_w0_extreme_wgts$year_cen[2], comparison_w0_extreme_wgts$sd_year_c[1], comparison_w0_extreme_wgts$sd_year_c[2])
+smd_time0 <- calc_continuous_smd(comparison_w0_extreme_wgts$time[1], comparison_w0_extreme_wgts$time[2], comparison_w0_extreme_wgts$sd_time[1], comparison_w0_extreme_wgts$sd_time[2])
+
+# Insert Continuous SMDs
+df_compare1$SMD[rownames(df_compare1) == "age"] <- smd_age1
+df_compare1$SMD[rownames(df_compare1) == "year_cen"] <- smd_year1
+df_compare1$SMD[rownames(df_compare1) == "time"] <- smd_time1
+
+df_compare0$SMD[rownames(df_compare0) == "age"] <- smd_age0
+df_compare0$SMD[rownames(df_compare0) == "year_cen"] <- smd_year0
+df_compare0$SMD[rownames(df_compare0) == "time"] <- smd_time0
+
+# Remove SD rows
+df_compare1 <- df_compare1[!grepl("sd_", rownames(df_compare1)),]
+df_compare0 <- df_compare0[!grepl("sd_", rownames(df_compare0)),]
+
+# Final formatting
+continuous_vars <- c("age", "year_cen", "time")
+df_compare0$Var <- rownames(df_compare0)
+
+df_fmt <- dplyr::bind_cols(df_compare0, df_compare1) |>
+  janitor::clean_names() %>%
+  dplyr::mutate(dplyr::across(
+    c(very_high_weight_1, very_low_weight_2, very_high_weight_5, very_low_weight_6),
+    ~ ifelse(var %in% continuous_vars, 
+             sprintf("%1.2f", .), 
+             sprintf("%.1f%%", . * 100))
+  )) %>%
+  dplyr::mutate(dplyr::across(c(smd_3, smd_7), ~ sprintf("%1.2f", abs(.)))) |>
+  dplyr::select(var, everything())
+
+# Display
+knitr::kable(df_fmt, caption = "Comparison of extreme weight groups (Lag 0 vs Lag 1)")
+
+```
+
+## MICE
+
+This step sets up the imputation matrix. It specifies that only variables in the vars_impute list (derived from your formula) should be imputed. It assigns methods based on variable types (PMM for numeric, logistic regression for binary, etc.) and runs the imputation 5 times. Finally, it reconstructs the full datasets by merging the imputed columns back into the "backbone" dataframe.
+
+```{r mice_run}
+#| echo: true
+#| results: "hold"
+#| warning: false
+#| message: false
+
+library(mice)
+
+# Text outputs for the report
+invisible("Missing covariate data were handled using multiple imputation
+by chained equations (MICE), imputing only prespecified variables with 
+missingness using predictive mean matching for continuous variables and 
+appropriate logistic/multinomial/ordinal models for categorical variables.")
+
+invisible("We generated m = 5 imputed datasets using MICE with 50 iterations 
+per dataset, using predictive mean matching with 5 donors for continuous variables; 
+binary, nominal, and ordinal variables were imputed using logistic, multinomial, 
+and proportional-odds models, respectively.")
+
+invisible("Point estimates and standard errors were combined across imputations using Rubin’s rules")
+
+set.seed(2125)
+
+# 1) Variables to impute = LHS of the formula
+vars_impute <- all.vars(form_miss[[2]])
+
+# 2) Initialize to extract method/predictorMatrix defaults
+ini  <- mice(dat_sub, maxit = 0, printFlag = FALSE)
+meth <- ini$method
+pred <- ini$predictorMatrix
+
+# 3) Do NOT impute variables not in vars_impute
+meth[setdiff(names(meth), vars_impute)] <- ""
+
+# (Optional) Zero out predictors for rows not being imputed
+pred[setdiff(rownames(pred), vars_impute), ] <- 0
+
+# 4) Choose method by type
+for (v in vars_impute) {
+  x <- dat_sub[[v]]
+  
+  if (is.numeric(x)) {
+    meth[v] <- "pmm"
+  } else if (is.logical(x)) {
+    dat_sub[[v]] <- factor(x, levels = c(FALSE, TRUE))
+    meth[v] <- "logreg"
+  } else if (is.factor(x) && nlevels(x) == 2) {
+    meth[v] <- "logreg"
+  } else if (is.ordered(x)) {
+    meth[v] <- "polr"
+  } else if (is.factor(x)) {
+    meth[v] <- "polyreg"
+  } else {
+    meth[v] <- "pmm"
+  }
+  
+  pred[v, v] <- 0  # A variable should not predict itself
+}
+
+# 5) Run MICE
+imp <- mice(
+  data = dat_sub,
+  m = 5,           
+  maxit = 50,
+  method = meth,
+  predictorMatrix = pred,
+  donors = 5,      
+  printFlag = FALSE, # Set to TRUE if you want to see the iteration log
+  seed = 2125
+)
+
+# 6) Extract imputations
+SISTRAT_imputed_list <- complete(imp, action = "all") 
+
+# Optional: Save/Load logic
+# saveRDS(SISTRAT_imputed_list, file = file.path(wdpath, "data/20241015_out/psu", "post3_SISTRAT_imputed_list.rds"))
+# post3_SISTRAT_imputed_list <- readRDS(file.path(wdpath, "data/20241015_out/psu", "post3_SISTRAT_imputed_list.rds"))
+post3_SISTRAT_imputed_list <- SISTRAT_imputed_list
+
+# Reconstruct full datasets
+# backbone = full dataset with all structural columns (ids, dates, outcome, etc.)
+backbone_df <- as.data.frame(SISTRAT_clean_drop_patient_multiple_imp)
+
+post3_SISTRAT_full_imputed_list <- purrr::map(post3_SISTRAT_imputed_list, \(imp_df) {
+  out <- backbone_df
+  imp_df <- as.data.frame(imp_df)
+  
+  # replace ONLY the imputed columns
+  out[vars_impute] <- imp_df[vars_impute]
+  out
+})
+```
+
+### Step 2: Trajectory Reconstruction
+
+Now that we have $m=5$ complete datasets, we need to apply the same longitudinal transformations used in the complete-case analysis (creating time intervals, censoring, and lagging variables) to *each* of the 5 datasets.
+
+```{r mice_traj_prep}
+#| echo: true
+#| results: "hold"
+
+make_traj <- function(df) {
+  
+  df |>
+    tidytable::ungroup() |>
+    # Canonical ordering within each patient
+    tidytable::arrange(hash_key, adm_date_rec2, disch_date_rec6) |>
+    tidytable::group_by(hash_key) |>
+    # Treatment sequence and entry date
+    tidytable::mutate(
+      treatment           = tidytable::row_number(),
+      is_first_occurrence = tidytable::if_else(treatment == 1L, 1L, 0L),
+      max_treatment       = max(treatment, na.rm = TRUE),
+      enter_date          = min(adm_date_rec2, na.rm = TRUE)
+    ) |>
+    tidytable::mutate(episode_id = cumsum(is_first_occurrence)) |>
+    tidytable::ungroup() |>
+    # Durations in MONTHS
+    tidytable::mutate(
+      time      = lubridate::time_length(lubridate::interval(enter_date, disch_date_rec6), unit = "months"),
+      cens_time = lubridate::time_length(lubridate::interval(enter_date, censor_date),    unit = "months")
+    ) |>
+    # Tie-breaker for identical times within person
+    tidytable::mutate(dup_idx = tidytable::row_number(), .by = c(hash_key, time)) |>
+    tidytable::mutate(time = time + (dup_idx - 1L) * 0.001) |>
+    tidytable::mutate(lag_time = tidytable::lag(time), .by = hash_key) |>
+    # Survival time
+    tidytable::mutate(
+      surv_time = tidytable::if_else(tidytable::coalesce(tr_noncompletion, 0L) == 0L, cens_time, time),
+      id = as.numeric(factor(hash_key))
+    ) |>
+    tidytable::select(-dup_idx, -is_first_occurrence)
+}
+
+# Apply to all imputed list elements
+post3_SISTRAT_traj_list <- purrr::map(post3_SISTRAT_full_imputed_list, make_traj)
+
+```
+
+
+### Step 3: IIW Calculation per Imputation
+
+This step runs the IIWs logic on each of the 5 datasets. It defines helper functions to handle the data preparation and the `IrregLong::iiw.weights` call. Note that we define the base weighting function first, then apply it.
+
+```{r mice_weighting_calc}
+#| echo: true
+#| results: "hold"
+
+# Helper function to run iiw on a single trajectory dataset
+post3_run_iiw <- function(post3_SISTRAT_traj) {
+  
+  gc()
+  
+  # --- Prepare data: plain data.frame for IrregLong ---
+  post3_sdat <- as.data.frame(post3_SISTRAT_traj)
+  
+  # ID/time/event
+  post3_sdat$id        <- as.character(as.integer(factor(post3_sdat$hash_key)))
+  post3_sdat$time      <- as.numeric(post3_sdat$time)
+  post3_sdat$event_vis <- 1L
+  
+  # Dummies
+  post3_sdat$occ24_inactive   <- as.integer(post3_sdat$occupation_condition_corr24 == "inactive")
+  post3_sdat$occ24_unemployed <- as.integer(post3_sdat$occupation_condition_corr24 == "unemployed")
+  post3_sdat$occ24_employed   <- as.integer(post3_sdat$occupation_condition_corr24 == "employed")
+  
+  post3_sdat$susinidum_oh  <- as.integer(post3_sdat$sus_ini_mod_mvv == "alcohol")
+  post3_sdat$susinidum_coc <- as.integer(post3_sdat$sus_ini_mod_mvv == "cocaine powder")
+  post3_sdat$susinidum_pbc <- as.integer(post3_sdat$sus_ini_mod_mvv == "cocaine paste")
+  post3_sdat$susinidum_mar <- as.integer(post3_sdat$sus_ini_mod_mvv == "marijuana")
+  post3_sdat$susinidum_oth <- as.integer(post3_sdat$sus_ini_mod_mvv == "others")
+  
+  post3_sdat$susprindum_oh  <- as.integer(post3_sdat$primary_sub_mod == "alcohol")
+  post3_sdat$susprindum_coc <- as.integer(post3_sdat$primary_sub_mod == "cocaine powder")
+  post3_sdat$susprindum_pbc <- as.integer(post3_sdat$primary_sub_mod == "cocaine paste")
+  post3_sdat$susprindum_mar <- as.integer(post3_sdat$primary_sub_mod == "marijuana")
+  post3_sdat$susprindum_oth <- as.integer(post3_sdat$primary_sub_mod == "others")
+  
+  post3_sdat$year_c  <- post3_sdat$year_decimal - 2015
+  post3_sdat$age_c10 <- (post3_sdat$adm_age_rec3 - mean(post3_sdat$adm_age_rec3, na.rm = TRUE)) / 10
+  
+  # treat_log_days sanity: keep NA for non-finite
+  bad <- !is.finite(post3_sdat$treat_log_days) & !is.na(post3_sdat$treat_log_days)
+  if (any(bad)) post3_sdat$treat_log_days[bad] <- NA_real_
+  
+  # outcome as integer (0/1)
+  post3_sdat$tr_noncompletion <- as.integer(post3_sdat$tr_noncompletion)
+  
+  # --- Make intervals strictly positive & ordered (defensive) ---
+  post3_dat <- data.table::as.data.table(post3_sdat)
+  data.table::setorder(post3_dat, id, time)
+  
+  eps <- 1e-3
+  post3_dat[, .idx := seq_len(.N) - 1L, by = .(id, time)]
+  post3_dat[, time := time + eps * .idx][, .idx := NULL]
+  post3_dat[, time.lag := data.table::shift(time, type = "lag", fill = 0), by = .(id)]
+  post3_dat[time <= time.lag, time := time.lag + eps]
+  
+  # Lagged outcome with baseline = 0 (no NA at first row)
+  post3_dat[, tr_noncompletion_lag0 := data.table::shift(tr_noncompletion, type = "lag"), by = .(id)]
+  post3_dat[is.na(tr_noncompletion_lag0), tr_noncompletion_lag0 := 0L]
+  
+  # --- Per-id max follow-up ---
+  post3_maxfu_df <- post3_dat[, .(maxfu.time = max(cens_time, na.rm = TRUE)),
+                              by = .(maxfu.id = id)]
+  data.table::setDF(post3_dat)
+  post3_maxfu_df <- as.data.frame(post3_maxfu_df)
+  
+  # --- i0 weights (your "post_i0_3" but with post3_ names) ---
+  post3_i0_3 <- IrregLong::iiw.weights(
+    formulaph = survival::Surv(time.lag, time, event_vis) ~ tr_noncompletion_lag0 +
+      survival::cluster(id),
+    data      = post3_dat,
+    id        = "id",
+    time      = "time",
+    event     = "event_vis",
+    lagvars   = c("time"),
+    invariant = "id",
+    maxfu     = post3_maxfu_df,
+    lagfirst  = c(0),
+    first     = TRUE
+  )
+  
+  list(
+    post3_dat = post3_dat,
+    post3_maxfu_df = post3_maxfu_df,
+    post3_i0_3 = post3_i0_3
+  )
+}
+
+# Run IPTW on all 5 datasets
+post3_iiw_results_list <- purrr::imap(
+  post3_SISTRAT_traj_list,
+  ~ post3_run_iiw(.x)
+)
+
+# Diagnostic: number of NA weights per imputation
+cat("NA weights per imputation:\n")
+print(purrr::map_int(post3_iiw_results_list, ~ sum(is.na(.x$post3_i0_3$iiw.weight))))
+
+```
+
+### Step 4: Stratified Weighting and Merging
+
+Here we calculate the final weights stratified by `plan_type_mod`. We run this for both Lag 0 and Lag 1 specifications, merge them back into the datasets, fix the first-visit weights (setting them to 1), and create a summary table of the weights across all imputations. Finally, we cap the weights at the 2.5% and 97.5% quantiles.
+
+```{r mice_strat_weights}
+#| echo: true
+#| results: "hold"
+#| warning: false
+
+cat("$:$:$:$:$:$:$:$:$:$:$:$:$:$:\n")
+cat("Weights by plan type\n")
+cat("$:$:$:$:$:$:$:$:$:$:$:$:$:$:\n")
+
+# Helper function: Calculate stratified weights
+post3_weights_by_plan <- function(post3_dat, post3_maxfu_df, plan_types,
+                                  lagfirst0 = c(5.149111, 0, 0, 0, 2.772589, 0),
+                                  lagfirst1 = c(5.149111, 1, 1, 1, 4.51086, 1)) {
+  
+  fml <- survival::Surv(time.lag, time, event_vis) ~
+    tr_noncompletion.lag + biopsych_comp_severe.lag +
+    treat_lt_90.lag + treat_log_days.lag + polysubstance_strict.lag +
+    age_c10 + year_c +
+    susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+    dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + prim_sub_daily +
+    occ24_inactive + occ24_unemployed +
+    susprindum_oh + susprindum_coc + susprindum_pbc + susprindum_mar +
+    survival::cluster(id)
+  
+  lagvars_vec <- c("time", "tr_noncompletion", "biopsych_comp_severe",
+                   "treat_lt_90", "treat_log_days", "polysubstance_strict")
+  
+  run_one <- function(pt, lagfirst_vec, out_col) {
+    dat_sub <- dplyr::filter(post3_dat, plan_type_mod == pt)
+    maxfu_sub <- post3_maxfu_df[post3_maxfu_df$maxfu.id %in% dat_sub$id, , drop = FALSE]
+    
+    fit <- IrregLong::iiw.weights(
+      formulaph  = fml,
+      data       = dat_sub,
+      id         = "id",
+      time       = "time",
+      event      = "event_vis",
+      lagvars    = lagvars_vec,
+      invariant  = "id",
+      maxfu      = maxfu_sub,
+      lagfirst   = lagfirst_vec,
+      first      = TRUE
+    )
+    
+    data.frame(rn = dat_sub$rn, w = fit$iiw.weight) |>
+      dplyr::rename(!!out_col := w)
+  }
+  
+  w0_all <- dplyr::bind_rows(lapply(plan_types, \(pt) run_one(pt, lagfirst0, "iiw_weight0_stab")))
+  w1_all <- dplyr::bind_rows(lapply(plan_types, \(pt) run_one(pt, lagfirst1, "iiw_weight1_stab")))
+  
+  list(w0_all = w0_all, w1_all = w1_all)
+}
+
+# Apply to each imputed dataset + merge weights back
+post3_dat_with_weights_list <- purrr::imap(post3_iiw_results_list, \(res, imp_i) {
+  
+  post3_dat      <- res$post3_dat
+  post3_maxfu_df <- res$post3_maxfu_df
+  
+  w <- post3_weights_by_plan(post3_dat, post3_maxfu_df, plan_types)
+  
+  out <- post3_dat |>
+    dplyr::left_join(w$w0_all, by = "rn") |>
+    dplyr::left_join(w$w1_all, by = "rn") |>
+    dplyr::arrange(hash_key, adm_age_rec3) |>
+    dplyr::mutate(.imp = imp_i)
+  
+  out
+})
+
+cat("Add weight 1 in case of first treatment for time.lag==0\n")
+post3_dat_with_weights_list <- purrr::map(post3_dat_with_weights_list, \(df) {
+  df |>
+    dplyr::mutate(
+      iiw_weight0_stab = dplyr::if_else(is.na(iiw_weight0_stab) & time.lag == 0, 1, iiw_weight0_stab),
+      iiw_weight1_stab = dplyr::if_else(is.na(iiw_weight1_stab) & time.lag == 0, 1, iiw_weight1_stab)
+    )
+})
+
+# Summary of Weights
+post3_weights_summary_long <- purrr::imap_dfr(post3_dat_with_weights_list, \(df, imp_i) {
+  s0 <- summary(df$iiw_weight0_stab)
+  s1 <- summary(df$iiw_weight1_stab)
+  dplyr::bind_rows(
+    data.frame(.imp = imp_i, model = "Primary (lag=0)", n = sum(!is.na(df$iiw_weight0_stab)),
+               t(as.matrix(s0)), check.names = FALSE),
+    data.frame(.imp = imp_i, model = "Alternative (lag=1)", n = sum(!is.na(df$iiw_weight1_stab)),
+               t(as.matrix(s1)), check.names = FALSE)
+  )
+})
+knitr::kable(post3_weights_summary_long, digits = 2, format = "markdown", caption = "Weights (long dataset)")
+
+# Cap weights
+post3_dat_with_weights_list <- purrr::map(post3_dat_with_weights_list, \(df) {
+  df |>
+    dplyr::mutate(
+      w0_tr = cap(iiw_weight0_stab, c(0.025, 0.975)),
+      w1_tr = cap(iiw_weight1_stab, c(0.025, 0.975))
+    )
+})
+```
+
+### Step 5: Pooling Results with Rubin's Rules
+
+This is the final analysis step. We define a function `post3_fit_tab3_one_imp` to fit the GEE model on a single dataset. Then, `post3_pool_rubin` combines the estimates and standard errors across the 5 datasets using Rubin's rules. We run this for Unweighted, Weighted (Lag 0), and Weighted (Lag 1) scenarios and combine them into a final comparison table.
+
+```{r mice_pooling_results}
+#| echo: true
+#| results: "hold"
+
+# 1) Fit GEE within ONE imputed dataset
+post3_fit_tab3_one_imp <- function(dat, weight_col = NULL) {
+  
+  dat <- dat |> dplyr::mutate(id = as.character(id))
+  
+  ff_local <- tr_noncompletion ~ polysubstance_strict +
+    age_c10 + year_c +
+    susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+    dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+    prim_sub_daily + occ24_inactive + occ24_unemployed +
+    susprindum_coc + susprindum_pbc + susprindum_mar
+  
+  split(dat, dat$plan_type_mod) |>
+    purrr::imap_dfr(function(df, pt) {
+      
+      mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+      keep <- stats::complete.cases(mf0)
+      mf   <- mf0[keep, , drop = FALSE]
+      if (nrow(mf) == 0L) return(NULL)
+      
+      # Cleanup design matrix
+      X <- stats::model.matrix(ff_local, mf)
+      assign_vec  <- attr(X, "assign")
+      term_labels <- attr(stats::terms(ff_local), "term.labels")
+      const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+      const[colnames(X) == "(Intercept)"] <- FALSE
+      if (any(const)) {
+        X <- X[, !const, drop = FALSE]; assign_vec <- assign_vec[!const]
+      }
+      qrX <- qr(X)
+      keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+      assign_kept <- assign_vec[keep_cols]
+      kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))
+      
+      if (length(kept_term_idx) == 0L) return(tibble::tibble(plan_type_mod = as.character(pt), term="(no pred)", estimate=NA))
+
+      kept_terms  <- term_labels[kept_term_idx]
+      ff_reduced  <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+      id_vec      <- df$id[keep]
+      w_vec       <- if (!is.null(weight_col)) df[[weight_col]][keep] else NULL
+      
+      fit <- geepack::geeglm(
+        ff_reduced, id = id_vec, data = mf, family = poisson,
+        corstr = "independence", scale.fix = TRUE, na.action = stats::na.exclude, weights = w_vec
+      )
+      
+      sm <- summary(fit)
+      cf <- as.data.frame(sm$coefficients)
+      cf$term <- rownames(cf)
+      se_col <- intersect(c("Robust S.E.", "Std.err"), colnames(cf))[1]
+      
+      tibble::tibble(
+        plan_type_mod = as.character(pt),
+        n_rows = nrow(mf),
+        term = cf$term,
+        estimate = cf$Estimate,
+        std.error = cf[[se_col]]
+      )
+    })
+}
+
+# 2) Rubin pooling on log scale
+post3_pool_rubin <- function(df) {
+  df <- df |> dplyr::filter(is.finite(estimate), is.finite(std.error))
+  
+  df |> dplyr::group_by(plan_type_mod, term) |>
+    dplyr::summarise(
+      m_used = dplyr::n(),
+      n_rows = round(mean(n_rows), 0),
+      Qbar   = mean(estimate),
+      Ubar   = mean(std.error^2),
+      B      = ifelse(m_used > 1, stats::var(estimate), 0),
+      Tvar   = Ubar + (1 + 1/m_used) * B,
+      se_pool = sqrt(Tvar),
+      df_old  = dplyr::if_else(B > 0 & m_used > 1, (m_used - 1) * (1 + Ubar / ((1 + 1/m_used) * B))^2, Inf),
+      crit = dplyr::if_else(is.finite(df_old), stats::qt(0.975, df_old), stats::qnorm(0.975)),
+      lo = Qbar - crit * se_pool,
+      hi = Qbar + crit * se_pool,
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(
+      RR = exp(Qbar),
+      conf.low = exp(lo),
+      conf.high = exp(hi),
+      `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", RR, conf.low, conf.high)
+    ) |>
+    dplyr::select(plan_type_mod, n_rows, m_used, term, `RR (95% CI)`) |>
+    dplyr::arrange(plan_type_mod, term)
+}
+
+cat("Running estimates and pooling...\n")
+
+# Run for w0, w1, and unweighted
+post3_res_w0 <- purrr::imap_dfr(post3_dat_with_weights_list, \(df, imp) post3_fit_tab3_one_imp(df, weight_col = "w0_tr") |> dplyr::mutate(.imp = imp))
+post3_tab3_w0 <- post3_pool_rubin(post3_res_w0)
+
+post3_res_w1 <- purrr::imap_dfr(post3_dat_with_weights_list, \(df, imp) post3_fit_tab3_one_imp(df, weight_col = "w1_tr") |> dplyr::mutate(.imp = imp))
+post3_tab3_w1 <- post3_pool_rubin(post3_res_w1)
+
+post3_res_unw <- purrr::imap_dfr(post3_dat_with_weights_list, \(df, imp) post3_fit_tab3_one_imp(df, weight_col = NULL) |> dplyr::mutate(.imp = imp))
+post3_tab3_unw <- post3_pool_rubin(post3_res_unw)
+
+# Combine Final Results
+final_res <- rbind.data.frame(
+  cbind.data.frame(stat="No weight", dplyr::filter(post3_tab3_unw, grepl("poly", term))),
+  cbind.data.frame(stat="Lag0", dplyr::filter(post3_tab3_w0, grepl("poly", term))),
+  cbind.data.frame(stat="Lag1", dplyr::filter(post3_tab3_w1, grepl("poly", term)))
+)
+
+knitr::kable(final_res, caption="Pooled Estimates (MICE + IPTW)")
+
+invisible("As a sensitivity analysis, results were compared with complete-case analyses and were substantively similar.")
+
+```
+
+### Step 6: Diagnostics (Observed vs Imputed)
+
+Finally, we compare the distributions of key variables between the observed data and the imputed data to check for plausibility.
+
+```{r mice_diagnostics}
+#| echo: true
+#| results: "hold"
+
+vars_check <- c("adm_age_rec3", "treat_log_days", "polysubstance_strict") # Adjust as needed
+
+obs_vs_imp <- purrr::map_dfr(vars_check, \(v){
+  long <- mice::complete(imp, action = "long", include = TRUE) |> 
+    dplyr::mutate(.source = dplyr::if_else(.imp == 0, "observed", "imputed"))
+  
+  x_obs <- long |> dplyr::filter(.source=="observed") |> dplyr::pull(!!dplyr::sym(v))
+  x_imp <- long |> dplyr::filter(.source=="imputed") |> dplyr::pull(!!dplyr::sym(v))
+  
+  tibble::tibble(
+    var = v,
+    obs_n = sum(!is.na(x_obs)),
+    imp_n = sum(!is.na(x_imp)),
+    obs_mean = if (is.numeric(x_obs)) mean(x_obs, na.rm=TRUE) else NA_real_,
+    imp_mean = if (is.numeric(x_imp)) mean(x_imp, na.rm=TRUE) else NA_real_
+  )
+})
+
+knitr::kable(obs_vs_imp, caption = "Diagnostic: Observed vs Imputed Means")
+
+cat("\nModel terms were consistently estimable across imputations (m_used=5 in all strata for the primary exposure),\nand pooled estimates were stable across modeling choices (weighted vs unweighted).\n")
+
+```
+
+## GEEGLM binary
+
+This code performs a sensitivity analysis to verify your treatment non-completion findings using three different statistical approaches, specifically comparing Relative Risks (RR) against Odds Ratios (OR) while accounting for your IPTW weights and clustering.
+
+```{r sensitivity_analysis_glm}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+# GEEGLM - Binary / Sensitivity Analysis ---------------------------------
+
+gc()
+suppressPackageStartupMessages({
+    library(dplyr)
+    library(sandwich)
+    library(lmtest) 
+})
+
+# Path Logic
+if(grepl("SISTRAT 2023", getwd())){
+  wdpath <- paste0(gsub("/cons", "", gsub("cons", "", paste0(getwd(), "/cons"))))
+} else {
+  wdpath <- paste0(paste0(gsub("/SISTRAT 2022 \\(github\\)/_proposal_grant/2023", "", getwd())), "/SISTRAT 2023/")
+}
+
+# -------------------- CONFIGURATION --------------------
+ff_formula <- tr_noncompletion ~ polysubstance_strict + age_c10 + year_c +
+    susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+    dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+    prim_sub_daily + occ24_inactive + occ24_unemployed +
+    susprindum_coc + susprindum_pbc + susprindum_mar
+
+vars_ff    <- all.vars(ff_formula)
+vars_extra <- c("id", "w0_tr", "w1_tr")
+vars_need  <- unique(c(vars_ff, vars_extra))
+
+# -------------------- DATA PREP --------------------
+if (!exists("dat_with_weights_stab_cons")) stop("Data object 'dat_with_weights_stab_cons' not found.")
+
+base <- as.data.frame(dat_with_weights_stab_cons)[, vars_need, drop = FALSE]
+
+# Model frame & Keep mask
+mf_all <- stats::model.frame(ff_formula, data = base, na.action = NULL)
+keep   <- stats::complete.cases(mf_all)
+if (!any(keep)) stop("No complete cases found.")
+
+mf <- mf_all[keep, , drop = FALSE]
+id_vec <- base$id[keep]
+id_int <- as.integer(factor(id_vec, exclude = NULL)) 
+ncl <- length(unique(id_int))
+
+# Clean Weights
+clean_weights <- function(w) {
+    w[!is.finite(w) | is.na(w) | w <= 0] <- 1
+    w / mean(w, na.rm = TRUE)
+}
+w0 <- clean_weights(base$w0_tr[keep])
+w1 <- clean_weights(base$w1_tr[keep])
+
+## -------------------- HELPER: EXTRACT --------------------
+extract_results <- function(obj, name) {
+    co <- stats::coef(obj$model)
+    se <- sqrt(diag(obj$vcov))
+    z  <- stats::qnorm(0.975)
+    out <- data.frame(
+        term    = names(co),
+        est     = exp(co), # OR for binomial, RR for poisson
+        cilo    = exp(co - z * se),
+        ciup    = exp(co + z * se),
+        p.value = 2 * stats::pnorm(abs(co / se), lower.tail = FALSE),
+        check.names = FALSE
+    )
+    names(out)[-1] <- paste0(names(out)[-1], "_", name)
+    out
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+## PART 1: ORIGINAL POISSON (RR)
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+fit_glm_robust_pois <- function(weights_vec = NULL) {
+    df <- mf
+    if (is.null(weights_vec)) {
+        m <- stats::glm(ff_formula, data = df, family = stats::poisson())
+    } else {
+        df$.__w <- weights_vec
+        m <- stats::glm(ff_formula, data = df, family = stats::poisson(), weights = .__w)
+    }
+    vc <- if (ncl >= 2) sandwich::vcovCL(m, cluster = id_int) else sandwich::vcovHC(m, type = "HC0")
+    list(model = m, vcov = vc)
+}
+
+m_un <- fit_glm_robust_pois(NULL)
+m_w0 <- fit_glm_robust_pois(w0)
+m_w1 <- fit_glm_robust_pois(w1)
+
+est_summary <- Reduce(
+    function(x, y) dplyr::full_join(x, y, by = "term"),
+    list(
+        extract_results(m_un, "un"),
+        extract_results(m_w0, "w0"),
+        extract_results(m_w1, "w1")
+    )
+)
+
+# Save Poisson Results
+utils::write.csv(est_summary,  file.path(wdpath, "data/20241015_out/psu", "simple_results.csv"), row.names = FALSE)
+cat("[POISSON] Saved simple_results.csv\n")
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+## PART 2: NEW BINOMIAL (OR) - "_post_rev"
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+fit_glm_robust_bin <- function(weights_vec = NULL) {
+  df <- mf
+  if (is.null(weights_vec)) {
+    # Standard binomial for unweighted
+    m <- stats::glm(ff_formula, data = df, family = stats::binomial())
+  } else {
+    # Quasibinomial for weighted
+    df$.__w <- weights_vec
+    m <- stats::glm(ff_formula, data = df, family = stats::quasibinomial(), weights = .__w)
+  }
+  vc <- if (ncl >= 2) sandwich::vcovCL(m, cluster = id_int) else sandwich::vcovHC(m, type = "HC0")
+  list(model = m, vcov = vc)
+}
+
+m_un_post_rev <- fit_glm_robust_bin(NULL)
+m_w0_post_rev <- fit_glm_robust_bin(w0)
+m_w1_post_rev <- fit_glm_robust_bin(w1)
+
+est_summary_post_rev <- Reduce(
+  function(x, y) dplyr::full_join(x, y, by = "term"),
+  list(
+    extract_results(m_un_post_rev, "un"),
+    extract_results(m_w0_post_rev, "w0"),
+    extract_results(m_w1_post_rev, "w1")
+  )
+)
+
+# Save Binomial Results
+utils::write.csv(est_summary_post_rev, file.path(wdpath, "data/20241015_out/psu", "simple_results_post_rev.csv"), row.names = FALSE)
+cat("[BINOMIAL] Saved simple_results_post_rev.csv (", nrow(est_summary_post_rev), " rows)\n")
+
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+## PART 3: MIETTINEN / SCHOUTEN (CASE DUPLICATION FOR RR)
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# 1. Get the outcome variable name (string) from the formula
+y_name <- all.vars(ff_formula)[1] 
+
+fit_glm_miettinen <- function(weights_vec = NULL) {
+  
+  # --- A. Prepare Data (Case Duplication) ---
+  df_curr <- mf
+  
+  if (is.null(weights_vec)) {
+    df_curr$.__w <- 1
+  } else {
+    df_curr$.__w <- weights_vec
+  }
+  
+  # 1. "Population" Set: All subjects, Outcome forced to 0
+  df_pop <- df_curr
+  df_pop[[y_name]] <- 0
+  
+  # 2. "Case" Set: Only original cases, Outcome kept as 1
+  original_y <- df_curr[[y_name]]
+  is_case <- original_y == 1
+  df_cases <- df_curr[is_case, ]
+  df_cases[[y_name]] <- 1 
+  
+  # 3. Stack them
+  df_expanded <- rbind(df_pop, df_cases)
+  
+  # 4. Expand the Cluster IDs
+  id_pop   <- id_int
+  id_cases <- id_int[is_case]
+  id_expanded <- c(id_pop, id_cases)
+  
+  # --- B. Fit Logistic Model on Expanded Data ---
+  m <- stats::glm(ff_formula, data = df_expanded, 
+                  family = stats::quasibinomial(link = "logit"), 
+                  weights = .__w)
+  
+  # --- C. Robust SE (Mandatory) ---
+  vc <- sandwich::vcovCL(m, cluster = id_expanded)
+  
+  list(model = m, vcov = vc)
+}
+
+# Run the Miettinen Models
+m_un_miet <- fit_glm_miettinen(NULL)
+m_w0_miet <- fit_glm_miettinen(w0)
+m_w1_miet <- fit_glm_miettinen(w1)
+
+# Extract Results (Estimates are RRs)
+est_summary_miet <- Reduce(
+  function(x, y) dplyr::full_join(x, y, by = "term"),
+  list(
+    extract_results(m_un_miet, "un"),
+    extract_results(m_w0_miet, "w0"),
+    extract_results(m_w1_miet, "w1")
+  )
+)
+
+# Save Miettinen Results
+utils::write.csv(est_summary_miet, 
+                 file.path(wdpath, "data/20241015_out/psu", "simple_results_miettinen.csv"), 
+                 row.names = FALSE)
+cat("[MIETTINEN] Saved simple_results_miettinen.csv (RR estimates)\n\n")
+
+# --- Final Comparisons ---
+
+cat("--- Comparison for 'polysubstance_strict' (Weighted Lag 1) ---\n")
+
+comp_df <- rbind(
+  cbind(Method="Poisson (RR)", est_summary[est_summary$term == "polysubstance_strict", c("est_w1", "cilo_w1", "ciup_w1")]),
+  cbind(Method="Binomial (OR)", est_summary_post_rev[est_summary_post_rev$term == "polysubstance_strict", c("est_w1", "cilo_w1", "ciup_w1")]),
+  cbind(Method="Miettinen (RR)", est_summary_miet[est_summary_miet$term == "polysubstance_strict", c("est_w1", "cilo_w1", "ciup_w1")])
+)
+
+knitr::kable(comp_df, digits=3, caption="Sensitivity Analysis: Polysubstance Estimate across methods")
+
+```
+
+### Miettinen/Schouten case-duplication method
+
+```{r miettinen_stratified}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+# case duplication approach -----------------------------------------------
+
+## -------------------- HELPER: Stratified Miettinen Logic (Robust Version) --------------------
+run_stratified_miettinen <- function(data_source, weight_col = NULL) {
+  
+  split(data_source, data_source$plan_type_mod) |> 
+    purrr::imap(~{
+      # 1. Setup & Cleaning
+      df <- .x |> dplyr::mutate(id = as.character(id))
+      
+      ff_local <- tr_noncompletion ~ polysubstance_strict + 
+        age_c10 + year_c + 
+        susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar + 
+        dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + 
+        prim_sub_daily + occ24_inactive + occ24_unemployed + 
+        susprindum_coc + susprindum_pbc + susprindum_mar
+      
+      mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+      
+      # Embed weights if needed
+      if (!is.null(weight_col)) {
+        mf0$.__weights <- df[[weight_col]]
+      } else {
+        mf0$.__weights <- 1
+      }
+      # Embed ID for clustering
+      mf0$.__id <- df$id
+      
+      keep <- stats::complete.cases(mf0)
+      mf   <- mf0[keep, , drop = FALSE]
+      
+      if (nrow(mf) == 0L) return(NULL)
+      
+      # Outcome Check
+      y <- stats::model.response(mf)
+      if (length(unique(y)) < 2L) {
+        return(tibble::tibble(
+          plan_type_mod = as.character(.y), n_rows = nrow(mf),
+          term = "(skipped: no variation)", 
+          estimate = NA, conf.low = NA, conf.high = NA
+        ))
+      }
+      
+      # 2. Design Matrix Cleaning
+      X <- stats::model.matrix(ff_local, mf)
+      assign_vec <- attr(X, "assign")
+      term_labels <- attr(stats::terms(ff_local), "term.labels")
+      
+      # Drop constants
+      const <- vapply(as.data.frame(X), function(v) length(unique(v)) == 1L, logical(1))
+      const[colnames(X) == "(Intercept)"] <- FALSE
+      if (any(const)) {
+        X <- X[, !const, drop = FALSE]
+        assign_vec <- assign_vec[!const]
+      }
+      
+      # Drop collinear
+      qrX <- qr(X)
+      keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+      assign_kept <- assign_vec[keep_cols]
+      
+      kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))
+      if (length(kept_term_idx) == 0L) return(NULL)
+      
+      kept_terms <- term_labels[kept_term_idx]
+      ff_reduced <- stats::reformulate(kept_terms, response = "tr_noncompletion")
+      
+      # 3. MIETTINEN EXPANSION
+      df_pop <- mf
+      df_pop[[1]] <- 0 # Force outcome to 0
+      
+      is_case <- mf[[1]] == 1
+      df_cases <- mf[is_case, ] # Keep outcome 1
+      
+      df_expanded <- rbind(df_pop, df_cases)
+      
+      # 4. Fit Model (GLM + Sandwich instead of GEE)
+      # Using tryCatch to prevent crashing on singular fits or convergence issues
+      tryCatch({
+        # A. Fit standard GLM (Quasibinomial)
+        m <- stats::glm(
+          ff_reduced,
+          data = df_expanded,
+          family = quasibinomial(link = "logit"), 
+          weights = .__weights
+        )
+        
+        # B. Calculate Robust SEs (Cluster by original ID)
+        # This is the "GEE Independence" equivalent
+        vc <- sandwich::vcovCL(m, cluster = df_expanded$.__id)
+        
+        # C. Extract manually using the robust VC
+        co <- coef(m)
+        se <- sqrt(diag(vc))
+        z  <- qnorm(0.975)
+        
+        res <- data.frame(
+          term     = names(co),
+          estimate = exp(co),
+          conf.low = exp(co - z * se),
+          conf.high= exp(co + z * se),
+          row.names = NULL
+        )
+        
+        # D. Return formatted tibble
+        dplyr::as_tibble(res) |>
+          dplyr::transmute(
+            plan_type_mod = as.character(.y),
+            n_rows        = nrow(mf),
+            term,
+            `RR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", estimate, conf.low, conf.high)
+          )
+        
+      }, error = function(e) {
+        # Error Handler
+        message(paste("Error in stratum:", .y, "-", e$message))
+        return(tibble::tibble(
+          plan_type_mod = as.character(.y),
+          n_rows = nrow(mf),
+          term = "ERROR_IN_FIT",
+          estimate = NA, conf.low = NA, conf.high = NA
+        ))
+      })
+    }) |>
+    dplyr::bind_rows() |>
+    dplyr::relocate(plan_type_mod, n_rows)
+}
+
+## -------------------- EXECUTION --------------------
+
+# 1. Unweighted
+tab3_miet <- run_stratified_miettinen(dat_with_weights_stab_cons, weight_col = NULL)
+
+# 2. Weighted (Lag 0)
+tab3_w0_miet <- run_stratified_miettinen(dat_with_weights_stab_cons, weight_col = "w0_tr")
+
+# 3. Weighted (Lag 1)
+tab3_w1_miet <- run_stratified_miettinen(dat_with_weights_stab_cons, weight_col = "w1_tr")
+
+
+## -------------------- FORMAT & EXPORT --------------------
+
+results_table_miet <- rbind.data.frame(
+  cbind.data.frame(w="no weight",    dplyr::filter(tab3_miet, grepl("poly|ERROR", term))),
+  cbind.data.frame(w="weight lag=0", dplyr::filter(tab3_w0_miet, grepl("poly|ERROR", term))),
+  cbind.data.frame(w="weight lag=1", dplyr::filter(tab3_w1_miet, grepl("poly|ERROR", term)))
+) |> 
+  tidyr::pivot_wider(
+    names_from = w,
+    values_from = `RR (95% CI)`
+  ) |>
+  dplyr::relocate(plan_type_mod, n_rows, term) |> 
+  dplyr::select(-term)
+
+# Export CSV (optional, commented out)
+# utils::write.csv(results_table_miet, file.path(wdpath, "data/20241015_out/psu", "stratified_results_miettinen.csv"), row.names = FALSE)
+
+# Print
+knitr::kable(results_table_miet, "markdown", caption = "Stratified Models (Miettinen/Schouten RR Approach)", digits = 2)
+
+```
+
+## Bootstrap Analysis for Attributable Risk (RD) and Extra Dropouts
+
+```{r boot_helpers}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+library(boot)
+library(dplyr)
+library(purrr)
+library(stats)
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 1. HELPER: Safe Bootstrap for Attributable Risk (Logistic-based)
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+boot_att_counts_safe <- function(data, formula, weight_col = NULL, B = 2000, seed = 2125) {
+  set.seed(seed)
+  
+  # Ensure ID is character for splitting
+  data$id_cluster <- as.character(data$id)
+  
+  # Handle weights
+  if (!is.null(weight_col)) {
+    data$w_model <- data[[weight_col]]
+  } else {
+    data$w_model <- 1
+  }
+  
+  # Identify Clusters
+  cl_ids <- unique(data$id_cluster)
+  K <- length(cl_ids)
+  
+  # Inner function to calculate Attributable Risk on a specific dataset
+  calc_diffs <- function(d_curr) {
+    # USE LOGISTIC (Quasibinomial) -> Bounds probabilities 0-1
+    fit <- try(stats::glm(formula, data = d_curr, 
+                          family = stats::quasibinomial(link = "logit"), 
+                          weights = w_model), silent = TRUE)
+    
+    if (inherits(fit, "try-error")) return(NULL)
+    
+    # Filter to EXPOSED only (ATT: Average Treatment effect on the Treated)
+    d_exp <- d_curr[d_curr$polysubstance_strict == 1, ]
+    
+    if (nrow(d_exp) == 0) return(NULL)
+    
+    # 1. Predict Outcome under "Status Quo" (Exposure = 1)
+    mu1 <- predict(fit, newdata = d_exp, type = "response")
+    
+    # 2. Predict Outcome under "Counterfactual" (Exposure forced to 0)
+    d_unexp <- d_exp
+    d_unexp$polysubstance_strict <- 0
+    mu0 <- predict(fit, newdata = d_unexp, type = "response")
+    
+    # 3. Calculate differences
+    diffs <- mu1 - mu0
+    
+    c(
+      total_extra = sum(diffs),  # Sum of prob differences = Expected Count
+      risk_diff   = mean(diffs), # Average prob difference = Risk Difference
+      base_risk   = mean(mu0)    # Baseline risk if they hadn't used drugs
+    )
+  }
+  
+  # --- Step A: Point Estimate (Original Data) ---
+  point_est <- calc_diffs(data)
+  if (is.null(point_est)) return(NULL)
+  
+  # --- Step B: Bootstrap Loop ---
+  res_mat <- matrix(NA, nrow = B, ncol = 3)
+  colnames(res_mat) <- c("total_extra", "risk_diff", "base_risk")
+  
+  # Optimization: Pre-split indices for faster resampling
+  cl_indices <- split(seq_len(nrow(data)), data$id_cluster)
+  success_count <- 0L
+  
+  for (b in seq_len(B)) {
+    # Resample Cluster IDs
+    samp_ids <- sample(cl_ids, K, replace = TRUE)
+    
+    # Reconstruct dataset
+    boot_rows <- unlist(cl_indices[samp_ids], use.names = FALSE)
+    d_boot <- data[boot_rows, , drop = FALSE]
+    
+    # Calculate on boot sample
+    est_b <- calc_diffs(d_boot)
+    
+    if (!is.null(est_b)) {
+      success_count <- success_count + 1L
+      res_mat[success_count, ] <- est_b
+    }
+  }
+  
+  # Trim to successful runs
+  res_mat <- res_mat[seq_len(success_count), , drop = FALSE]
+  
+  # Helper for Quantiles
+  get_ci <- function(x) quantile(x, c(0.025, 0.5, 0.975), na.rm = TRUE)
+  
+  list(
+    B_success = success_count,
+    point     = point_est,
+    ci_total  = get_ci(res_mat[, "total_extra"]),
+    ci_rd     = get_ci(res_mat[, "risk_diff"]),
+    ci_base   = get_ci(res_mat[, "base_risk"])
+  )
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 2. MAIN WRAPPER: Run across all strata
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+run_bootstrap_stratified <- function(data_full, weights = "w1_tr", B = 2000) {
+  
+  # Define Formula
+  ff_boot <- tr_noncompletion ~ polysubstance_strict + 
+    age_c10 + year_c + 
+    susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar + 
+    dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg + 
+    prim_sub_daily + occ24_inactive + occ24_unemployed + 
+    susprindum_coc + susprindum_pbc + susprindum_mar
+  
+  split(data_full, data_full$plan_type_mod) |> 
+    purrr::imap(~{
+      cat("Bootstrapping Stratum:", .y, "...\n")
+      
+      # Prepare local data
+      df <- .x |> dplyr::mutate(id = as.character(id))
+      mf <- stats::model.frame(ff_boot, data = df, na.action = stats::na.pass)
+      
+      # Add Weights & ID explicitly to model frame
+      mf$w_model <- df[[weights]]
+      mf$id      <- df$id
+      
+      # Keep complete cases
+      mf <- mf[stats::complete.cases(mf), ]
+      
+      # Validation: Need variation in outcome and exposure
+      if (sum(mf$polysubstance_strict) < 10 || length(unique(mf[[1]])) < 2) {
+        return(tibble::tibble(
+          plan_type_mod = .y, 
+          note = "Insufficient data/variation"
+        ))
+      }
+      
+      # RUN BOOTSTRAP
+      res <- boot_att_counts_safe(mf, ff_boot, weight_col = "w_model", B = B)
+      
+      if (is.null(res)) {
+        return(tibble::tibble(plan_type_mod = .y, note = "Fit failed"))
+      }
+      
+      # EXTRACT RESULTS
+      tibble::tibble(
+        plan_type_mod = .y,
+        n_exposed = sum(mf$polysubstance_strict),
+        
+        # 1. Baseline Risk (among exposed, if they hadn't used)
+        Base_Risk_est = res$point["base_risk"] * 100,
+        
+        # 2. Risk Difference (Percentage Points)
+        RD_est = res$point["risk_diff"] * 100,
+        RD_lo  = res$ci_rd[1] * 100,
+        RD_hi  = res$ci_rd[3] * 100,
+        
+        # 3. Extra Cases (Count)
+        Extra_est = res$point["total_extra"],
+        Extra_lo  = res$ci_total[1],
+        Extra_hi  = res$ci_total[3],
+        
+        # Formatted Strings for Table
+        `Baseline Risk`  = sprintf("%.1f%%", Base_Risk_est),
+        `Risk Diff (pp)` = sprintf("%.2f (%.2f, %.2f)", RD_est, RD_lo, RD_hi),
+        `Extra Dropouts` = sprintf("%.0f (%.0f, %.0f)", Extra_est, Extra_lo, Extra_hi)
+      )
+    }) |> 
+    dplyr::bind_rows()
+}
+```
+
+This chunk defines the core statistical logic. `boot_att_counts_safe` calculates the Attributable Risk (ATT) by fitting a logistic model and comparing factual vs. counterfactual predictions. `run_bootstrap_stratified` iterates this process across all plan types, handling data preparation and weights.
+
+### Chunk 2: Execution of Bootstrap
+
+This chunk runs the bootstrap function defined above. It runs it twice: once using `w1_tr` (Lag 1 weights) and once using `w0_tr` (Lag 0 weights). It saves the results to `.RData` files for persistence.
+
+```{r boot_run}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# 3. EXECUTION
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+
+# Run for Weighted Lag 1 (w1_tr)
+cat("Running Bootstrap for Lag 1...\n")
+set.seed(2125)
+boot_results_tr1 <- run_bootstrap_stratified(dat_with_weights_stab_cons, 
+                                             weights = "w1_tr", 
+                                             B = 2000)
+save(boot_results_tr1, file = file.path(wdpath, "data/20241015_out/psu", 
+                                        "boot_results_safe_tr1.RData"))
+
+
+# Run for Weighted Lag 0 (w0_tr)
+cat("Running Bootstrap for Lag 0...\n")
+set.seed(2125)
+boot_results_tr0 <- run_bootstrap_stratified(dat_with_weights_stab_cons, 
+                                             weights = "w0_tr", 
+                                             B = 2000)
+save(boot_results_tr0, file = file.path(wdpath, "data/20241015_out/psu", 
+                                        "boot_results_safe_tr0.RData"))
+```
+
+### Chunk 3: Table and Text Summary
+
+This chunk loads the results (to ensure we have them even if not re-run in this session) and generates a formatted Markdown table. It also outputs a text summary of the attributable burden.
+
+```{r boot_table}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+# Load results (defensive)
+load(file.path(wdpath, "data/20241015_out/psu", "boot_results_safe_tr0.RData"))
+load(file.path(wdpath, "data/20241015_out/psu", "boot_results_safe_tr1.RData"))
+
+# Use tr1 (Lag 1) as the primary result for display
+boot_results <- boot_results_tr1
+
+# Print Table
+boot_results |>
+  dplyr::select(plan_type_mod, n_exposed, `Baseline Risk`, `Risk Diff (pp)`, `Extra Dropouts`) |>
+  knitr::kable("markdown", caption = "Attributable Risk of Polysubstance Use (Logistic Bootstrap)")
+
+# Text Summary
+cat("\nTotal Attributable Dropouts: ", sum(boot_results$Extra_est), "\n")
+invisible("Conclusion: In your sample alone, these patients failed treatment who arguably would have completed it if their polysubstance use issues had been effectively neutralized.")
+
+cat("
+Risk Diff (pp): 'Among patients with polysubstance use, the risk of dropout 
+was X percentage points higher than if they had not used polysubstances.'
+")
+cat("Extra Dropouts (Count): 'In this sample alone, Y patients dropped 
+out solely attributable to their polysubstance use.' (This transforms the 
+abstract 'Risk' into a concrete burden of disease).
+")
+```
+
+### Chunk 4: Visualization (Plot)
+
+This chunk creates a dual-panel forest plot using `ggplot2` and `cowplot`. It visualizes the absolute number of "Extra Dropouts" for both Lag 0 and Lag 1 models side-by-side, providing a clear visual representation of the burden of disease. It also handles file saving.
+
+```{r boot-plot, fig.width = 8, fig.height = 5, dev="pdf"}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(cowplot)
+
+# 1. Prepare Data
+prepare_plot_data <- function(df) {
+  df |>
+    mutate(
+      stratum_label = case_when(
+        plan_type_mod == "GP basic ambulatory"     ~ "General-Population\nBasic Ambulatory",
+        plan_type_mod == "GP intensive ambulatory" ~ "General-Population\nIntensive\nAmbulatory",
+        plan_type_mod == "GP residential"          ~ "General-Population\nResidential",
+        plan_type_mod == "WO intensive ambulatory" ~ "Women-Only\nIntensive\nAmbulatory",
+        plan_type_mod == "WO residential"          ~ "Women-Only\nResidential"
+      ),
+      stratum_label = reorder(stratum_label, Extra_est),
+      text_label = sprintf("%.0f [%.0f, %.0f]", Extra_est, Extra_lo, Extra_hi)
+    )
+}
+
+plot_data0 <- prepare_plot_data(boot_results_tr0)
+plot_data1 <- prepare_plot_data(boot_results_tr1)
+
+# 2. Build Plots
+create_plot <- function(data, title_suffix, hide_y = FALSE) {
+  p <- ggplot(data, aes(x = Extra_est, y = stratum_label)) +
+    geom_vline(xintercept = 0, linetype = "longdash", color = "grey40", linewidth = 0.5) +
+    geom_errorbarh(aes(xmin = Extra_lo, xmax = Extra_hi), height = 0.2, color = "black", linewidth = 0.7) +
+    geom_point(size = 3.5, shape = 15) +
+    geom_text(aes(label = text_label, x = max(Extra_hi) * 1.1),
+              hjust = 0, family = "serif", size = 3.5) +
+    scale_x_continuous(
+      limits = c(-200, 1200), 
+      breaks = c(0, 300, 600, 900, 1200),
+      expand = expansion(mult = c(0.00, 0.06))) +
+    labs(x = "Attributable number of treatment non-completions", y = NULL) +
+    theme_classic(base_size = 12) +
+    theme(
+      text = element_text(family = "serif", color = "black"),
+      axis.text.x = element_text(size = 10, color = "black"),
+      axis.title.x = element_blank(),
+      axis.line = element_line(linewidth = 0.5),
+      axis.ticks = element_line(color = "black"),
+      plot.margin = margin(t = 20, r = 20, b = 20, l = 10)
+    )
+  
+  if (hide_y) {
+    p <- p + theme(axis.text.y = element_blank())
+  } else {
+    p <- p + theme(axis.text.y = element_text(size = 11, color = "black", face = "bold"))
+  }
+  return(p)
+}
+
+p0 <- create_plot(plot_data0, "Lag 0", hide_y = FALSE)
+p1 <- create_plot(plot_data1, "Lag 1", hide_y = TRUE)
+
+# 3. Combine and Render
+p_combined <- cowplot::plot_grid(p0, p1, 
+                                 labels = c("a)", "b)"), 
+                                 label_fontface = "bold",
+                                 label_fontfamily = "serif",
+                                 label_size = 14, 
+                                 label_x = 0.02, 
+                                 ncol = 2, 
+                                 align = "h",
+                                 rel_widths = c(.56,.44)) +
+  cowplot::draw_label("Attributable number of treatment non-completions", 
+                      x = 0.5, y = 0.025, hjust = 0.5, vjust = 0, 
+                      size = 12, fontface = "plain", fontfamily = "serif")
+
+print(p_combined)
+
+# 4. Save
+ggsave(file.path(wdpath, "data/20241015_out/psu", "figure_attributable_counts.png"), 
+       plot = p_combined, width = 8, height = 5, dpi = 600)
+
+ggsave(file.path(wdpath, "data/20241015_out/psu", "figure_attributable_counts.pdf"),
+       plot = p_combined, width = 8, height = 5)
+```
+
+
+
+```{r boot_methods_text}
+#| echo: true
+#| eval: false
+### Chunk 5: Methodological Explanation
+
+#This chunk contains the narrative explanation of the methods and results. Using `invisible()` prevents the text from cluttering the R output console while keeping it documented in the source code.
+
+# Methods Explanation
+invisible("
+### Methods — Statistical analysis: absolute risk and attributable burden
+
+To estimate the absolute impact of polysubstance use on treatment non‑completion we calculated the Average Treatment Effect on the Treated (ATT) using a non‑parametric cluster bootstrap with B = 2000 iterations. While relative measures (for example, risk ratios) describe the strength of association, they do not convey clinical burden in settings with high baseline failure rates.
+
+For each bootstrap resample we fitted a logistic regression model (quasibinomial family) adjusted for the same covariates used in the main analysis. For every patient in the exposed group (polysubstance users) we generated two predicted probabilities:
+  
+- **Factual risk:** predicted probability of non‑completion given observed polysubstance use, P(Y=1 | X=1).  
+- **Counterfactual risk:** predicted probability of non‑completion if the same patient had not engaged in polysubstance use, P(Y=1 | X=0), holding all other covariates constant.
+
+The difference between these two probabilities, averaged across all exposed patients, yields the **risk difference (RD)**. Summing these individual differences produced the total number of **attributable dropouts** — the count of treatment failures that would be theoretically preventable if polysubstance use were absent. Confidence intervals were obtained from the 2.5th and 97.5th percentiles of the bootstrap distribution, clustering by patient ID to account for repeated measures.
+
+---
+  
+### Results — Absolute risk and attributable case burden
+
+Baseline rates of treatment non‑completion were high across strata, ranging from 68.1% (Women‑Only Residential) to 76.0% (GP Basic Ambulatory). Consequently, even modest relative increases translated into substantial absolute numbers of treatment failures (see Table X).
+
+- **GP ambulatory (general population):** Polysubstance use was associated with a moderate absolute increase in risk (RD ≈ 2.0%–3.2%). Because these tracks include a large number of patients, this difference corresponded to an estimated **886 attributable dropouts** (95% CI: 410–1,384) in total.  
+- **Women‑Only Residential:** The largest absolute effect was observed here; polysubstance use increased the risk of non‑completion by **7.62 percentage points** (95% CI: 4.45, 10.55).  
+- **GP Residential:** No significant absolute increase was observed (RD = 0.29%, 95% CI: −2.20, 2.80).
+
+All estimates are reported as absolute differences; inference is based on cluster bootstrap 95% confidence intervals as described above.
+")
+
+```
+
+
+# Exposure (count or ordinal transformation)
+
+This chunk processes the substance columns to calculate the distinct number of substances per patient (`n_distinct_substances`) and creates the ordinal variable `psu_ord`.
+
+```{r psu_count_prep}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+# PSU count mode ----------------------------------------------------------
+
+`%>%` <- magrittr::`%>%`
+
+collapse_substance <- function(x) {
+  x <- trimws(x)
+  
+  dplyr::case_when(
+    x == "sin sustancia principal (cip-crc)" ~ NA_character_,
+    x == "cocaine paste"                     ~ "cocaine paste",
+    x == "cocaine powder"                    ~ "cocaine powder",
+    x == "alcohol"                           ~ "alcohol",
+    x == "marijuana"                         ~ "marijuana",
+    is.na(x)                                 ~ NA_character_,
+    TRUE                                     ~ "others"
+  )
+}
+
+dat_with_weights_stab_cons_count <- dat_with_weights_stab_cons %>%
+  dplyr::mutate(
+    second_sub1_mod = collapse_substance(second_sub1),
+    second_sub2_mod = collapse_substance(second_sub2),
+    second_sub3_mod = collapse_substance(second_sub3)
+  )
+
+# QC Check
+invisible("Checking second substance recoding:\n")
+# table(dat_with_weights_stab_cons_count$second_sub1,
+#       dat_with_weights_stab_cons_count$second_sub1_mod,
+#       useNA = "ifany")
+
+# Calculate distinct substances count
+dat_with_weights_stab_cons_count <- dat_with_weights_stab_cons_count %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(
+    n_distinct_substances = dplyr::n_distinct(
+      c(primary_sub_mod, second_sub1_mod, second_sub2_mod, second_sub3_mod),
+      na.rm = TRUE
+    )
+  ) %>%
+  dplyr::ungroup()
+
+# Create Ordinal Variable
+dat_with_weights_stab_cons_count <- dat_with_weights_stab_cons_count |>
+  dplyr::mutate(
+    psu_ord = dplyr::case_when(
+      n_distinct_substances <= 1 ~ "0-1",
+      n_distinct_substances == 2 ~ "2",
+      n_distinct_substances >= 3 ~ "3+"
+    ),
+    psu_ord = factor(psu_ord, levels = c("0-1", "2", "3+"))
+  )
+```
+
+### Chunk 2: Run Stratified Models (Unweighted)
+
+This chunk runs the GEE models stratified by plan type without weights.
+
+```{r psu_count_unweighted}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+tab3_cnt <- 
+  split(dat_with_weights_stab_cons_count,
+        dat_with_weights_stab_cons_count$plan_type_mod) |>
+  purrr::imap(~{
+    df <- .x |> dplyr::mutate(id = as.character(id))
+    
+    # ===== FORMULA (COUNT VERSION) 
+    ff_local <- tr_noncompletion ~ psu_ord +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    # Freeze row universe
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    # Outcome variation check
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        `RR (95% CI)` = NA_character_
+      ))
+    }
+    
+    # Design matrix
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec  <- attr(X, "assign")
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    # Drop constants
+    const <- vapply(as.data.frame(X),
+                    function(v) length(unique(v)) == 1L,
+                    logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    # Drop collinearity
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    assign_kept <- assign_vec[keep_cols]
+    
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))
+    if (length(kept_term_idx) == 0L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(no predictors after cleanup)",
+        `RR (95% CI)` = NA_character_
+      ))
+    }
+    
+    kept_terms <- term_labels[kept_term_idx]
+    ff_reduced <- stats::reformulate(kept_terms,
+                                     response = "tr_noncompletion")
+    
+    id_vec <- df$id[keep]
+    
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) |>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` =
+          sprintf("%.4f (%.4f, %.4f)", estimate, conf.low, conf.high)
+      )
+  }) |>
+  dplyr::bind_rows() |>
+  dplyr::relocate(plan_type_mod, n_rows)
+```
+
+### Chunk 3: Run Stratified Models (Weighted Lag 0)
+
+This chunk replicates the analysis using `w0_tr` weights.
+
+```{r psu_count_w0}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+tab3_cnt_w0 <- 
+  split(dat_with_weights_stab_cons_count,
+        dat_with_weights_stab_cons_count$plan_type_mod) |>
+  purrr::imap(~{
+    df <- .x |> dplyr::mutate(id = as.character(id))
+    
+    ff_local <- tr_noncompletion ~ psu_ord +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    if (nrow(mf) == 0L) return(NULL)
+    
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) {
+      return(tibble::tibble(
+        plan_type_mod = as.character(.y),
+        n_rows = nrow(mf),
+        term = "(skipped: no outcome variation)",
+        `RR (95% CI)` = NA_character_
+      ))
+    }
+    
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec  <- attr(X, "assign")
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    const <- vapply(as.data.frame(X),
+                    function(v) length(unique(v)) == 1L,
+                    logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    assign_kept <- assign_vec[keep_cols]
+    
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))
+    if (length(kept_term_idx) == 0L) return(NULL)
+    
+    kept_terms <- term_labels[kept_term_idx]
+    ff_reduced <- stats::reformulate(kept_terms,
+                                     response = "tr_noncompletion")
+    
+    id_vec <- df$id[keep]
+    
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude,
+      weights   = df$w0_tr[keep]
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) |>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows        = nrow(mf),
+        term,
+        `RR (95% CI)` =
+          sprintf("%.4f (%.4f, %.4f)", estimate, conf.low, conf.high)
+      )
+  }) |>
+  dplyr::bind_rows() |>
+  dplyr::relocate(plan_type_mod, n_rows)
+```
+
+### Chunk 4: Run Stratified Models (Weighted Lag 1)
+
+This chunk runs the analysis using `w1_tr` weights and also calculates the counts for each ordinal PSU category (`n_rows_psu`) to include in the final table.
+
+```{r psu_count_w1}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+tab3_cnt_w1 <- 
+  split(dat_with_weights_stab_cons_count,
+        dat_with_weights_stab_cons_count$plan_type_mod) |>
+  purrr::imap(~{
+    df <- .x |> dplyr::mutate(id = as.character(id))
+    
+    ff_local <- tr_noncompletion ~ psu_ord +
+      age_c10 + year_c +
+      susinidum_oh + susinidum_coc + susinidum_pbc + susinidum_mar +
+      dg_psiq_cie_10_instudy + dg_psiq_cie_10_dg +
+      prim_sub_daily + occ24_inactive + occ24_unemployed +
+      susprindum_coc + susprindum_pbc + susprindum_mar
+    
+    mf0  <- stats::model.frame(ff_local, data = df, na.action = stats::na.pass)
+    keep <- stats::complete.cases(mf0)
+    mf   <- mf0[keep, , drop = FALSE]
+    
+    # Counts by ordinal PSU category in estimation sample
+    n_psu_01 <- sum(mf$psu_ord == "0-1")
+    n_psu_2  <- sum(mf$psu_ord == "2")
+    n_psu_3p <- sum(mf$psu_ord == "3+")
+    
+    if (nrow(mf) == 0L) return(NULL)
+    
+    y <- stats::model.response(mf)
+    if (length(unique(y)) < 2L) return(NULL)
+    
+    X <- stats::model.matrix(ff_local, mf)
+    assign_vec  <- attr(X, "assign")
+    term_labels <- attr(stats::terms(ff_local), "term.labels")
+    
+    const <- vapply(as.data.frame(X),
+                    function(v) length(unique(v)) == 1L,
+                    logical(1))
+    const[colnames(X) == "(Intercept)"] <- FALSE
+    if (any(const)) {
+      X <- X[, !const, drop = FALSE]
+      assign_vec <- assign_vec[!const]
+    }
+    
+    qrX <- qr(X)
+    keep_cols <- sort(qrX$pivot[seq_len(qrX$rank)])
+    assign_kept <- assign_vec[keep_cols]
+    
+    kept_term_idx <- sort(unique(assign_kept[assign_kept > 0]))
+    if (length(kept_term_idx) == 0L) return(NULL)
+    
+    kept_terms <- term_labels[kept_term_idx]
+    ff_reduced <- stats::reformulate(kept_terms,
+                                     response = "tr_noncompletion")
+    
+    id_vec <- df$id[keep]
+    
+    fit <- geepack::geeglm(
+      ff_reduced,
+      id        = id_vec,
+      data      = mf,
+      family    = poisson,
+      corstr    = "independence",
+      scale.fix = TRUE,
+      na.action = stats::na.exclude,
+      weights   = df$w1_tr[keep]
+    )
+    
+    broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) |>
+      dplyr::mutate(
+        n_rows_psu = dplyr::case_when(
+          term == "psu_ord2"  ~ n_psu_2,
+          term == "psu_ord3+" ~ n_psu_3p,
+          TRUE                ~ NA_real_
+        )
+      ) |>
+      dplyr::transmute(
+        plan_type_mod = as.character(.y),
+        n_rows_total  = nrow(mf),
+        n_rows_psu,
+        term,
+        `RR (95% CI)` =
+          sprintf("%.4f (%.4f, %.4f)", estimate, conf.low, conf.high)
+      )
+  }) |>
+  dplyr::bind_rows() |>
+  dplyr::relocate(plan_type_mod, n_rows_total, n_rows_psu)
+```
+
+### Chunk 5: Final Summary Table
+
+This chunk merges the results from the three models (Unweighted, Lag 0, Lag 1) and formats them into a final table suitable for reporting.
+
+```{r psu_count_summary}
+#| echo: true
+#| warning: false
+#| message: false
+#| results: "hold"
+
+### summary -----------------------------------------------------------------
+
+format_ci <- function(x) {
+  m <- stringr::str_match(x, "([0-9.]+) \\(([^,]+), ([^)]+)\\)")
+  if(all(is.na(m))) return(x)
+  est <- as.numeric(m[,2])
+  lo  <- as.numeric(m[,3])
+  hi  <- as.numeric(m[,4])
+  sprintf("%.2f (%.2f, %.2f)", est, lo, hi)
+}
+
+rr_tab <-
+  dplyr::bind_rows(
+    cbind.data.frame(
+      w = "no weight",
+      dplyr::filter(tab3_cnt, grepl("psu_ord", term))
+    ),
+    cbind.data.frame(
+      w = "weight lag=0",
+      dplyr::filter(tab3_cnt_w0, grepl("psu_ord", term))
+    ),
+    cbind.data.frame(
+      w = "weight lag=1",
+      dplyr::filter(tab3_cnt_w1, grepl("psu_ord", term))
+    )
+  ) |>
+  tidyr::pivot_wider(
+    names_from  = w,
+    values_from = `RR (95% CI)`
+  ) |>
+  dplyr::select(
+    plan_type_mod, term, n_rows,
+    `no weight`, `weight lag=0`, `weight lag=1`
+  )
+
+psu_denoms <-
+  tab3_cnt_w1 |>
+  dplyr::filter(grepl("psu_ord", term)) |>
+  dplyr::select(plan_type_mod, term, n_rows_psu) |>
+  dplyr::distinct()
+
+final_tab <-
+  rr_tab |>
+  dplyr::left_join(
+    psu_denoms,
+    by = c("plan_type_mod", "term")
+  )
+
+final_tab_clean <-
+  final_tab |>
+  dplyr::group_by(plan_type_mod, term) |>
+  dplyr::summarise(
+    n_rows     = max(n_rows, na.rm = TRUE),
+    n_rows_psu = max(n_rows_psu, na.rm = TRUE),
+    
+    `no weight`    = dplyr::coalesce(`no weight`[1], `no weight`[2]),
+    `weight lag=0` = dplyr::coalesce(`weight lag=0`[1], `weight lag=0`[2]),
+    `weight lag=1` = dplyr::coalesce(`weight lag=1`[1], `weight lag=1`[2]),
+    .groups = "drop"
+  )
+
+final_tab_clean_fmt <-
+  final_tab_clean |>
+  dplyr::mutate(
+    dplyr::across(
+      c(`no weight`, `weight lag=0`, `weight lag=1`),
+      format_ci
+    )
+  )
+
+knitr::kable(
+  final_tab_clean_fmt,
+  format  = "markdown",
+  caption = "Stratified Poisson GEE models using number of substances reported at admission",
+  digits  = 2
+)
+```
+
+
+
+<br>
+
+# Session info
+
+```{r session-info}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", wdpath))
+
+cat("quarto version: "); quarto::quarto_version()
+
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+)|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+
+
+```{r session-info-python}
+#|echo: true
+#|error: true
+#|message: true
+#|paged.print: true
+#|class-output: center-table
+
+reticulate::py_list_packages()|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+
+Save
+
+```{r save}
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+if(grepl("SISTRAT 2023",getwd())){
+    wdpath<-
+        paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+} else {
+    wdpath<-
+        paste0(paste0(gsub("/SISTRAT 2022 \\(github\\)/_proposal_grant/2023","",getwd())),"/SISTRAT 2023/")
+}
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out/psu", paste0("psu_ndp_postrev_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup3<-Sys.time()
+
+paste0("Time in markdown: ");time_after_dedup3-time_before_dedup3
+```

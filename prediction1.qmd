@@ -1,7 +1,7 @@
 ---
 title: "SENDAs Agreement 1 Update 2010-2022 (Prediction, step 1)"
 description: |
-  The dataset is enriched with derived variables, clinically meaningful recodings, and grouped diagnostic categories, while excluding patients still in treatment or with truncated admission dates. This results in a person-level dataset suitable for semi-competing risks modeling, where each row represents a unique index treatment episode with associated covariates and event times.
+  The dataset is enriched with derived variables, clinically meaningful recodings, and grouped diagnostic categories, while excluding patients still in treatment or with truncated admission dates. This results in a person-level dataset suitable for semi-competing risks modeling, where each row represents a unique index treatment episode with associated covariates and event times. This step involves mainly Data Pre-processing and Feature Engineering.
 date: last-modified
 author: "Andrés González Santa Cruz"
 bibliography: [_lit/refs.bib]
@@ -619,6 +619,7 @@ library(SemiMarkov)
 library(flexsurv)
 library(rms)
 library(survidm)
+library(caret)
 
 # library(shapr)#https://norskregnesentral.github.io/shapr/
 # library(survidm)#https://sci-hub.ee/10.1002/bimj.201700200
@@ -992,10 +993,11 @@ Enabling factors:
 
 * **Treatment modality** `plan_type_corr`
 
+### 1.1. Cohort Construction for Time-to-Event Analysis 
 
-First, we flagged all qualifying treatment episodes by filtering for patients aged 18–65 with an admission date between 2010 and 2020. To ensure each patient served as their own baseline, we isolated only the first qualifying treatment for each individual, removing any second or subsequent qualifying treatments from the dataset. Using this first episode as the index event, we then built time-to-event variables in months for our outcomes of interest: death and readmission. We applied an administrative censoring date of December 31, 2020, to all observations. Finally, we constructed our analytical dataset to contain only the first qualifying treatment per patient, carrying forward the time-to-event information and a counter of any discarded prior treatments.
+First, we flagged all qualifying treatment episodes by filtering for patients aged 18–65 with an admission date between 2010 and 2020. To ensure each patient served as their own baseline, we isolated only the first qualifying treatment for each individual, removing any second or subsequent qualifying treatments from the dataset. Using this first episode as the index event, we then built time-to-event variables in months for our outcomes of interest: death and readmission. All observations were administratively censored as of December 31, 2020, to all observations. The final analytical dataset included only the first qualifying treatment per patient, carrying forward the time-to-event information and a counter of any discarded prior treatments.
 
-* **What can I do with adm truncated (0.2%), and currently in (0.1%)**
+* **What can I do with adm truncated (0.2%), and currently in (0.1%)??**
 
 We created a formatted database in wide format for multistate analysis (`SISTRAT23_c1_2010_2024_df_prev1z`).
 
@@ -1238,6 +1240,7 @@ message("B. Excluding missing/after-censor origins: ",
 rm(perperson); rm(perperson2)
 ```
 
+#### 1.1.* Flowchart
 
 ```{r}
 #| class-output: center-table
@@ -1369,6 +1372,8 @@ gr <- DiagrammeR::grViz(
 gr
 ```
 
+Exported the graph into png fortmat.
+
 ```{r}
 #| class-output: center-table
 #| message: true
@@ -1387,6 +1392,11 @@ webshot::webshot(paste0(gsub("/cons","",getwd()),"/cons/_figs/_flowchart_pred.ht
 ```
 
 
+### 1.2. Death decomposition
+
+We decomposed the cumulative incidence of death following an initial treatment episode by its temporal relationship to the first SUD treatment readmission. 
+
+Cumulative incidence functions (CIFs) were estimated using the Aalen–Johansen method, and total mortality was also calculated via Kaplan–Meier to validate consistency. The resulting decomposition shows how overall mortality is partitioned over time relative to readmission, visualized as stacked cumulative probabilities.
 
 ```{r}
 #| class-output: center-table
@@ -1410,8 +1420,8 @@ df2 <- SISTRAT23_c1_2010_2024_df_prev1z |>
   ) |>
   # Sanitiza tipos
   dplyr::mutate(
-    e_r = as.integer(!!e_r),
-    e_d = as.integer(!!e_d)
+    e_r = as.integer(e_r),
+    e_d = as.integer(e_d)
   )
 
 # Chequeo rápido (opcional)
@@ -1438,7 +1448,7 @@ df3 <- df2 |>
   )
 
 # Consistencia con tu 2x2
-with(df3, table(cause, e_d))
+# with(df3, table(cause, e_d))
 # Esperado: cause=1 -> 3203 muertes; cause=2 -> 744 muertes
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1485,7 +1495,7 @@ horiz <- data.frame(
 ) |>
   dplyr::mutate(total_CIF = CIF_before + CIF_after)
 
-print(horiz)
+# print(horiz)
 # Esperado: KM_death ≈ total_CIF en cada tau (pequeñas diferencias numéricas)
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1504,7 +1514,7 @@ out <- data.frame(
 out$sum_cifs <- out$CIF_death_before + out$CIF_death_after
 
 # Chequeo final (debe acercarse al KM final ~ 9%)
-tail(out[, c("time","CIF_death_before","CIF_death_after","sum_cifs","P_dead_total")], 3)
+# tail(out[, c("time","CIF_death_before","CIF_death_after","sum_cifs","P_dead_total")], 3)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # 6) Gráfico: descomposición correcta de la mortalidad total
@@ -1552,7 +1562,7 @@ p <- out|>
     ggplot2::geom_step(ggplot2::aes(y = CIF_death_before, color = "CIF of death before readmission"),
                        linewidth = 0.7) +
     ggplot2::scale_y_continuous(labels = scales::percent_format(accuracy = 1),
-                                limits = c(0, ymax)) +
+                                limits = c(0, max(out[,"sum_cifs"]))) +
     ggplot2::scale_fill_manual(values = c("Death before readmission"= "#a6cee3",
                                           "Death after readmission"= "#b2df8a")) +
     ggplot2::scale_color_manual(values = c("Total death (KM)"= "#1f78b4", "Death before readmission"= "#666666")) +
@@ -1607,6 +1617,8 @@ ggsave(
 ```
 
 A total of `r format(sum(table(SISTRAT23_c1_2010_2024_df_prev1z$treatment)[2:3]), big.mark=",")` patients   (`r scales::percent(sum(prop.table(table(SISTRAT23_c1_2010_2024_df_prev1z$treatment))[2:3]),accuracy=.1)`) had valid treatments between 18-64 in their second or third treatment.
+
+### 1.3. Rule-Based Aggregation into ICD-10–Informed groups
 
 To reduce sparsity and improve interpretability, we grouped specific diagnostic labels into four clinically coherent supergroups aligned with ICD-10 logic: (1) Infectious diseases (STIs, viral hepatitis, and infections related to substance use); (2) Organ-system medical diseases (cardiovascular, hepatic, oral, and hematologic conditions); (3) Injuries and sequelae; and (4) Other specified medical conditions (broad/vague descriptors such as “enfermedades somáticas”, “otras enfermedades…”, and pregnancy-related items). We preserved the status values “en estudio” and “sin trastorno” as-is, and left missing values as NA. For multi-response entries (diagnostico_trs_fisico_series), we parsed “||”-separated items, applied the same mapping to each token, deduplicated within-row, and produced both a collapsed supergroup string and one-hot indicators for the supergroups to avoid inflating counts while preventing sparse categories.
 
@@ -2004,8 +2016,9 @@ SISTRAT23_c1_2010_2024_df_prev1z <- SISTRAT23_c1_2010_2024_df_prev1z|>
 hist(table(round(SISTRAT23_c1_2010_2024_df_prev1z$dit_m,1), exclude=NULL), breaks=120, main= "Histogram: Months in treatment", xlab="Months")
 ```
 
+### 1.4. Missingness
 
-### 1.1. Missingness
+We assessed missing data across predictors, calculating the overall proportion of complete cases and percentage of missing values for each variable.
 
 ```{r miss-diag}
 #| echo: true
@@ -2033,7 +2046,9 @@ tot_variables <- c(
   "prim_sub_freq", "prim_sub_freq_rec", "polysubstance_strict", "dit_m", "treat_log",
   "treat_days_pow2", "treat_days_pow3", "treat_lt_90", "tr_outcome",
   "adm_motive", "primary_sub", "primary_sub_mod", "usuario_tribunal_trat_droga",
-  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico"
+  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico", 
+  
+  "eva_consumo", "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", "eva_transgnorma"
 )
 # Character vector of the variables restricted to factor or character columns
 char_variables <- c(
@@ -2048,7 +2063,8 @@ char_variables <- c(
   "phys_dx_injuries_and_sequelae", "phys_dx_infectious_diseases",
   "prim_sub_freq", "prim_sub_freq_rec", "polysubstance_strict", "treat_lt_90", "tr_outcome",
   "adm_motive", "primary_sub", "primary_sub_mod", "usuario_tribunal_trat_droga",
-  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico"
+  "tipo_de_vivienda_rec", "tipo_de_vivienda_rec2", "plan_type_corr", "evaluacindelprocesoteraputico",
+  "eva_consumo", "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", "eva_transgnorma"
 )
 
 paste0( "Percentage of the total that has missing values: ",
@@ -2074,89 +2090,107 @@ vars_check <- c(tot_variables)
 missing_pct <- colMeans(
   is.na(subset(SISTRAT23_c1_2010_2024_df_prev1z, select = vars_check))
 ) * 100
-#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
-#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
 # Named vector of labels (names = variable names)
 labels_map <- c(
   # Times & events
-  readmit_time_from_adm_m           = "Readmission time from admission (months)",
-  readmit_time_from_disch_m         = "Readmission time from discharge (months)",
-  death_time_from_adm_m             = "Death time from admission (months)",
-  death_time_from_disch_m           = "Death time from discharge (months)",
-  readmit_event                     = "Readmission event",
-  death_event                       = "Death event",
+  readmit_time_from_adm_m         = "Readmission time from admission (months)",
+  readmit_time_from_disch_m       = "Readmission time from discharge (months)",
+  death_time_from_adm_m           = "Death time from admission (months)",
+  death_time_from_disch_m         = "Death time from discharge (months)",
+  readmit_event                   = "Readmission event",
+  death_event                     = "Death event",
+
   # Demographics & status
-  sex_rec                           = "Sex (biological categorization)",
-  tenure_status_household           = "Housing situation",
-  tenure_status_household_rec       = "Housing situation (- ill. settlement)",
-  occupation_condition_corr24       = "Employment status",
-  marital_status_rec                = "Marital status",
-  ed_attainment_corr                = "Educational attainment",
-  ethnicity                         = "Ethnicity(=1)",
-  nationality_chile                 = "Nationallity (Chile)",
-  adm_age_log                       = "Admission age (log)",
-  adm_age_pow2                      = "Admission age ^2",
-  adm_age_pow3                      = "Admission age ^3",
-  adm_age_c                         = "Admission age (centered)",
-  adm_age_cat                       = "Admission age, three groups",
+  sex_rec                         = "Sex (biological categorization)",
+  tenure_status_household         = "Housing situation",
+  tenure_status_household_rec     = "Housing situation (- informal settlement)",
+  occupation_condition_corr24     = "Employment status",
+  marital_status_rec              = "Marital status",
+  ed_attainment_corr              = "Educational attainment",
+  ethnicity                       = "Ethnicity (=1)",
+  nationality_chile               = "Nationality (Chile)",
+  adm_age_log                     = "Admission age (log)",
+  adm_age_pow2                    = "Admission age ^2",
+  adm_age_pow3                    = "Admission age ^3",
+  adm_age_c                       = "Admission age (centered)",
+  adm_age_cat                     = "Admission age (three groups)",
+
   # Contextual
-  porc_pobr                         = "Poverty index of commune of residence",
-  porc_pobr_log                     = "Poverty index (log1p)",
-  porc_pobr_c                       = "Poverty index (centered)",
-  porc_pobr_c_cat6                  = "Poverty index (6 quantile groups)",
-  urbanicity_cat                    = "Urbanization level of the commune of residence",
+  porc_pobr                       = "Poverty index of commune of residence",
+  porc_pobr_log                   = "Poverty index (log1p)",
+  porc_pobr_c                     = "Poverty index (centered)",
+  porc_pobr_c_cat6                = "Poverty index (6 quantile groups)",
+  urbanicity_cat                  = "Urbanization level of commune of residence",
+
   # Living arrangement
-  cohabitation                      = "Cohabitation status (harmonized)",
+  cohabitation                    = "Cohabitation status (harmonized)",
+
   # Clinical/behavioral
-  dg_psiq_cie_10_instudy            = "Psychiatric comorbidity (ICD-10, in-study)",
-  dg_psiq_cie_10_dg                 = "Psychiatric comorbidity (ICD-10, diagnosis record)",
-  sub_dep_icd10_status              = "SUD severity (ICD-10)",
-  prim_sub_freq                     = "Primary-substance use frequency at admission",
-  prim_sub_freq_rec                 = "Primary-substance use frequency at admission (simplified)",
-  polysubstance_strict              = "Polysubstance use (strict)",
+  dg_psiq_cie_10_instudy          = "Psychiatric comorbidity (ICD-10, in-study)",
+  dg_psiq_cie_10_dg               = "Psychiatric comorbidity (ICD-10, diagnosis record)",
+  sub_dep_icd10_status            = "SUD severity (ICD-10)",
+  prim_sub_freq                   = "Primary-substance use frequency at admission",
+  prim_sub_freq_rec               = "Primary-substance use frequency at admission (simplified)",
+  polysubstance_strict            = "Polysubstance use (strict)",
+
   # Treatment exposure
-  dit_m                             = "Length of stay in treatment (months)",
-  treat_log                         = "Length of stay (log1p months)",
-  treat_days_pow2                   = "Length of stay (months)^2",
-  treat_days_pow3                   = "Length of stay (months)^3",
-  treat_lt_90                       = "Treatment length < 90 days (indicator)",
-  tr_outcome                        = "Treatment outcome",
-  adm_motive                        = "Admission motive",
-  primary_sub                       = "Primary substance of use (detailed substances)",
-  primary_sub_mod                   = "Primary substance of use (recoded)",
+  dit_m                           = "Length of stay in treatment (months)",
+  treat_log                       = "Length of stay (log1p months)",
+  treat_days_pow2                 = "Length of stay (months)^2",
+  treat_days_pow3                 = "Length of stay (months)^3",
+  treat_lt_90                     = "Treatment length < 90 days (indicator)",
+  tr_outcome                      = "Treatment outcome",
+  adm_motive                      = "Admission motive",
+  primary_sub                     = "Primary substance of use (detailed substances)",
+  primary_sub_mod                 = "Primary substance of use (recoded)",
+
   # Research-context extras
-  usuario_tribunal_trat_droga       = "Court-referred to drug treatment (1 = yes)",
-  tipo_de_vivienda_rec              = "Housing type (recoded)",
-  tipo_de_vivienda_rec2             = "Housing type (recoded & simplified)",
+  usuario_tribunal_trat_droga     = "Court-referred to drug treatment (1 = yes)",
+  tipo_de_vivienda_rec            = "Housing type (recoded)",
+  tipo_de_vivienda_rec2           = "Housing type (recoded & simplified)",
+
   # Stratification
-  plan_type_corr                    = "Treatment modality (plan type)",
-  prim_sub_licit                    = "Licit primary substance at admission",
-  f0_organic                        = "F0. Organic, including symptomatic, mental disorders",
-  f1_substance_use                  = "F1. Mental and behavioural disorders due to psychoactive substance use",
-  f2_psychotic                      = "F2. Schizophrenia, schizotypal and delusional disorders",
-  f3_mood                           = "F3. Mood [affective] disorders",
-  f4_anxiety_stress_somatoform      = "F4. Neurotic, stress-related and somatoform disorders",
-  f5_physio_eating_sleep_sexual     = "F5. Behavioural syndromes associated with physiological disturbances and physical factors",
-  f6_personality_adult_behaviour    = "F6. Disorders of adult personality and behaviour",
-  f7_intellectual_disability        = "F7. Intellectual Disability",
-  f8_9_neurodevelopment_child       = "F8-9. Disorders of psychological development, and behavioural/emotional disorders with onset in childhood and adolescence",
-  dx_f2_smi_psychotic               = "Psychotic disorders (F2)",
-  dx_f3_mood                        = "Mood disorders (F3)",
-  dx_f45_anx_stress_phys            = "Anxiety & stress-related (F4-F5)",
-  dx_f6_personality                 = "Personality disorders (F6)",
-  dx_f0789_neurocog_dev             = "Neurocog & neurodevelopmental (F0,F7-F9)",
+  plan_type_corr                  = "Treatment modality (plan type)",
+  prim_sub_licit                  = "Licit primary substance at admission",
+  f0_organic                      = "F0. Organic, including symptomatic, mental disorders",
+  f1_substance_use                = "F1. Mental and behavioural disorders due to psychoactive substance use",
+  f2_psychotic                    = "F2. Schizophrenia, schizotypal and delusional disorders",
+  f3_mood                         = "F3. Mood [affective] disorders",
+  f4_anxiety_stress_somatoform    = "F4. Neurotic, stress-related and somatoform disorders",
+  f5_physio_eating_sleep_sexual   = "F5. Behavioural syndromes associated with physiological disturbances and physical factors",
+  f6_personality_adult_behaviour  = "F6. Disorders of adult personality and behaviour",
+  f7_intellectual_disability      = "F7. Intellectual disability",
+  f8_9_neurodevelopment_child     = "F8-9. Disorders of psychological development and behavioural/emotional disorders with onset in childhood and adolescence",
+  dx_f2_smi_psychotic             = "Psychotic disorders (F2)",
+  dx_f3_mood                      = "Mood disorders (F3)",
+  dx_f45_anx_stress_phys          = "Anxiety & stress-related (F4–F5)",
+  dx_f6_personality               = "Personality disorders (F6)",
+  dx_f0789_neurocog_dev           = "Neurocognitive & neurodevelopmental (F0, F7–F9)",
+
   # Violence indicators
-  any_violence                      = "Domestic violence/Sexual abuse",
-  dom_violence                      = "Domestic violence",
-  sex_abuse                         = "Sexual abuse",
+  any_violence                    = "Domestic violence/Sexual abuse",
+  dom_violence                    = "Domestic violence",
+  sex_abuse                       = "Sexual abuse",
+
   # Physical diagnosis groups
-  phys_dx_supergroup                = "Physical Dx Supergroup (Single)",
-  phys_dx_instudy                   = "Physical Dx: Under Study",
-  phys_dx_other_spec_medical_cond   = "Physical Dx: Other Med Conditions",
-  phys_dx_organ_system_med_dis      = "Physical Dx: Organ-System Diseases",
-  phys_dx_injuries_and_sequelae     = "Physical Dx: Injuries & Sequelae",
-  phys_dx_infectious_diseases       = "Physical Dx: Infectious Diseases",
-  evaluacindelprocesoteraputico     = "Assessment of the therapeutic process"
+  phys_dx_supergroup              = "Physical diagnosis supergroup (single)",
+  phys_dx_instudy                 = "Physical diagnosis: under study",
+  phys_dx_other_spec_medical_cond = "Physical diagnosis: other medical conditions",
+  phys_dx_organ_system_med_dis    = "Physical diagnosis: organ-system diseases",
+  phys_dx_injuries_and_sequelae   = "Physical diagnosis: injuries & sequelae",
+  phys_dx_infectious_diseases     = "Physical diagnosis: infectious diseases",
+
+  # Evaluation at discharge
+  evaluacindelprocesoteraputico   = "Assessment of the therapeutic process",
+  eva_consumo                     = "Evaluation of consumption pattern at discharge",
+  eva_fam                         = "Family situation evaluation at discharge",
+  eva_relinterp                   = "Interpersonal relations evaluation at discharge",
+  eva_ocupacion                   = "Occupational situation evaluation at discharge",
+  eva_sm                          = "Mental health evaluation at discharge",
+  eva_fisica                      = "Physical health evaluation at discharge",
+  eva_transgnorma                 = "Social norm transgression evaluation at discharge"
 )
 
 # Apply labels safely (only to variables that exist)
@@ -2182,7 +2216,9 @@ data.frame(
 ```
 
 
-#### 1.1.5. Currently in
+#### 1.4.* Currently in
+
+We identified `r dplyr::filter(SISTRAT23_c1_2010_2024_df_prev1z,tr_outcome=="other")|> nrow()` cases with missing treatment outcomes. For these cases, treatment outcome, duration of treatment, and other treatment-related variables (e.g., evaluation at discharge) are unknown. 
 
 ```{r currently-in}
 #| class-output: center-table
@@ -2192,19 +2228,21 @@ data.frame(
 #| error: true
 #| results: "hold"
 
-SISTRAT23_c1_2010_2024_df_prev1z|> dplyr::filter(tr_outcome=="other")|> 
-    dplyr::select(hash_key, tr_outcome, adm_date_rec2, disch_date_rec6, dit_rec6, adm_year)|>
+SISTRAT23_c1_2010_2024_df_prev1z|> 
+  dplyr::filter(tr_outcome=="other")|> 
+  dplyr::select(hash_key, tr_outcome, adm_date_rec2, disch_date_rec6, dit_rec6, adm_year)|>
     #janitor::tabyl(adm_year)
-     dplyr::mutate(
+  dplyr::mutate(
      hash_key = gsub(
          "(?<=^.{8}).{2}",   # lookbehind for first 8 chars, match the next 2
          "**",               # replace with two asterisks
          hash_key,
          perl = TRUE
-     ))
+     )) |> 
+  head()
 ```
 
-### 1.2. Descriptives
+### 1.5. Descriptives
 
 ```{r desc-1.1-print-pre}
 #| class-output: center-table
@@ -2340,7 +2378,7 @@ write.table(table_one_clean_print,
 
 - Urban residence highest: 88–89% in women-only settings.
 
--  <span style="color:darkred">**  We did not find patients with sex that was inconsistent with their clinical presentation regarding the Pathology of Gestation and of the Intrauterine Fetus without Disorder. Although this study focuses on pregnancy and fetal outcomes, the male parent's (father's) medical history and genetic contribution were documented as part of the patient data. `r paste0(wdpath,"cons/_out/table_one_prediction_clean.txt")` **.</span>
+-  <span style="color:darkred">**We did not find patients with sex that was inconsistent with their clinical presentation regarding the Pathology of Gestation and of the Intrauterine Fetus without Disorder. Although this study focuses on pregnancy and fetal outcomes, the male parent's (father's) medical history and genetic contribution were documented as part of the patient data. `r paste0(wdpath,"cons/_out/table_one_prediction_clean.txt")` **.</span>
 
 
 - **Considering these differences, we think that certain predictors may behave differently by settings**
@@ -2364,9 +2402,9 @@ SISTRAT23_c1_2010_2024_df_prev1z|>
 ```
 
 
-#### For thesis project
+### 1.6. Near-zero variance
 
-```{r thesisproj}
+```{r nzv}
 #| echo: true
 #| error: false
 #| warning: true
@@ -2375,291 +2413,55 @@ SISTRAT23_c1_2010_2024_df_prev1z|>
 #| results: "hold"
 #| eval: true
 
+# freqRatio	The ratio of the frequency of the most common value to the frequency of the second most common value. A large number means the variable is dominated by one value (i.e., nearly constant). #high (e.g. > 20) → highly unbalanced (rare category vs majority).
+# percentUnique	The percentage of unique values relative to the sample size. Low values mean the variable has very few distinct values — often categorical or binary, but potentially too invariant. #High → many distinct values (continuous-type).
+# zeroVar	TRUE means the variable has zero variance (same value for all observations). These should always be removed.
+# nzv	TRUE means the variable has near-zero variance (too little variation to be useful). These are usually removed before modeling.
+
+categorical_vars2<- 
+  setdiff(categorical_vars, c("nationality_cons", "phys_dx_supergroup", "dx_supergroup_series", "f1_substance_use"))
+numerical_vars2 <- 
+  setdiff(numerical_vars, c("nationality_cons", "phys_dx_supergroup", "dx_supergroup_series"))
+
+nzv <- nearZeroVar(subset(SISTRAT23_c1_2010_2024_df_prev1z, select= setdiff(c(categorical_vars,numerical_vars), "plan_type_corr")),
+                   names = TRUE, #column names are returned.
+                   saveMetrics= TRUE, # a data frame with predictor information is returned.
+                   allowParallel= TRUE,
+                   foreach= TRUE
+                   )
+dplyr::mutate_if(nzv, is.numeric, ~round(.,2)) |> 
+  knitr::kable(caption="Near zero variance", col.names= c("Variables", "Freq most common value / second", "% of unique values", "Zero variance","Near-zero variance"))
 
 ```
 
+Given that near-zero variance can lead to large standard errors, convergence warnings, or even quasi-separation if the infrequent category aligns perfectly with the outcome, we deleted the following predictors due to potential collinearity: `nationality_cons`, `phys_dx_supergroup`, and `dx_supergroup_series`.
 
-## 2. Nonproportionallity
+Also, we deleted `r dplyr::mutate_if(nzv, is.numeric, ~round(.,2)) |> filter(zeroVar) |> tibble::rownames_to_column(var="rn") |> pull(rn)` due to zero variance.
 
-### 2.1. Log-log plots
+Variables with near zero variance: `r dplyr::mutate_if(nzv, is.numeric, ~round(.,2))|> dplyr::filter(nzv)|> tibble::rownames_to_column(var="rn")|> dplyr::arrange(desc(freqRatio))|> pull(rn)|> paste(collapse=", ")`.
 
-```{r pre-dg-nonproportionallity-loglog}
-#| echo: true
-#| error: false
-#| warning: true
-#| message: true
-#| paged.print: true
-#| results: "hold"
-#| eval: true
-#| fig-align: center
-#| fig-height: 8
-#| fig-width: 10
-#| fig-dpi: 600
-#| fig-cap: "Figure. Log-log plots by treatment plan type"
+- For `tipo_de_vivienda_rec`, we used `tipo_de_vivienda_rec2` instead. 
 
-#Bradburn, M., Clark, T., Love, S. et al. Survival Analysis Part III: Multivariate data analysis – choosing a model and assessing its adequacy and fit. Br J Cancer 89, 605–611 (2003). https://doi.org/10.1038/sj.bjc.6601120
+- For psychiatric variables, we grouped them into severe mental illness and neurocognitive disorders (`dx_f_any_severe_mental`= F0|F2|F7|F(8-9)|), any internalizing/stress-related diagnosis or of the somatoform spectrum (`dx_f_any_internalizing` F(4-5)).
 
-SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr <- factor(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
+- For any physical comorbidity, we applied grouping for any diagnostic (`any_phys_dx`): Infectuous diseases, Organ-system, Injuries and sequelae and Other specified medical conditions.
 
-# Define titles for the four outcomes
-plots <- data.frame(
-  title = c(
-    "Admission to\nReadmission", 
-    "Admission to\nDeath", 
-    "Discharge to\nReadmission", 
-    "Discharge to\nDeath"
-  ),
-  outcome = c(1, 2, 3, 4)  # Just for indexing
-)
-# SIN COVARIABLES: Kaplan-Meier log-log plots stratified by plan_type_corr
-# Layout: 2x2 grid for the four outcomes
-layout(matrix(1:4, nc = 2, byrow = FALSE))
-# Get unique levels for consistent colors/lines across plots
-levels_plan <- levels(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
-n_levels <- length(levels_plan)
-colors <- rainbow(n_levels)  # Simple rainbow; for better colors, load library(RColorBrewer) and use brewer.pal(n_levels, "Set1")
-lty_vec <- c(1, 2, 3, 4, 5)[1:n_levels]  # Line types: 1=solid, 2=dashed, 3=dotted, etc.
+- For `nationality_chile`, we changed the dominant category and changed it for foreigners instead (`national_foreign`).
 
-for (i in 1:4) {
-  # Define the time and event variables based on outcome
-  if (i == 1) {
-    # Admission to Readmission
-    time_var_name <- "readmit_time_from_adm_m"
-    event_var_name <- "readmit_event"
-    xlab_text <- "log(Months)"
-  } else if (i == 2) {
-    # Admission to Death
-    time_var_name <- "death_time_from_adm_m"
-    event_var_name <- "death_event"
-    xlab_text <- "log(Months)"
-  } else if (i == 3) {
-    # Discharge to Readmission
-    time_var_name <- "readmit_time_from_disch_m"
-    event_var_name <- "readmit_event"
-    xlab_text <- "log(Months)"
-  } else {
-    # Discharge to Death
-    time_var_name <- "death_time_from_disch_m"
-    event_var_name <- "death_event"
-    xlab_text <- "log(Months)"  }
-  # Get the full data subset for this outcome (exclude NA and non-positive times)
-  time_var <- SISTRAT23_c1_2010_2024_df_prev1z[[time_var_name]]
-  event_var <- SISTRAT23_c1_2010_2024_df_prev1z[[event_var_name]]
-  subset_cond <- !is.na(time_var) & !is.na(event_var) & time_var > 0
-  data_subset <- SISTRAT23_c1_2010_2024_df_prev1z[subset_cond, ]
-  
-  if (nrow(data_subset) == 0) {
-    # Skip if no data
-    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
-    next
-  }
-  # Collect all log-log values for dynamic limits
-  all_log_times <- c()
-  all_log_log_surv <- c()
-  # Fit and extract for each level separately (avoids strata subsetting issues)
-  for (j in seq_along(levels_plan)) {
-    data_level <- data_subset[data_subset$plan_type_corr == levels_plan[j], ]
-    if (nrow(data_level) == 0) next
-    # Fit single-group survfit for this level
-    if (i == 1) {
-      level_fit <- survfit(Surv(readmit_time_from_adm_m, readmit_event) ~ 1, data = data_level)
-    } else if (i == 2) {
-      level_fit <- survfit(Surv(death_time_from_adm_m, death_event) ~ 1, data = data_level)
-    } else if (i == 3) {
-      level_fit <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ 1, data = data_level)
-    } else {
-      level_fit <- survfit(Surv(death_time_from_disch_m, death_event) ~ 1, data = data_level)
-    }
-    # Compute log-log only for valid points (time > 0, surv < 1 to avoid log(0) or NaN)
-    valid_idx <- level_fit$surv < 1 & level_fit$time > 0 & !is.na(level_fit$surv)
-    if (sum(valid_idx) > 0) {
-      log_times_j <- log(level_fit$time[valid_idx])
-      log_log_surv_j <- log(-log(level_fit$surv[valid_idx]))
-      valid_log_log <- is.finite(log_times_j) & is.finite(log_log_surv_j)
-      if (sum(valid_log_log) > 0) {
-        all_log_times <- c(all_log_times, log_times_j[valid_log_log])
-        all_log_log_surv <- c(all_log_log_surv, log_log_surv_j[valid_log_log])
-        
-        # Store for plotting later
-        assign(paste0("log_times_", j), log_times_j[valid_log_log])
-        assign(paste0("log_log_surv_", j), log_log_surv_j[valid_log_log])
-      }
-    }
-  }
-  if (length(all_log_times) == 0) {
-    # No valid data for plotting
-    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
-    next
-  }
-  # Dynamic limits
-  x_lim <- range(all_log_times, na.rm = TRUE)
-  y_lim <- range(all_log_log_surv, na.rm = TRUE)
-  if (is.infinite(x_lim[1]) || diff(x_lim) == 0) x_lim <- c(0, 5)  # Fallback
-  if (is.infinite(y_lim[1]) || diff(y_lim) == 0) y_lim <- c(-5, 0)  # Typical fallback for log-log
-  # Initialize empty plot
-  plot(NA, NA, 
-       xlim = x_lim, 
-       ylim = y_lim, 
-       xlab = xlab_text, 
-       ylab = "log(-log(S(t)))", 
-       xaxs = "i", yaxs = "i", las = 1, cex.lab = 0.8, cex.axis = 0.8)
-  # Add lines for each stratum (using stored values)
-  for (j in seq_along(levels_plan)) {
-    log_times_var <- get(paste0("log_times_", j), envir = environment())
-    log_log_surv_var <- get(paste0("log_log_surv_", j), envir = environment())
-    if (exists(paste0("log_times_", j)) && length(log_times_var) > 0) {
-      lines(log_times_var, log_log_surv_var, 
-            col = colors[j], lty = lty_vec[j], lwd = 1.5)
-    }
-  }
-  # Legend
-  legend("bottomright", 
-         legend = levels_plan, 
-         col = colors, lty = lty_vec, lwd = 1.5, 
-         bty = "n", cex = 0.7, inset = 0.02)
-  
-  # Title
-  title(main = plots[i, "title"], cex.main = 1.2)
-}
-# Reset layout to single plot
-layout(1)
+- Court-mandated or drug court treatment user (`usuario_tribunal_trat_droga`) are less than 2% of the SUD treatment population. We did not use it as a predictor.
 
-# Notes:
-# - This assumes plan_type_corr is a factor. If not, convert: df$plan_type_corr <- factor(df$plan_type_corr)
-# - Subsets exclude NA times/events to avoid errors.
-# - For log-log plots, times > 0; handle zeros/infinites if present (e.g., add small epsilon).
-# - Adjust xlim/ylim based on your data (e.g., inspect range(log(time)) and log(-log(surv))).
-# - If some strata have no events, lines may be missing—check with summary(fit_amb).
-# - Reference: Bradburn et al. (2003) for log-log plots to assess proportional hazards.
-# - Run summary(survfit(...)) first to verify curves before plotting.
+- Reported sexual abuse also represent less than 2% of the population. We have a variable called `any_violence` that groups domestic violence with sexual abuse
 
-wdpath<-
-paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
-pdf(paste0(wdpath,"cons/_figs/loglog_plots.pdf"), width=10, height=8)
-
-# SIN COVARIABLES: Kaplan-Meier log-log plots stratified by plan_type_corr
-# Layout: 2x2 grid for the four outcomes
-layout(matrix(1:4, nc = 2, byrow = FALSE))
-# Get unique levels for consistent colors/lines across plots
-levels_plan <- levels(SISTRAT23_c1_2010_2024_df_prev1z$plan_type_corr)
-n_levels <- length(levels_plan)
-colors <- rainbow(n_levels)  # Simple rainbow; for better colors, load library(RColorBrewer) and use brewer.pal(n_levels, "Set1")
-lty_vec <- c(1, 2, 3, 4, 5)[1:n_levels]  # Line types: 1=solid, 2=dashed, 3=dotted, etc.
-
-for (i in 1:4) {
-  # Define the time and event variables based on outcome
-  if (i == 1) {
-    # Admission to Readmission
-    time_var_name <- "readmit_time_from_adm_m"
-    event_var_name <- "readmit_event"
-    xlab_text <- "log(Months)"
-  } else if (i == 2) {
-    # Admission to Death
-    time_var_name <- "death_time_from_adm_m"
-    event_var_name <- "death_event"
-    xlab_text <- "log(Months)"
-  } else if (i == 3) {
-    # Discharge to Readmission
-    time_var_name <- "readmit_time_from_disch_m"
-    event_var_name <- "readmit_event"
-    xlab_text <- "log(Months)"
-  } else {
-    # Discharge to Death
-    time_var_name <- "death_time_from_disch_m"
-    event_var_name <- "death_event"
-    xlab_text <- "log(Months)"  }
-  # Get the full data subset for this outcome (exclude NA and non-positive times)
-  time_var <- SISTRAT23_c1_2010_2024_df_prev1z[[time_var_name]]
-  event_var <- SISTRAT23_c1_2010_2024_df_prev1z[[event_var_name]]
-  subset_cond <- !is.na(time_var) & !is.na(event_var) & time_var > 0
-  data_subset <- SISTRAT23_c1_2010_2024_df_prev1z[subset_cond, ]
-  
-  if (nrow(data_subset) == 0) {
-    # Skip if no data
-    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
-    next
-  }
-  # Collect all log-log values for dynamic limits
-  all_log_times <- c()
-  all_log_log_surv <- c()
-  # Fit and extract for each level separately (avoids strata subsetting issues)
-  for (j in seq_along(levels_plan)) {
-    data_level <- data_subset[data_subset$plan_type_corr == levels_plan[j], ]
-    if (nrow(data_level) == 0) next
-    # Fit single-group survfit for this level
-    if (i == 1) {
-      level_fit <- survfit(Surv(readmit_time_from_adm_m, readmit_event) ~ 1, data = data_level)
-    } else if (i == 2) {
-      level_fit <- survfit(Surv(death_time_from_adm_m, death_event) ~ 1, data = data_level)
-    } else if (i == 3) {
-      level_fit <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ 1, data = data_level)
-    } else {
-      level_fit <- survfit(Surv(death_time_from_disch_m, death_event) ~ 1, data = data_level)
-    }
-    # Compute log-log only for valid points (time > 0, surv < 1 to avoid log(0) or NaN)
-    valid_idx <- level_fit$surv < 1 & level_fit$time > 0 & !is.na(level_fit$surv)
-    if (sum(valid_idx) > 0) {
-      log_times_j <- log(level_fit$time[valid_idx])
-      log_log_surv_j <- log(-log(level_fit$surv[valid_idx]))
-      valid_log_log <- is.finite(log_times_j) & is.finite(log_log_surv_j)
-      if (sum(valid_log_log) > 0) {
-        all_log_times <- c(all_log_times, log_times_j[valid_log_log])
-        all_log_log_surv <- c(all_log_log_surv, log_log_surv_j[valid_log_log])
-        
-        # Store for plotting later
-        assign(paste0("log_times_", j), log_times_j[valid_log_log])
-        assign(paste0("log_log_surv_", j), log_log_surv_j[valid_log_log])
-      }
-    }
-  }
-  if (length(all_log_times) == 0) {
-    # No valid data for plotting
-    plot(0, 0, type = "n", main = plots[i, "title"], cex.main = 1.2)
-    next
-  }
-  # Dynamic limits
-  x_lim <- range(all_log_times, na.rm = TRUE)
-  y_lim <- range(all_log_log_surv, na.rm = TRUE)
-  if (is.infinite(x_lim[1]) || diff(x_lim) == 0) x_lim <- c(0, 5)  # Fallback
-  if (is.infinite(y_lim[1]) || diff(y_lim) == 0) y_lim <- c(-5, 0)  # Typical fallback for log-log
-  # Initialize empty plot
-  plot(NA, NA, 
-       xlim = x_lim, 
-       ylim = y_lim, 
-       xlab = xlab_text, 
-       ylab = "log(-log(S(t)))", 
-       xaxs = "i", yaxs = "i", las = 1, cex.lab = 0.8, cex.axis = 0.8)
-  # Add lines for each stratum (using stored values)
-  for (j in seq_along(levels_plan)) {
-    log_times_var <- get(paste0("log_times_", j), envir = environment())
-    log_log_surv_var <- get(paste0("log_log_surv_", j), envir = environment())
-    if (exists(paste0("log_times_", j)) && length(log_times_var) > 0) {
-      lines(log_times_var, log_log_surv_var, 
-            col = colors[j], lty = lty_vec[j], lwd = 1.5)
-    }
-  }
-  # Legend
-  legend("bottomright", 
-         legend = levels_plan, 
-         col = colors, lty = lty_vec, lwd = 1.5, 
-         bty = "n", cex = 0.7, inset = 0.02)
-  
-  # Title
-  title(main = plots[i, "title"], cex.main = 1.2)
-}
-# Reset layout to single plot
-layout(1)
+For the rest of variables, <span style="color:darkred">we marked them and review them conceptually later, collapse rare categories if possible, and avoid including obvious.</span>
 
 
-dev.off()
-```
+## 2. Prepare for survival setting w/ ML
 
+### 2.1. Defined variables and clean database
 
-### 2.2. Coefficients & Collinearity
+We numeric and categorical predictors, excluded target and time-leak columns, and added a unique row IDs. Then we converted categorical variables to factors.
 
-If we included `porc_pobr_c`, we get the error "X matrix deemed to be singular". If 
-
-```{r schoenfeld-res}
+```{r explore-predictors-ML2-data-prep}
 #| echo: true
 #| error: false
 #| warning: true
@@ -2668,347 +2470,146 @@ If we included `porc_pobr_c`, we get the error "X matrix deemed to be singular".
 #| results: "hold"
 #| eval: true
 
-# Create the datadist object from your dataset
-dd <- datadist(dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
-      adm_age_cat              = forcats::fct_relevel(factor(adm_age_cat), "18-29"),
-      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
-                                               "owner/transferred dwellings/pays dividends"),
-      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
-      prim_sub_freq_rec        = forcats::fct_relevel(factor(prim_sub_freq_rec), "1.≤1 day/wk"),
-      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
-      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
-      primary_sub_mod          = forcats::fct_relevel(factor(primary_sub_mod), "marijuana"),
-      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
-    ))
-# Register it globally so rms::cph can find it
-options(datadist = "dd")
-
-formula_str_corr2 <- paste("~", paste(c( "adm_age_log", "adm_age_pow2", "adm_age_pow3", "adm_age_c", 
-"adm_age_cat", "tenure_status_household", "occupation_condition_corr24", 
-"marital_status_rec", "porc_pobr", "porc_pobr_log", "ethnicity", "dg_psiq_cie_10_instudy",
-"dx_f2_smi_psychotic", "dx_f3_mood", "dx_f45_anx_stress_phys", "dx_f6_personality", "dx_f0789_neurocog_dev", 
-"sub_dep_icd10_status", "any_violence", "phys_dx_other_spec_medical_cond", 
-"phys_dx_organ_system_med_dis", "phys_dx_injuries_and_sequelae", 
-"phys_dx_infectious_diseases", "prim_sub_freq_rec", "polysubstance_strict", "dit_m", "treat_log", "treat_days_pow2", 
-"treat_days_pow3", "treat_lt_90", "tr_outcome", "adm_motive", "primary_sub_mod", "usuario_tribunal_trat_droga", 
-"tipo_de_vivienda_rec2", "cohabitation", "evaluacindelprocesoteraputico"), collapse = "+ "))
-#"porc_pobr_c"= X matrix deemed to be singular; variable porc_pobr_c 
-
-cox_saturated_readm<-
-rms::cph(
-  as.formula(paste0("Surv(readmit_time_from_disch_m, readmit_event==1) ",
-    formula_str_corr2,
-    " + strat(plan_type_corr)"
-  )),
-  data = dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
-      adm_age_cat              = forcats::fct_relevel(factor(adm_age_cat), "18-29"),
-      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
-                                               "owner/transferred dwellings/pays dividends"),
-      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
-      prim_sub_freq_rec        = forcats::fct_relevel(factor(prim_sub_freq_rec), "1.≤1 day/wk"),
-      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
-      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
-      primary_sub_mod          = forcats::fct_relevel(factor(primary_sub_mod), "marijuana"),
-      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
-    ) |>
-  dplyr::mutate(across(where(is.factor), forcats::fct_drop)),
-  x    = TRUE,
-  y    = TRUE,
-  surv = TRUE)
-vif_saturated_readm <- 
-car::vif(coxph(as.formula(paste0("Surv(readmit_time_from_disch_m, readmit_event==1) ",formula_str_corr2,"+ strat(plan_type_corr)")), data = SISTRAT23_c1_2010_2024_df_prev1z)) |> tibble::as_tibble(rownames = "variable")|>
-  dplyr::rename(GVIF_adj = `GVIF^(1/(2*Df))`)
- 
-invisible("Cox models don’t have an intercept, but VIF still works")
-
-tidy_cph(cox_saturated_readm)|> 
-  dplyr::mutate(var_base = stringr::str_remove(term, "\\s-\\s.*$"))|> 
-  dplyr::left_join(vif_saturated_readm,by=c("var_base"="variable"))|>
-  dplyr::select(-var_base)|> 
-  dplyr::mutate_if(is.numeric, ~round(.,2))|>
-    DT::datatable(filter = 'top',
-        caption = htmltools::tags$caption(
-            style = 'caption-side: top; text-align: left;',
-            htmltools::tags$b('VIF and coefficients from saturated Cox model, Discharge to Readmission')),
-        colnames = c('Term', 'Estimate', 'CI Low', 'CI High',
-            'VIF', 'Df', 'GVIF Adj.'),
-        rownames = FALSE,
-        options = list(
-            pageLength = 20,
-            autoWidth = TRUE,
-            scrollX = TRUE,
-            dom = 't',
-            initComplete = htmlwidgets::JS(
-                "function(settings, json) {
-           $(this.api().tables().body()).css({
-             'font-family': 'Helvetica Neue',
-             'font-size': '75%',
-             'white-space': 'nowrap',
-             'line-height': '1.0em'
-           });
-         }"
-            )))
-#X matrix deemed to be singular; variable porc_pobr_c tr_outcome=adm discharge – adm reasons tr_outcome=adm discharge – rule violation tr_outcome=currently in 
-#  bad_const
-# [1] "primary_sub=dissociatives" "primary_sub=hallucinogens"
-
-# Make sure R uses treatment contrasts with the FIRST level as the baseline
-options(contrasts = c("contr.treatment", "contr.poly"))
-
-cox_saturated_d <- rms::cph(
-  formula = stats::as.formula(paste0(
-    "survival::Surv(death_time_from_disch_m, death_event == 1) ",
-    formula_str_corr2,
-    " + strat(plan_type_corr)"
-  )),
-  data = dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
-      adm_age_cat              = forcats::fct_relevel(adm_age_cat, "18-29"),
-      tenure_status_household  = forcats::fct_relevel(factor(tenure_status_household),
-                                               "owner/transferred dwellings/pays dividends"),
-      sub_dep_icd10_status     = forcats::fct_relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
-      prim_sub_freq_rec        = forcats::fct_relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
-      tr_outcome               = forcats::fct_relevel(factor(tr_outcome), "completion"),
-      adm_motive               = forcats::fct_relevel(factor(adm_motive), "spontaneous consultation"),
-      primary_sub_mod          = forcats::fct_relevel(primary_sub_mod, "marijuana"),
-      cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"),
-    ),
-  x    = TRUE,
-  y    = TRUE,
-  surv = TRUE)
-vif_saturated_d <- 
-car::vif(coxph(as.formula(paste0("Surv(death_time_from_disch_m, death_event==1) ",formula_str_corr2,"+ strat(plan_type_corr)")), data = SISTRAT23_c1_2010_2024_df_prev1z)) |> tibble::as_tibble(rownames = "variable")|>
-  dplyr::rename(GVIF_adj = `GVIF^(1/(2*Df))`)
-
-tidy_cph(cox_saturated_d)|> 
-    dplyr::mutate(var_base = stringr::str_remove(term, "\\s-\\s.*$"))|> 
-    dplyr::left_join(vif_saturated_d,by=c("var_base"="variable"))|> 
-    dplyr::select(-var_base)|>
-    dplyr::mutate_if(is.numeric, ~round(.,2))|>
-    DT::datatable(filter = 'top',
-        caption = htmltools::tags$caption(
-            style = 'caption-side: top; text-align: left;',
-            htmltools::tags$b('VIF and coefficients from saturated Cox model, Discharge to Mortality')),
-        colnames = c('Term', 'Estimate', 'CI Low', 'CI High',
-            'VIF', 'Df', 'GVIF Adj.'),
-        rownames = FALSE,
-        options = list(
-            pageLength = 20,
-            autoWidth = TRUE,
-            scrollX = TRUE,
-            dom = 't',
-            initComplete = htmlwidgets::JS(
-                "function(settings, json) {
-           $(this.api().tables().body()).css({
-             'font-family': 'Helvetica Neue',
-             'font-size': '75%',
-             'white-space': 'nowrap',
-             'line-height': '1.0em'
-           });
-         }"
-            )))
-```
-
-Due to collinearity and sparsity, it is not yet possible to conduct Schoenfeld residuals; however, some relationships deserve highlighting.
-
-* Polysubstance use ↑ readmission (HR≈1.13); ↓ mortality (HR≈0.71).
-* Treatment <90 days ↑ readm. risk (HR≈1.17); Treatment duration effects on mortality, not robust.
-* Inactive or unemployed ↑ vs employed, readm. risk (HR≈1.19, 1.16); ↑ mortality (HR≈1.49, 1.42).
-* Psychiatric dx (in-study) ↓ readm. risk (HR≈0.94; NS).
-* Psychiatric diagnosis (clinical) ↑ readm. risk (HR≈1.10).
-* Married/cohabiting ↓ vs single, readm. risk (HR≈0.95); ↑ mortality (HR≈1.25).
-* Separated/widowed ↑ readm. risk (HR≈1.58).
-* Not living with partner/children ↓ readm. risk (HR≈0.82–0.91); alone, ↑ mortality (HR≈1.56); with family/others, ↑ mortality (HR≈1.14–1.38).
-* Hazardous use ↓ vs dependence (HR≈0.94); Hazardous use ↓ mortality vs dependence (HR≈0.86).
-* Less than daily use ↓ vs daily, readm. risk (HR≈0.83–0.96); Less than daily use ↓ mortality (HR≈0.51–0.77).
-* Completion ↓ readm. risk (HR≈0.79); Completion ↓ mortality (HR≈0.72).
-* Adm. discharge ↑↑ mortality (HR≈6.16).
-* Discharge for rule violation ↑ readm. risk (HR≈1.17); Rule-violation discharge ↑ mortality (HR≈1.61).
-* Referral at discharge ↑ readm. risk (HR≈1.11).
-* “Other” discharge ↓ readm. risk (HR≈0.34).
-* Vs cocaine paste, alcohol ↓ readm. risk (HR≈0.71); Alcohol as primary drug ↑ mortality (HR≈3.43).
-* Vs cocaine paste, marijuana ↓ readm. risk (HR≈0.64).
-* Vs cocaine paste, cocaine powder ↓ readm. risk (HR≈0.86).
-* Vs cocaine paste, other drugs ↓ readm. risk (HR≈0.65).
-* Mid poverty categories ↓ vs baseline, readm. risk (HR≈0.87–0.90); Poverty categories show ↓ mortality (HR≈0.58–0.84).
-* Rural vs urban: borderline higher readm. risk (HR≈1.06).
-* ≤Primary education ↑ mortality risk (HR≈1.24).
-* Urbanicity: no clear mortality effect.
-
-* Renting ↓ mortality risk vs staying with relatives (HR≈0.80).
-* Housing other/unknown ↑ mortality risk (HR≈1.20).
-
-We performed diagnostics to check if the covariate matrices (or design matrices) are well-conditioned.
-
-
-We verified that the one-hot encoded Cox model and the original factor-based rms::cph fit were identical on the complete-case data: Design matrices agree (TRUE from all.equal); Coefficient vectors align perfectly after matching column names; Linear predictors (type = "lp") coincide for every row used in the fit.
-
-::: {.callout-note collapse=true title="Details of one-hot encoding process, death"}
-```{r onehot-readm}
-#| echo: true
-#| error: false
-#| warning: true
-#| message: true
-#| paged.print: true
-#| results: "hold"
-#| eval: true
-
-# --- READMISSION VERSION (parallel to your mortality pipeline) ---
-
-# 0) Common preprocessing (set reference levels)
-prep_df <- dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
-    adm_age_cat              = stats::relevel(adm_age_cat, "18-29"),
-    tenure_status_household  = stats::relevel(factor(tenure_status_household),
-                                              "owner/transferred dwellings/pays dividends"),
-    sub_dep_icd10_status     = stats::relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
-    prim_sub_freq_rec        = stats::relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
-    tr_outcome               = stats::relevel(factor(tr_outcome), "completion"),
-    adm_motive               = stats::relevel(factor(adm_motive), "spontaneous consultation"),
-    primary_sub_mod          = stats::relevel(primary_sub_mod, "marijuana"),
-    cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone"))
-# Save the stratification factor
-plan_type_corr_all <- prep_df$plan_type_corr
-# 1) Full formula (includes stratification term)
-rhs_str   <- sub("^\\s*~\\s*", "", formula_str_corr2)
-form_full <- stats::as.formula(paste0(
-  "survival::Surv(readmit_time_from_disch_m, readmit_event==1) ~ ",
-  rhs_str,
-  " + strat(plan_type_corr)"
-))
-# 2) Model frame with NA rows retained
-mf_all <- stats::model.frame(
-  formula   = form_full,
-  data      = prep_df,
-  na.action = stats::na.pass)
-# 3) Extract the Surv response as time/status
-Y_all      <- stats::model.response(mf_all)
-time_all   <- Y_all[, 1]
-status_all <- Y_all[, ncol(Y_all)]
-# 4) Build one-hot design (drop stratification term; keep NAs)
-form_nostr <- stats::update(form_full, . ~ . - strat(plan_type_corr))
-Tr_rhs     <- stats::delete.response(stats::terms(form_nostr))
-X_onehot <- stats::model.matrix(
-  object    = Tr_rhs,
-  data      = mf_all,
-  na.action = stats::na.pass)
-# Remove intercept / any stray strata columns; enforce unique names
-keep_cols <- !colnames(X_onehot) %in% "(Intercept)" &
-             !base::grepl("^strat\\(", colnames(X_onehot))
-X_onehot  <- X_onehot[, keep_cols, drop = FALSE]
-colnames(X_onehot) <- base::make.names(colnames(X_onehot), unique = TRUE)
-# Sanity checks
-base::stopifnot(
-  nrow(X_onehot) == length(time_all),
-  length(plan_type_corr_all) == length(time_all))
-# 5) Assemble final analysis data (time, status, one-hot predictors, strata factor)
-cox_onehot_df <- base::cbind.data.frame(
-  time           = time_all,
-  status         = status_all,
-  X_onehot,
-  plan_type_corr = plan_type_corr_all)
-# Rebuild plan_type_corr as factor with observed levels
-plan_type_levels <- unique(as.character(plan_type_corr_all))
-plan_type_levels <- plan_type_levels[!is.na(plan_type_levels)]
-cox_onehot_df$plan_type_corr <- factor(plan_type_corr_all, levels = plan_type_levels)
-# 6) Explicit predictor formula
-predictors      <- paste(colnames(X_onehot), collapse = " + ")
-cox_onehot_form <- stats::as.formula(paste(
-  "survival::Surv(time, status) ~",
-  predictors,
-  "+ strat(plan_type_corr)"))
-# 7) Fit Cox PH on one-hot design (readmission endpoint)
-cox_onehot_fit <- rms::cph(
-  formula = cox_onehot_form,
-  data    = cox_onehot_df,
-  x       = TRUE,
-  y       = TRUE,
-  surv    = TRUE)
-# 8) Factor-based Cox with the same stratification term (for comparison)
-cox_saturated_r <- rms::cph(
-  formula = stats::as.formula(paste0(
-    "survival::Surv(readmit_time_from_disch_m, readmit_event==1) ",
-    formula_str_corr2,
-    " + strat(plan_type_corr)")),
-  data = prep_df,
-  x    = TRUE,
-  y    = TRUE,
-  surv = TRUE)
-# 9) Complete cases actually used by cph
-vars_used <- c("time", "status", colnames(X_onehot), "plan_type_corr")
-keep_idx <- which(stats::complete.cases(cox_onehot_df[, vars_used]))
-# 9a) One-hot matrix equals cph’s stored X
-base::stopifnot(
-  base::all.equal(
-    X_onehot[keep_idx, , drop = FALSE],
-    cox_onehot_fit$x,
-    tolerance        = 1e-10,
-    check.attributes = FALSE))
-# 9b) Coefficients match after aligning names
-coef_onehot <- stats::coef(cox_onehot_fit)
-coef_factor <- stats::coef(cox_saturated_r)
-names(coef_factor) <- colnames(cox_saturated_r$x)
-
-coef_factor_aligned <- coef_factor[names(coef_onehot)]
-coef_onehot_aligned <- coef_onehot[names(coef_factor_aligned)]
-base::stopifnot(
-  base::all.equal(
-    coef_onehot_aligned,
-    coef_factor_aligned,
-    tolerance        = 1e-10,
-    check.attributes = FALSE  ))
-# 9c) Linear predictors match on retained rows
-lp_onehot_used <- stats::predict(
-  cox_onehot_fit,
-  type    = "lp",
-  newdata = cox_onehot_df[keep_idx, , drop = FALSE]
+num_vars = c(
+    # floats
+    "readmit_time_from_adm_m",
+    "death_time_from_adm_m",
+    "adm_age_rec3",
+    # "adm_age_log",
+    # "adm_age_pow2",
+    # "adm_age_pow3",
+    # "adm_age_c",
+    "porc_pobr",
+    # "porc_pobr_log",
+    # "porc_pobr_c",
+    "dit_m",
+    # "treat_log",
+    # "treat_days_pow2",
+    # "treat_days_pow3"
+    "num_trat_ant",# only 5993 missings
+    "age_subs_onset_rec2" # only 4300 missings
 )
-lp_factor_used <- stats::predict(
-  cox_saturated_r,
-  type    = "lp",
-  newdata = prep_df[keep_idx, , drop = FALSE]
+cat_vars = c(
+    # category
+    "sex_rec",
+    "tenure_status_household",
+    "cohabitation",
+    "sub_dep_icd10_status",
+    #"dom_violence", # check collinearity
+    #"sex_abuse", # collinear #freqRatio>20
+    "any_violence",
+    "prim_sub_freq_rec",
+    "tr_outcome",
+    "adm_motive",
+    "first_sub_used",
+    "primary_sub_mod",
+    #"tipo_de_vivienda_rec", #freqRatio>20
+    "tipo_de_vivienda_rec2",
+    #"adm_age_cat", # collinear
+    #"nationality_chile",
+    "national_foreign",
+    "plan_type_corr",
+    # object
+    "occupation_condition_corr24",
+    "marital_status_rec",
+    "urbanicity_cat",
+    "ed_attainment_corr",
+    #"prim_sub_freq",
+    #"primary_sub",
+    #"usuario_tribunal_trat_droga", #freqRatio>20
+    "evaluacindelprocesoteraputico",
+    "eva_consumo",
+    "eva_fam",
+    "eva_relinterp",
+    "eva_ocupacion",
+    "eva_sm",
+    "eva_fisica",
+    "eva_transgnorma",
+    # booleans
+    "ethnicity",    
+    "dg_psiq_cie_10_instudy",
+    "dg_psiq_cie_10_dg",
+    #"f0_organic", #freqRatio>20
+    #"f2_psychotic", #freqRatio>20
+    #"f3_mood", #collinear
+    #"f4_anxiety_stress_somatoform", #freqRatio>20
+    #"f5_physio_eating_sleep_sexual", #freqRatio>20
+    #"f6_personality_adult_behaviour", #freqRatio>20
+    #"f7_intellectual_disability", #freqRatio>20
+    #"f8_9_neurodevelopment_child", #freqRatio>20
+    # ints
+    #"dx_f2_smi_psychotic",
+    "dx_f3_mood",
+    #"dx_f45_anx_stress_phys",
+    "dx_f6_personality",
+    #"dx_f0789_neurocog_dev",
+    "dx_f_any_severe_mental",
+    "dx_f_any_internalizing",
+    "phys_dx_instudy",
+    "any_phys_dx",
+    #"phys_dx_other_spec_medical_cond",
+    #"phys_dx_organ_system_med_dis",
+    #"phys_dx_injuries_and_sequelae",
+    #"phys_dx_infectious_diseases",
+    "polysubstance_strict"
+    #"treat_lt_90" #collinear
 )
-base::stopifnot(
-  base::all.equal(
-    lp_onehot_used,
-    lp_factor_used,
-    tolerance        = 1e-10,
-    check.attributes = FALSE
+
+
+# 0. Define columns to exclude (endpoints + time leaks)
+target_cols <- c(
+  "readmit_time_from_disch_m", "readmit_event",
+  "death_time_from_disch_m", "death_event"
+)
+leak_time_cols <- c("readmit_time_from_adm_m", "death_time_from_adm_m")
+cols_to_exclude <- c(target_cols, leak_time_cols)
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+SISTRAT23_c1_2010_2024_df_model<-  
+SISTRAT23_c1_2010_2024_df_prev1z%>%
+  dplyr::mutate(original_row_id = dplyr::row_number())%>%  # Create a unique ID
+  dplyr::mutate(
+      national_foreign = dplyr::if_else(nationality_chile == "other", 1L, 0L)
+    )%>%
+  dplyr::mutate(
+    dx_f_any_severe_mental =
+      (f2_psychotic == 1L |
+       dx_f2_smi_psychotic == 1L |
+       f0_organic == 1L |
+       f7_intellectual_disability == 1L |
+       f8_9_neurodevelopment_child == 1L |
+       dx_f0789_neurocog_dev == 1L)
+  )%>%
+  dplyr::mutate(
+    any_internalizing =
+      (f4_anxiety_stress_somatoform == 1L |
+       dx_f45_anx_stress_phys == 1L |
+       f5_physio_eating_sleep_sexual == 1L)
+  )%>%
+  dplyr::mutate(
+    any_phys_dx = (phys_dx_infectious_diseases == 1L |
+                   phys_dx_injuries_and_sequelae == 1L |
+                   phys_dx_organ_system_med_dis == 1L |
+                   phys_dx_other_spec_medical_cond == 1L)
   )
-)
 
-# --- Optional diagnostics ---
-dd <- rms::datadist(cox_onehot_df[keep_idx, ])
-options(datadist = "dd")
-stats::anova(cox_onehot_fit)
-summary(cox_onehot_fit)
 
-# Mapping for easy comparison printout
-coef_factor <- stats::coef(cox_saturated_r)
-coef_factor <- coef_factor[!is.na(coef_factor)]
-comparison_tbl <- base::data.frame(
-  factor_label = names(coef_factor),
-  onehot_name  = base::make.names(names(coef_factor), unique = TRUE),
-  coef_factor  = base::unname(coef_factor),
-  stringsAsFactors = FALSE
+# 1. Create predictor dataset (remove excluded columns)
+df_pred <- SISTRAT23_c1_2010_2024_df_model %>%
+  dplyr::select(any_of(c(num_vars, cat_vars, cols_to_exclude))) 
+factor_vars<- 
+c("sex_rec", "tenure_status_household", "cohabitation", "sub_dep_icd10_status", "any_violence", "tr_outcome", "adm_motive", "primary_sub_mod",  "tipo_de_vivienda_rec2", "plan_type_corr", "occupation_condition_corr24", "marital_status_rec", "urbanicity_cat", "ed_attainment_corr", "prim_sub_freq_rec", "first_sub_used", "evaluacindelprocesoteraputico", "eva_consumo", "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", "eva_transgnorma")
+invisible(
+df_pred[, (factor_vars) := lapply(.SD, as.factor), .SDcols = factor_vars]
 )
-comparison_tbl <- comparison_tbl[
-  comparison_tbl$onehot_name %in% names(coef_onehot),
-]
-comparison_tbl$coef_onehot <- coef_onehot[comparison_tbl$onehot_name]
-comparison_tbl$abs_diff    <- abs(comparison_tbl$coef_onehot - comparison_tbl$coef_factor)
-comparison_tbl$rel_diff    <- comparison_tbl$abs_diff / pmax(abs(comparison_tbl$coef_factor), .Machine$double.eps)
-
-print(comparison_tbl, digits = 6)
-cat(
-  "Max absolute diff:", max(comparison_tbl$abs_diff), "\n",
-  "Max relative diff:", max(comparison_tbl$rel_diff), "\n"
-)
-invisible("Check the new predictor names")
-attr(coefficients(cox_onehot_fit), "names")
 ```
-:::
 
-::: {.callout-note collapse=true title="Details of one-hot encoding process, mortality"}
-```{r onehot-death}
+### 2.2. Imputation
+
+Then we run MICE-like  with PMM (15 donors, 200 trees, 5 datasets, 10 iterations) using a correlation-based predictor matrix, and finally extracted the 5 completed/imputed datasets, restoring factor levels.
+
+```{r explore-predictors-ML3-imputation}
 #| echo: true
 #| error: false
 #| warning: true
@@ -3017,183 +2618,303 @@ attr(coefficients(cox_onehot_fit), "names")
 #| results: "hold"
 #| eval: true
 
-# 0) Common preprocessing (set reference levels)
-prep_df <- dplyr::mutate(SISTRAT23_c1_2010_2024_df_prev1z,
-    adm_age_cat              = stats::relevel(adm_age_cat, "18-29"),
-    tenure_status_household  = stats::relevel(factor(tenure_status_household),
-                                              "owner/transferred dwellings/pays dividends"),
-    sub_dep_icd10_status     = stats::relevel(factor(sub_dep_icd10_status), "hazardous consumption"),
-    prim_sub_freq_rec        = stats::relevel(prim_sub_freq_rec, "1.≤1 day/wk"),
-    tr_outcome               = stats::relevel(factor(tr_outcome), "completion"),
-    adm_motive               = stats::relevel(factor(adm_motive), "spontaneous consultation"),
-    primary_sub_mod          = stats::relevel(primary_sub_mod, "marijuana"),
-    cohabitation              = forcats::fct_relevel(factor(cohabitation), "alone")
-  )
-# Save the stratification factor for later
-plan_type_corr_all <- prep_df$plan_type_corr
-# 1) Full formula (includes stratification term)
-rhs_str   <- sub("^\\s*~\\s*", "", formula_str_corr2)
-form_full <- stats::as.formula(paste0(
-  "survival::Surv(death_time_from_disch_m, death_event == 1) ~ ",
-  rhs_str,
-  " + strata(plan_type_corr)"
-))
-# 2) Model frame with NA rows retained (mirrors cph handling)
-mf_all <- stats::model.frame(
-  formula   = form_full,
-  data      = prep_df,
-  na.action = stats::na.pass
-)
-# 3) Extract the Surv response as time/status columns
-Y_all      <- stats::model.response(mf_all)
-time_all   <- Y_all[, 1]
-status_all <- Y_all[, ncol(Y_all)]
-# 4) Build the one-hot design matrix (drop stratification term, keep NA rows)
-form_nostr <- stats::update(form_full, . ~ . - strata(plan_type_corr))
-Tr_rhs     <- stats::delete.response(stats::terms(form_nostr))
-X_onehot <- stats::model.matrix(
-  object    = Tr_rhs,
-  data      = mf_all,
-  na.action = stats::na.pass
-)
-# Remove intercept and any stray strata columns; enforce syntactic names
-keep_cols <- !colnames(X_onehot) %in% "(Intercept)" &
-             !base::grepl("^strata\\(", colnames(X_onehot))
-X_onehot  <- X_onehot[, keep_cols, drop = FALSE]
-colnames(X_onehot) <- base::make.names(colnames(X_onehot), unique = TRUE)
-# Sanity check: dimensions must match the response length
-base::stopifnot(
-  nrow(X_onehot) == length(time_all),
-  length(plan_type_corr_all) == length(time_all)
-)
-# 5) Assemble final analysis data (time, status, one-hot predictors, strata factor)
-cox_onehot_df <- base::cbind.data.frame(
-  time           = time_all,
-  status         = status_all,
-  X_onehot,
-  plan_type_corr = plan_type_corr_all
-)
-# Rebuild plan_type_corr as a factor with its observed levels
-plan_type_levels <- plan_type_corr_all |>
-  base::as.character() |>
-  base::unique()
-plan_type_levels <- plan_type_levels[!base::is.na(plan_type_levels)]
+# Stable imputation
+# set.seed(2125)
+# imp <- mice(
+#     clean_dummified_df,
+#     m = 5,
+#     maxit = 10,
+#     ridge = 1e-04,  # Regularización agresiva pero necesaria
+#     donors = 15,
+#     allow.na = FALSE
+# )
+#  it im dep      meth                                  out
+# 1  0  0     collinear                          porc_pobr_c
+# 2  0  0     collinear                  dx_f2_smi_psychotic
+# 3  0  0     collinear                           dx_f3_mood
+# 4  0  0     collinear                    dx_f6_personality
+# 5  0  0     collinear sub_dep_icd10_status_drug_dependence
+# 6  0  0     collinear              nationality_chile_other
 
-cox_onehot_df$plan_type_corr <- base::factor(
-  plan_type_corr_all,
-  levels = plan_type_levels
-)
-# 6) Explicit predictor formula (avoids using '.' which could duplicate the Surv object)
-predictors      <- paste(colnames(X_onehot), collapse = " + ")
-cox_onehot_form <- stats::as.formula(paste(
-  "survival::Surv(time, status) ~",
-  predictors,
-  "+ strat(plan_type_corr)"
-))
-# 7) Fit Cox PH model on the one-hot design
-cox_onehot_fit <- rms::cph(
-  formula = cox_onehot_form,
-  data    = cox_onehot_df,
-  x       = TRUE,
-  y       = TRUE,
-  surv    = TRUE
-)
-# 8) Fit the factor-based Cox model with the same stratification term (for comparison)
-cox_saturated_d <- rms::cph(
-  formula = stats::as.formula(paste0(
-    "survival::Surv(death_time_from_disch_m, death_event == 1) ",
-    formula_str_corr2,
-    " + strat(plan_type_corr)"
-  )),
-  data = prep_df,
-  x    = TRUE,
-  y    = TRUE,
-  surv = TRUE
-)
-# 9) Identify the complete cases actually used by cph (rows without any NA in model variables)
-vars_used <- c("time", "status", colnames(X_onehot), "plan_type_corr")
-keep_idx <- which(stats::complete.cases(cox_onehot_df[, vars_used]))
-# --- Checks confirming both models are identical on the used rows ---
-# 9a) One-hot matrix equals the stored design matrix within cph
-base::stopifnot(
-  base::all.equal(
-    X_onehot[keep_idx, , drop = FALSE],
-    cox_onehot_fit$x,
-    tolerance        = 1e-10,
-    check.attributes = FALSE
-  ))
-# 9b) Coefficients match when names are standardized via cph’s internal design matrix
-coef_onehot <- stats::coef(cox_onehot_fit)
-coef_factor <- stats::coef(cox_saturated_d)
-names(coef_factor) <- colnames(cox_saturated_d$x)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
 
-coef_factor_aligned <- coef_factor[names(coef_onehot)]
-coef_onehot_aligned <- coef_onehot[names(coef_factor_aligned)]
+  
+cat("Define number of complete datasets to create\n")
+replicates_n <- 5
 
-base::stopifnot(
-  base::all.equal(
-    coef_onehot_aligned,
-    coef_factor_aligned,
-    tolerance        = 1e-10,
-    check.attributes = FALSE
-  ))
-# 9c) Linear predictors (log partial hazards) are identical on the retained rows
-lp_onehot_used <- stats::predict(
-  cox_onehot_fit,
-  type    = "lp",
-  newdata = cox_onehot_df[keep_idx, , drop = FALSE]
-)
-lp_factor_used <- stats::predict(
-  cox_saturated_d,
-  type    = "lp",
-  newdata = prep_df[keep_idx, , drop = FALSE]
-)
-base::stopifnot(
-  base::all.equal(
-    lp_onehot_used,
-    lp_factor_used,
-    tolerance        = 1e-10,
-    check.attributes = FALSE
-  ))
-# --- Optional diagnostics ---
-# Datadist must be defined on complete cases for rms summaries/anova
-dd <- rms::datadist(cox_onehot_df[keep_idx, ])
-options(datadist = "dd")
-# rms outputs now work without error
-stats::anova(cox_onehot_fit)
-summary(cox_onehot_fit)
-# Extract non-NA coefficients from the factor-based fit
-coef_factor <- stats::coef(cox_saturated_d)
-coef_factor <- coef_factor[!base::is.na(coef_factor)]
-# Map factor-style names to the make.names() versions used by the one-hot design
-comparison_tbl <- base::data.frame(
-  factor_label = names(coef_factor),
-  onehot_name  = base::make.names(names(coef_factor), unique = TRUE),
-  coef_factor  = base::unname(coef_factor),
-  stringsAsFactors = FALSE
-)
-# Keep only columns that exist in the one-hot fit (base levels are absent in both fits)
-comparison_tbl <- comparison_tbl[
-  comparison_tbl$onehot_name %in% names(coef_onehot),
-]
-# Add one-hot coefficients and differences
-comparison_tbl$coef_onehot <- coef_onehot[comparison_tbl$onehot_name]
-comparison_tbl$abs_diff    <- base::abs(comparison_tbl$coef_onehot - comparison_tbl$coef_factor)
-comparison_tbl$rel_diff    <- comparison_tbl$abs_diff / base::pmax(
-  base::abs(comparison_tbl$coef_factor),
-  base::.Machine$double.eps)
-# View the comparison (you can adjust digits/tolerance as needed)
-print(comparison_tbl, digits = 6)
-# Optional: quick summary of the discrepancies
-base::cat(
-  "Max absolute diff:", base::max(comparison_tbl$abs_diff), "\n",
-  "Max relative diff:", base::max(comparison_tbl$rel_diff), "\n")
-invisible("Check the new predictor names")
-attr( coefficients(cox_onehot_fit),"names")
+  # Check if the session is interactive (i.e., you are using RStudio manually)
+  if (interactive()) {
+    if(
+    !file.exists(file.path(wdpath, 
+                           "data/20241015_out", 
+                           "filled_datasets.Rds"))
+    ) {
+      # If interactive, offload to a background job to keep console free
+      job::job({
+        source(file.path(wdpath, "cons", "_hist_scripts", "missranger_mice_like_pred1.R"))
+      }, title = "Imputation Job") # Optional: adds a nice title to the jobs pane
+    } else {
+      filled_datasets <- readr::read_rds(file.path(wdpath, "data/20241015_out", "filled_datasets.Rds"))
+    }  
+  } else {
+    # If NOT interactive (e.g., batch mode), just run it directly
+      
+    library(dplyr)
+    library(purrr)
+    library(tibble)
+    
+    # Run MICE imputation (corrected syntax)
+    time_event_vars <- c(
+      "readmit_time_from_disch_m", "readmit_event",
+      "death_time_from_disch_m", "death_event"
+    )
+    predictor_formula <- as.formula(
+      #paste(". ~ . -", paste(time_event_vars, collapse = " - "))
+      paste(". ~ . ", sep="")
+    )
+    
+    cat("MICE-like but with missranger")
+    #https://cran.r-project.org/web/packages/missRanger/vignettes/working_with_censoring.html
+    set.seed(2125)
+    filled_datasets <- replicate(
+      replicates_n,
+      missRanger::missRanger(
+        df_pred,
+        formula = predictor_formula,  # Excluye explícitamente outcomes
+        verbose = 2,
+        pmm.k = 15,#10, # predictive mean matching with 15 nearest neighbors for num variables
+        num.trees = 200, # trees sufficient for stability
+        #seed      = 2125, #if you want 5 different but reproducible imputations. dont use insede missRanger
+        maxiter = 10, #50 is overkill unless you have very heavy missingness and time isn’t an issue
+        returnOOB = TRUE,
+        respect.unordered.factors = "order" # controls how categorical variables are handled inside the trees, giving a better treatment of unordered factors.
+      ),
+      simplify = FALSE
+    )
+    #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+    #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+    cat("Check remaining missing values\n")
+    imputed_data <- map_dfr(1:5, function(i) {
+      df <- filled_datasets[[i]]
+      # add control variables
+      dplyr::mutate(df,
+             .imp = i,  # imputation number
+             .id = SISTRAT23_c1_2010_2024_df_model$original_row_id  # Use original ID
+      ) %>%
+        # Keep variables necessary for analysis
+        dplyr::select(
+          .imp, .id,
+          everything()
+        )
+    }, .id = "imputation_id") %>% 
+      dplyr::select(-imputation_id)  # cleaning
+    #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+    #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+    cat("Check remaining missing values\n")
+    
+    get_all_oobs <- function(imputed_list) {
+      # 1. Extract OOBs from all 5 datasets into one big table
+      all_oobs <- map_dfr(seq_along(imputed_list), function(i) {
+        # Get the attribute
+        oob_vec <- attr(imputed_list[[i]], "oob")
+        # Create a tidy table
+        tibble::tibble(
+          Variable = names(oob_vec),
+          Error_Value = as.numeric(oob_vec),
+          Imputation_Run = as.factor(i)
+        )
+      })
+      # 2. Create a Summary Table (Mean across the 5 runs)
+      oob_summary <- all_oobs %>%
+        dplyr::group_by(Variable) %>%
+        dplyr::summarise(
+          Mean_OOB = mean(Error_Value),
+          SD_OOB = sd(Error_Value),
+          Best_Run = min(Error_Value),
+          Worst_Run = max(Error_Value)
+        ) %>%
+        dplyr::arrange(Mean_OOB) # Sort: Best variables (lowest error) first
+      # 3. Print the summary nicely
+      cat("\n=== COMPLETE OOB ERROR REPORT ===\n")
+      cat("Scale: 0.00 = Perfect Prediction | 1.00 = Useless/Random\n")
+      print(as.data.frame(oob_summary), digits = 3)
+      return(oob_summary)
+    }
 
-cat("Review of coefficients and differences available in: out/saturated model discharge to mortality.xlsx\n")
+#Takes 1:41:49
+#Takes 1:38:06
+
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  #:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+  imputed_data %>%
+    dplyr::select(where(~ any(is.na(.x)))) %>%
+    { 
+      if (ncol(.) == 0) {
+        message("✅ No missing values remain after imputation")
+        tibble::tibble()
+      } else {
+        dplyr::summarise(., across(everything(), ~ scales::percent(mean(is.na(.x)), accuracy = 0.1))) %>%
+          tidyr::pivot_longer(everything(), names_to = "variable", values_to = "missing_pct") %>%
+          dplyr::arrange(desc(as.numeric(gsub("%", "", missing_pct))))
+      }
+    } %>%
+    print()
+  }
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+
+if (interactive()) {
+  if(
+  !file.exists(file.path(wdpath, 
+                         "data/20241015_out", 
+                         "filled_datasets.Rds"))
+  ) {
+    
+    final_oob_stats <- get_all_oobs(filled_datasets)
+    # cat("\n=== COMPLETE OOB ERROR REPORT ===\n")
+    #   cat("Scale: 0.00 = Perfect Prediction | 1.00 = Useless/Random\n")
+    final_oob_stats|>  
+      dplyr::mutate_if(is.numeric, ~round(.,4))|> 
+      knitr::kable(caption="Oob report")
+  }
+}
+# tipo_de_vivienda_rec2 (0.08): Extremely reliable. The model almost certainly 
+# knows what kind of house someone lives in based on their other traits.
+# any_phys_dx (0.09): Very strong prediction.
+# sex_rec (0.12): Standard; usually easy to predict from other social variables.
+# eva_ variables (~0.14 - 0.21): Your "Evaluation" scales (consumo, fam, ocupacion, etc.) 
+# are performing very well. This suggests clear patterns in your psychological/evaluation metrics.
+
+# marital_status_rec (0.30): Decent.
+# first_sub_used (0.34): The model has a fair idea of what substance they used 
+# first, but it's not certain.
+# prim_sub_freq_rec (0.41) & ed_attainment_corr (0.43): These are getting "fuzzy." 
+# The imputed values will be plausible, but they might not perfectly 
+# capture the individual nuance for every person.
+
+# age_subs_onset_rec2 (0.72): High error. The age at which someone started using 
+# substances is hard to predict from their current status.
+# phys_dx_instudy (0.78): Very high. The specific physical diagnosis is likely too 
+# complex or rare to be predicted by general social/eval variables.
+# num_trat_ant (0.86): Critical Flag. This is nearly 0.90.
+
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#previous imputations
+
+#saveRDS(imp, file= file.path(wdpath, "data/20241015_out", "imp.Rds"))
+
+#saveRDS(filled_datasets, file= file.path(wdpath, "data/20241015_out", "filled_datasets.Rds"))
 ```
-:::
+
+
+### 2.3. One-hot encoding
+
+We applied one‑hot encoding with `dummyVars`, and combined them with numeric predictors. Finally, we cleaned column names to produce a tidy modeling dataset, and generated a vector with `dummified_vars`. But also we decided to discard predictor variables with high uncertainty in the imputations, such as substance use onset age (`age_subs_onset_rec2`)  physical diagnosis, in study (`phys_dx_instudy`) and the reported number of previous treatments (`num_trat_ant`).
+
+The resulting database is called `processed_datasets`, which is a list of the imputed databases.
+
+We also exported `corrected_datasets` to avoid immortal time bias in patients who were not readmitted because they died. This step is essential for accurately estimating readmission.
+
+
+```{r explore-predictors-ML25-data-prep2}
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+
+cat("Define vector to discard dummy levels\n")
+
+dummified_lvls_vars<- c("sex_rec_man", "tenure_status_household_others", "cohabitation_others", "sub_dep_icd10_status_hazardous_consumption", "any_violence_0_no_domestic_violence_sex_abuse", "tr_outcome_other", "adm_motive_other", "primary_sub_mod_others", "tipo_de_vivienda_rec2_formal_housing", "plan_type_corr_pg_pab", "occupation_condition_corr24_employed", "marital_status_rec_married_cohabiting", "urbanicity_cat_3_urban", "ed_attainment_corr_1_more_than_high_school", "prim_sub_freq_rec_1_1_day_wk", "first_sub_used_hallucinogens", "first_sub_used_inhalants", "first_sub_used_amphetamine_type_stimulants", "first_sub_used_others", "evaluacindelprocesoteraputico_logro_alto", "eva_consumo_logro_alto", "eva_fam_logro_alto", "eva_relinterp_logro_alto", "eva_ocupacion_logro_alto", "eva_sm_logro_alto", "eva_fisica_logro_alto", "eva_transgnorma_logro_alto")
+
+high_uncertainty_imps<- c("age_subs_onset_rec2", "phys_dx_instudy", "num_trat_ant")
+
+cat("Map dummification\n")
+# 0. Define your factor variables dynamically (or use your manual list)
+# It is safer to detect them from the first dataset to avoid typos
+factor_vars <- names(filled_datasets[[1]])[sapply(filled_datasets[[1]], is.factor)]
+dummy_formula <- as.formula(paste("~", paste(factor_vars, collapse = " + ")))
+
+# Apply the transformation to EACH dataset in the list
+processed_datasets <- map(filled_datasets, function(df_current) {
+  # 1. Create the dummy model based on THIS specific dataset
+  # (Though technically the levels should be the same, it's safer to re-run)
+  dummies_model <- dummyVars(dummy_formula, data = df_current, fullRank = FALSE)
+  # 2. Predict (generate) the dummies
+  df_dummies_encoded <- predict(dummies_model, newdata = df_current)
+  df_dummies_encoded <- as.data.frame(df_dummies_encoded)
+  # 3. Combine non-factor columns with new dummy columns
+  # We use dplyr::select to be safe regardless of whether it's data.table or data.frame
+  numeric_part <- df_current %>% dplyr::select(-all_of(factor_vars))
+  clean_dummified_df <- cbind(numeric_part, df_dummies_encoded)
+  # 4. Clean names
+  clean_dummified_df <- janitor::clean_names(clean_dummified_df)
+  # 5. Select variables
+  clean_dummified_df <- clean_dummified_df|> 
+    dplyr::select(-any_of(dummified_lvls_vars))|> 
+    dplyr::select(-any_of(high_uncertainty_imps))
+  return(clean_dummified_df)
+})
+
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Export databases\n")
+#To google colab to explore predictors with Coxnet
+
+# 1. Apply Correction to Each Dataset in the List
+corrected_datasets <- map(processed_datasets, function(df) {
+  # Ensure columns are numeric for comparison
+  df <- df|> 
+    mutate(
+      readmit_time = as.numeric(readmit_time_from_disch_m),
+      death_time   = as.numeric(death_time_from_disch_m),
+      # Ensure events are 0/1 integers
+      readmit_event = as.integer(as.character(readmit_event)), 
+      death_event   = as.integer(as.character(death_event))
+    )
+  # --- THE CORRECTION LOGIC ---
+  df <- df|>
+    dplyr::mutate(
+      # condition: Patient died (death_event==1) AND death happened before (or at) the readmission endpoint
+      is_competing_risk = (death_event == 1) & (death_time <= readmit_time),
+      # 1. Update Time: If competing risk, cut follow-up at death time. Otherwise keep original.
+      readmit_time_from_disch_m = dplyr::if_else(is_competing_risk, death_time, readmit_time),
+      # 2. Update Event: If competing risk, censor readmission (set to 0). Otherwise keep original.
+      readmit_event = dplyr::if_else(is_competing_risk, 0, readmit_event)
+    ) %>%
+    # Remove temporary helper columns if you want to keep the dataset clean
+    dplyr::select(-readmit_time, -death_time, -is_competing_risk)
+  return(df)
+})
+
+# 1. Define the destination folder
+output_dir <- file.path(wdpath, "data/20241015_out/pred1")
+
+# 2. Iterate and Export
+# iwalk automatically gives you the object (.x) and its index (.y)
+purrr::iwalk(corrected_datasets, function(df, i) {
+  # Construct the full file path
+  # e.g. .../data/20241015_out/imputation_1.parquet
+  file_name <- file.path(output_dir, paste0("imputation_", i, ".parquet"))
+  # Export using rio
+  rio::export(df, file_name)
+  message(paste("Saved:", file_name))
+})
+
+#Export list
+rio::export(processed_datasets, paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets.Rds"))
+
+rio::export(corrected_datasets, paste0(file.path(wdpath, "data/20241015_out/pred1"),"/corrected_datasets.Rds"))
+```
+
 
 
 # Session info
@@ -3214,7 +2935,10 @@ dplyr::select(
   tibble::as_tibble(sesion_info$packages),
   c(package, loadedversion, source)
 )|> 
-  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+  DT::datatable(filter = 'top', 
+                colnames = c('Row number' =1,
+                             'Package' = 2, 
+                             'Version'= 3),
               caption = htmltools::tags$caption(
         style = 'caption-side: top; text-align: left;',
         '', htmltools::em('R packages')),
