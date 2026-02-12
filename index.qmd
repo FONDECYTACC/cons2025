@@ -43,9 +43,17 @@ This page is composed by the following main topics:
 
 6. [**Deduplication of C1, Part 4**](Duplicates_25_4.html)
 
-7. [**Descriptive Glimpse of the Database**](prediction1.html)
+7. [**Descriptive Glimpse of the Database (format for prediction analyses)**](prediction1.html)
 
-8. [**Codebook of C1**](codebook.html)
+8. [**Format and export databases for ML and Deep Learning survival models & Non-proportional hazards**](prediction2.html)
+
+9. [**XGboost (ML model) based on discrimination hyperparameters & SHAP explanations**](XGboost_combined_jan26.html)
+
+10. [**DeepHit (Deep learning model) based on discrimination hyperparameters, hyperparameter tuning**](DeepHit_jan26.html)
+
+11. [**DeepHit (Deep learning model) based on discrimination hyperparameters over death & SHAP explanations**](DeepHit2_jan26.html)
+
+12. [**Codebook of C1**](codebook.html)
 
 The main processes are summarized in the following figures.
 
