@@ -4063,26 +4063,75 @@ $headings-color: #5027c5;</style>
 
 <section id="sistrat-datasets" class="level1">
 <h1>SISTRAT Datasets</h1>
-<p>This page is composed by the following main topics:</p>
+<p>This page is composed by the following main topics: Perfecto 👇 Te la dejo en <strong>Markdown limpio</strong>, manteniendo <strong>estructura de enlaces y negritas</strong>, lista para copiar/pegar.</p>
+<hr>
+</section>
+<section id="sistrat-datasets-1" class="level1">
+<h1>SISTRAT Datasets</h1>
+<p>This repository is organized into four main sections: data preparation, deduplication, predictive modeling, and documentation.</p>
+<hr>
+<section id="data-preparation-standardization" class="level2">
+<h2 class="anchored" data-anchor-id="data-preparation-standardization">1. Data Preparation &amp; Standardization</h2>
+<section id="core-datasets" class="level3">
+<h3 class="anchored" data-anchor-id="core-datasets">Core Datasets</h3>
 <ol type="1">
 <li><p><a href="import_c1_top_data_adm_25.html"><strong>Data Preparation and Standardization of C1, TOP, Mortality &amp; Hospitalizations</strong></a></p></li>
 <li><p><a href="import_c2_c6_data_adm_25.html"><strong>Data Preparation and Standardization of C2 to C6</strong></a></p></li>
-<li><p><a href="Duplicates_25.html"><strong>Deduplication of C1</strong></a></p></li>
-<li><p><a href="Duplicates_25_2.html"><strong>Deduplication of C1, Part 2</strong></a></p></li>
-<li><p><a href="Duplicates_25_3.html"><strong>Deduplication of C1, Part 3</strong></a></p></li>
-<li><p><a href="Duplicates_25_4.html"><strong>Deduplication of C1, Part 4</strong></a></p></li>
-<li><p><a href="prediction1.html"><strong>Descriptive Glimpse of the Database (format for prediction analyses)</strong></a></p></li>
-<li><p><a href="prediction2.html"><strong>Format and export databases for ML and Deep Learning survival models &amp; Non-proportional hazards</strong></a></p></li>
-<li><p><a href="XGboost_combined_jan26.html"><strong>XGboost (ML model) based on discrimination hyperparameters &amp; SHAP explanations</strong></a></p></li>
 </ol>
-<p>10.<a href="XGboost_readm_hyp_tun_jan26.html"><strong>XGboost, Hyperparameter tuning based on readmission discrimination</strong></a></p>
-<p>11.<a href="XGboost_death_hyp_tun_jan26.html"><strong>XGboost, Hyperparameter tuning based on death discrimination</strong></a></p>
-<ol start="10" type="1">
-<li><p><a href="CoxNet_BSS_feb26.html"><strong>Elastic net CoxPH, variable importance and performance metrics</strong></a></p></li>
-<li><p><a href="DeepHit_jan26.html"><strong>DeepHit (Deep learning model) based on discrimination, hyperparameter tuning</strong></a></p></li>
-<li><p><a href="DeepHit2_jan26.html"><strong>DeepHit (Deep learning model) based on discrimination &amp; SHAP explanations</strong></a></p></li>
-<li><p><a href="codebook.html"><strong>Codebook of C1</strong></a></p></li>
+<hr>
+</section>
+</section>
+<section id="data-cleaning-deduplication-c1" class="level2">
+<h2 class="anchored" data-anchor-id="data-cleaning-deduplication-c1">2. Data Cleaning &amp; Deduplication (C1)</h2>
+<ol type="1">
+<li><p><a href="Duplicates_25.html"><strong>Deduplication of C1 – Part 1 (Initial Processing)</strong></a></p></li>
+<li><p><a href="Duplicates_25_2.html"><strong>Deduplication of C1 – Part 2 (Advanced Matching Procedures)</strong></a></p></li>
+<li><p><a href="Duplicates_25_3.html"><strong>Deduplication of C1 – Part 3 (Resolution &amp; Validation)</strong></a></p></li>
+<li><p><a href="Duplicates_25_4.html"><strong>Deduplication of C1 – Part 4 (Final Dataset Consolidation)</strong></a></p></li>
 </ol>
+<hr>
+</section>
+<section id="predictive-modeling-pipeline" class="level2">
+<h2 class="anchored" data-anchor-id="predictive-modeling-pipeline">3. Predictive Modeling Pipeline</h2>
+<section id="database-formatting" class="level3">
+<h3 class="anchored" data-anchor-id="database-formatting">Database Formatting</h3>
+<ol type="1">
+<li><p><a href="prediction1.html"><strong>Descriptive Glimpse of the Database (Prediction Format)</strong></a></p></li>
+<li><p><a href="prediction2.html"><strong>Format and Export Databases for ML, Deep Learning Survival Models &amp; Non-Proportional Hazards</strong></a></p></li>
+</ol>
+<hr>
+</section>
+<section id="machine-learning-xgboost" class="level3">
+<h3 class="anchored" data-anchor-id="machine-learning-xgboost">Machine Learning – XGBoost</h3>
+<ol type="1">
+<li><p><a href="XGboost_combined_jan26.html"><strong>XGBoost – Discrimination-Based Model &amp; SHAP Explanations</strong></a></p></li>
+<li><p><a href="XGboost_readm_hyp_tun_jan26.html"><strong>XGBoost – Hyperparameter Tuning (Readmission)</strong></a></p></li>
+<li><p><a href="XGboost_death_hyp_tun_jan26.html"><strong>XGBoost – Hyperparameter Tuning (Death)</strong></a></p></li>
+</ol>
+<hr>
+</section>
+<section id="penalized-survival-models" class="level3">
+<h3 class="anchored" data-anchor-id="penalized-survival-models">Penalized Survival Models</h3>
+<ol type="1">
+<li><a href="CoxNet_BSS_feb26.html"><strong>Elastic Net Cox Proportional Hazards – Variable Importance &amp; Performance Metrics</strong></a></li>
+</ol>
+<hr>
+</section>
+<section id="deep-learning-deephit" class="level3">
+<h3 class="anchored" data-anchor-id="deep-learning-deephit">Deep Learning – DeepHit</h3>
+<ol type="1">
+<li><p><a href="DeepHit_jan26.html"><strong>DeepHit – Hyperparameter Tuning Based on Discrimination</strong></a></p></li>
+<li><p><a href="DeepHit2_jan26.html"><strong>DeepHit – Discrimination &amp; SHAP Explanations</strong></a></p></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="documentation" class="level2">
+<h2 class="anchored" data-anchor-id="documentation">4. Documentation</h2>
+<ol type="1">
+<li><a href="codebook.html"><strong>Codebook of C1</strong></a></li>
+</ol>
+<hr>
 <p>The main processes are summarized in the following figures.</p>
 <p><br></p>
 <section id="figure-1.-diagram-of-data-preparation" class="level5">
@@ -4094,6 +4143,7 @@ $headings-color: #5027c5;</style>
 <h5 class="anchored" data-anchor-id="figure-2.-strobe-diagram">Figure 2. STROBE Diagram</h5>
 
 
+</section>
 </section>
 </section>
 

@@ -29,37 +29,79 @@ editor: source
 # SISTRAT Datasets
 
 This page is composed by the following main topics:
+Perfecto 👇
+Te la dejo en **Markdown limpio**, manteniendo **estructura de enlaces y negritas**, lista para copiar/pegar.
 
+---
 
-1.  [**Data Preparation and Standardization of C1, TOP, Mortality & Hospitalizations**](import_c1_top_data_adm_25.html)
+# SISTRAT Datasets
 
-2.  [**Data Preparation and Standardization of C2 to C6**](import_c2_c6_data_adm_25.html)
+This repository is organized into four main sections: data preparation, deduplication, predictive modeling, and documentation.
 
-3. [**Deduplication of C1**](Duplicates_25.html)
+---
 
-4. [**Deduplication of C1, Part 2**](Duplicates_25_2.html)
+## 1. Data Preparation & Standardization
 
-5. [**Deduplication of C1, Part 3**](Duplicates_25_3.html)
+### Core Datasets
 
-6. [**Deduplication of C1, Part 4**](Duplicates_25_4.html)
+1. [**Data Preparation and Standardization of C1, TOP, Mortality & Hospitalizations**](import_c1_top_data_adm_25.html)
 
-7. [**Descriptive Glimpse of the Database (format for prediction analyses)**](prediction1.html)
+2. [**Data Preparation and Standardization of C2 to C6**](import_c2_c6_data_adm_25.html)
 
-8. [**Format and export databases for ML and Deep Learning survival models & Non-proportional hazards**](prediction2.html)
+---
 
-9. [**XGboost (ML model) based on discrimination hyperparameters & SHAP explanations**](XGboost_combined_jan26.html)
+## 2. Data Cleaning & Deduplication (C1)
 
-10.[**XGboost, Hyperparameter tuning based on readmission discrimination**](XGboost_readm_hyp_tun_jan26.html)
+1. [**Deduplication of C1 – Part 1 (Initial Processing)**](Duplicates_25.html)
 
-11.[**XGboost, Hyperparameter tuning based on death discrimination**](XGboost_death_hyp_tun_jan26.html)
+2. [**Deduplication of C1 – Part 2 (Advanced Matching Procedures)**](Duplicates_25_2.html)
 
-10. [**Elastic net CoxPH, variable importance and performance metrics**](CoxNet_BSS_feb26.html)
+3. [**Deduplication of C1 – Part 3 (Resolution & Validation)**](Duplicates_25_3.html)
 
-11. [**DeepHit (Deep learning model) based on discrimination, hyperparameter tuning**](DeepHit_jan26.html)
+4. [**Deduplication of C1 – Part 4 (Final Dataset Consolidation)**](Duplicates_25_4.html)
 
-12. [**DeepHit (Deep learning model) based on discrimination & SHAP explanations**](DeepHit2_jan26.html)
+---
 
-13. [**Codebook of C1**](codebook.html)
+## 3. Predictive Modeling Pipeline
+
+### Database Formatting
+
+1. [**Descriptive Glimpse of the Database (Prediction Format)**](prediction1.html)
+
+2. [**Format and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards**](prediction2.html)
+
+---
+
+### Machine Learning – XGBoost
+
+1. [**XGBoost – Discrimination-Based Model & SHAP Explanations**](XGboost_combined_jan26.html)
+
+2. [**XGBoost – Hyperparameter Tuning (Readmission)**](XGboost_readm_hyp_tun_jan26.html)
+
+3. [**XGBoost – Hyperparameter Tuning (Death)**](XGboost_death_hyp_tun_jan26.html)
+
+---
+
+### Penalized Survival Models
+
+1. [**Elastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics**](CoxNet_BSS_feb26.html)
+
+---
+
+### Deep Learning – DeepHit
+
+1. [**DeepHit – Hyperparameter Tuning Based on Discrimination**](DeepHit_jan26.html)
+
+2. [**DeepHit – Discrimination & SHAP Explanations**](DeepHit2_jan26.html)
+
+---
+
+## 4. Documentation
+
+1. [**Codebook of C1**](codebook.html)
+
+---
+
 
 The main processes are summarized in the following figures.
 
