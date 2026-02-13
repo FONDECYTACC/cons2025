@@ -1,0 +1,43 @@
+name: coxnet
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Core
+  - python=3.11
+
+  # Scientific stack (stable ABI)
+  - numpy=1.26
+  - scipy=1.11
+  - pandas=2.1
+
+  # Visualization
+  - matplotlib=3.8
+  - seaborn=0.13
+
+  # ML / Survival
+  - scikit-learn=1.3
+  - scikit-survival=0.22
+
+  # Stats
+  - statsmodels
+
+  # Utilities
+  - tqdm
+  - openpyxl
+  - joblib
+  - numexpr
+  - psutil
+
+  # Notebook
+  - jupyterlab
+  - notebook
+  - ipykernel
+  - ipywidgets
+
+  # File handling
+  - pyarrow=14
+
+  # Keep pip available (but don't use for compiled libs)
+  - pip
