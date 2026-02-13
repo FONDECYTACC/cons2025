@@ -49,11 +49,17 @@ This page is composed by the following main topics:
 
 9. [**XGboost (ML model) based on discrimination hyperparameters & SHAP explanations**](XGboost_combined_jan26.html)
 
-10. [**DeepHit (Deep learning model) based on discrimination hyperparameters, hyperparameter tuning**](DeepHit_jan26.html)
+10.[**XGboost, Hyperparameter tuning based on readmission discrimination**](XGboost_readm_hyp_tun_jan26.html)
 
-11. [**DeepHit (Deep learning model) based on discrimination hyperparameters over death & SHAP explanations**](DeepHit2_jan26.html)
+11.[**XGboost, Hyperparameter tuning based on death discrimination**](XGboost_death_hyp_tun_jan26.html)
 
-12. [**Codebook of C1**](codebook.html)
+10. [**Elastic net CoxPH, variable importance and performance metrics**](CoxNet_BSS_feb26.html)
+
+11. [**DeepHit (Deep learning model) based on discrimination, hyperparameter tuning**](DeepHit_jan26.html)
+
+12. [**DeepHit (Deep learning model) based on discrimination & SHAP explanations**](DeepHit2_jan26.html)
+
+13. [**Codebook of C1**](codebook.html)
 
 The main processes are summarized in the following figures.
 
