@@ -96,6 +96,14 @@ This repository is organized into four main sections: data preparation, deduplic
 
 ---
 
+### Deep Learning – DeepSurv
+
+1. [**DeepSurv – Hyperparameter Tuning Based on Discrimination**](DeepSurv_jan26.html)
+
+2. [**DeepSurv – Discrimination & SHAP Explanations**](DeepSurv2_feb26.html)
+
+---
+
 ## 4. Documentation
 
 1. [**Codebook of C1**](codebook.html)

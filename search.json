@@ -123,7 +123,7 @@
     "href": "index.html#predictive-modeling-pipeline",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
     "section": "3. Predictive Modeling Pipeline",
-    "text": "3. Predictive Modeling Pipeline\n\nDatabase Formatting\n\nDescriptive Glimpse of the Database (Prediction Format)\nFormat and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards\n\n\n\n\nMachine Learning – XGBoost\n\nXGBoost – Discrimination-Based Model & SHAP Explanations\nXGBoost – Hyperparameter Tuning (Readmission)\nXGBoost – Hyperparameter Tuning (Death)\n\n\n\n\nPenalized Survival Models\n\nElastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics\n\n\n\n\nDeep Learning – DeepHit\n\nDeepHit – Hyperparameter Tuning Based on Discrimination\nDeepHit – Discrimination & SHAP Explanations"
+    "text": "3. Predictive Modeling Pipeline\n\nDatabase Formatting\n\nDescriptive Glimpse of the Database (Prediction Format)\nFormat and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards\n\n\n\n\nMachine Learning – XGBoost\n\nXGBoost – Discrimination-Based Model & SHAP Explanations\nXGBoost – Hyperparameter Tuning (Readmission)\nXGBoost – Hyperparameter Tuning (Death)\n\n\n\n\nPenalized Survival Models\n\nElastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics\n\n\n\n\nDeep Learning – DeepHit\n\nDeepHit – Hyperparameter Tuning Based on Discrimination\nDeepHit – Discrimination & SHAP Explanations\n\n\n\n\nDeep Learning – DeepSurv\n\nDeepSurv – Hyperparameter Tuning Based on Discrimination\nDeepSurv – Discrimination & SHAP Explanations"
   },
   {
     "objectID": "index.html#documentation",
