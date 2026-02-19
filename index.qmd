@@ -28,14 +28,6 @@ editor: source
 
 # SISTRAT Datasets
 
-This page is composed by the following main topics:
-Perfecto 👇
-Te la dejo en **Markdown limpio**, manteniendo **estructura de enlaces y negritas**, lista para copiar/pegar.
-
----
-
-# SISTRAT Datasets
-
 This repository is organized into four main sections: data preparation, deduplication, predictive modeling, and documentation.
 
 ---

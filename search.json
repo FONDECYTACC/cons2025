@@ -32,7 +32,7 @@
     "href": "index.html",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
     "section": "",
-    "text": "This page is composed by the following main topics: Perfecto 👇 Te la dejo en Markdown limpio, manteniendo estructura de enlaces y negritas, lista para copiar/pegar."
+    "text": "This repository is organized into four main sections: data preparation, deduplication, predictive modeling, and documentation.\n\n\n\n\n\n\nData Preparation and Standardization of C1, TOP, Mortality & Hospitalizations\nData Preparation and Standardization of C2 to C6\n\n\n\n\n\n\n\nDeduplication of C1 – Part 1 (Initial Processing)\nDeduplication of C1 – Part 2 (Advanced Matching Procedures)\nDeduplication of C1 – Part 3 (Resolution & Validation)\nDeduplication of C1 – Part 4 (Final Dataset Consolidation)\n\n\n\n\n\n\n\n\nDescriptive Glimpse of the Database (Prediction Format)\nFormat and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards\n\n\n\n\n\n\nXGBoost – Discrimination-Based Model & SHAP Explanations\nXGBoost – Hyperparameter Tuning (Readmission)\nXGBoost – Hyperparameter Tuning (Death)\n\n\n\n\n\n\nElastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics\n\n\n\n\n\n\nDeepHit – Hyperparameter Tuning Based on Discrimination\nDeepHit – Discrimination & SHAP Explanations\n\n\n\n\n\n\nDeepSurv – Hyperparameter Tuning Based on Discrimination\nDeepSurv – Discrimination & SHAP Explanations\n\n\n\n\n\n\n\nCodebook of C1\n\n\nThe main processes are summarized in the following figures.\n\n\n\nTo open in a new window"
   },
   {
     "objectID": "Duplicates_25_3.html#loading-packages-and-uniting-databases",
@@ -108,28 +108,28 @@
     "objectID": "index.html#data-preparation-standardization",
     "href": "index.html#data-preparation-standardization",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
-    "section": "1. Data Preparation & Standardization",
-    "text": "1. Data Preparation & Standardization\n\nCore Datasets\n\nData Preparation and Standardization of C1, TOP, Mortality & Hospitalizations\nData Preparation and Standardization of C2 to C6"
+    "section": "",
+    "text": "Data Preparation and Standardization of C1, TOP, Mortality & Hospitalizations\nData Preparation and Standardization of C2 to C6"
   },
   {
     "objectID": "index.html#data-cleaning-deduplication-c1",
     "href": "index.html#data-cleaning-deduplication-c1",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
-    "section": "2. Data Cleaning & Deduplication (C1)",
-    "text": "2. Data Cleaning & Deduplication (C1)\n\nDeduplication of C1 – Part 1 (Initial Processing)\nDeduplication of C1 – Part 2 (Advanced Matching Procedures)\nDeduplication of C1 – Part 3 (Resolution & Validation)\nDeduplication of C1 – Part 4 (Final Dataset Consolidation)"
+    "section": "",
+    "text": "Deduplication of C1 – Part 1 (Initial Processing)\nDeduplication of C1 – Part 2 (Advanced Matching Procedures)\nDeduplication of C1 – Part 3 (Resolution & Validation)\nDeduplication of C1 – Part 4 (Final Dataset Consolidation)"
   },
   {
     "objectID": "index.html#predictive-modeling-pipeline",
     "href": "index.html#predictive-modeling-pipeline",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
-    "section": "3. Predictive Modeling Pipeline",
-    "text": "3. Predictive Modeling Pipeline\n\nDatabase Formatting\n\nDescriptive Glimpse of the Database (Prediction Format)\nFormat and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards\n\n\n\n\nMachine Learning – XGBoost\n\nXGBoost – Discrimination-Based Model & SHAP Explanations\nXGBoost – Hyperparameter Tuning (Readmission)\nXGBoost – Hyperparameter Tuning (Death)\n\n\n\n\nPenalized Survival Models\n\nElastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics\n\n\n\n\nDeep Learning – DeepHit\n\nDeepHit – Hyperparameter Tuning Based on Discrimination\nDeepHit – Discrimination & SHAP Explanations\n\n\n\n\nDeep Learning – DeepSurv\n\nDeepSurv – Hyperparameter Tuning Based on Discrimination\nDeepSurv – Discrimination & SHAP Explanations"
+    "section": "",
+    "text": "Descriptive Glimpse of the Database (Prediction Format)\nFormat and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards\n\n\n\n\n\n\nXGBoost – Discrimination-Based Model & SHAP Explanations\nXGBoost – Hyperparameter Tuning (Readmission)\nXGBoost – Hyperparameter Tuning (Death)\n\n\n\n\n\n\nElastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics\n\n\n\n\n\n\nDeepHit – Hyperparameter Tuning Based on Discrimination\nDeepHit – Discrimination & SHAP Explanations\n\n\n\n\n\n\nDeepSurv – Hyperparameter Tuning Based on Discrimination\nDeepSurv – Discrimination & SHAP Explanations"
   },
   {
     "objectID": "index.html#documentation",
     "href": "index.html#documentation",
     "title": "Workflow of data management and analysis - Chilean substance use treatment administrative data",
-    "section": "4. Documentation",
-    "text": "4. Documentation\n\nCodebook of C1\n\n\nThe main processes are summarized in the following figures.\n\n\nFigure 1. Diagram of data preparation\nTo open in a new window\n\n\n\nFigure 2. STROBE Diagram"
+    "section": "",
+    "text": "Codebook of C1\n\n\nThe main processes are summarized in the following figures.\n\n\n\nTo open in a new window"
   }
 ]
