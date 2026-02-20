@@ -62,6 +62,8 @@ This repository is organized into four main sections: data preparation, deduplic
 
 2. [**Format and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards**](prediction2.html)
 
+3. [**Translating survival analysis workflows from R to Python: data preprocessing**](model_performance_ml_jan26.html)
+
 ---
 
 ### Machine Learning – XGBoost
