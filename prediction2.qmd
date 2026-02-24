@@ -1078,7 +1078,7 @@ violations_readm <- ph_test_readmit$table |>
 
 # 2. Generate the combined plot
 # ggcoxzph creates a list of plots if you pass multiple variables
-combined_plots <- ggcoxzph(ph_test_readmit, var = violations_readm)
+combined_plots <- survminer::ggcoxzph(ph_test_readmit, var = violations_readm)
 
 # Open a PDF device 
 pdf("_figs/ph_test_violations_readm.pdf", width = 16*1.5, height = 12*1.5) 
@@ -1126,7 +1126,7 @@ violations <- ph_test_death$table|>
 
 # 2. Generate the combined plot
 # ggcoxzph creates a list of plots if you pass multiple variables
-combined_plots <- ggcoxzph(ph_test_death, var = violations)
+combined_plots <- survminer::ggcoxzph(ph_test_death, var = violations)
 
 # Open a PDF device 
 pdf("_figs/ph_test_violations_death.pdf", width = 16*1.5, height = 12*1.5) 
