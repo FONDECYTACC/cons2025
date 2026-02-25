@@ -19,6 +19,11 @@ _input/!2_ndp_2025_03_08.Rdata.7z.001
 _input/!2_ndp_2025_03_08.Rdata.7z.002
 _input/!2_ndp_2025_03_08.Rdata.7z.003
 _input/!2_ndp_2025_03_08.Rdata.7z.004
+## From xgb
+_out/!death_split_seed2125_test20.parquet
+_out/!readm_split_seed2125_test20.parquet
+!_out/!death_split_seed2125_test20.parquet
+!_out/!readm_split_seed2125_test20.parquet
 
 # Sensitive or personal data directories
 data/
