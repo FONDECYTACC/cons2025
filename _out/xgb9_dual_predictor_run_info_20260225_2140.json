@@ -1,0 +1,25 @@
+{
+  "source_tag": "20260225_2140",
+  "shap_file": "_out\\xgb6_corr_DUAL_SHAP_Aggregated_20260225_2140.pkl",
+  "stability_files_used": [
+    "_out\\xgb8_dual_death_rank_stability_20260225_2140.csv",
+    "_out\\xgb8_dual_readm_rank_stability_20260225_2140.csv"
+  ],
+  "top_n_key": 15,
+  "top_k_stability": 30,
+  "stability_freq_threshold_pct": 90.0,
+  "direction_analysis": {
+    "top_n_features_per_outcome": 20,
+    "n_bootstrap": 300,
+    "seed": 2125,
+    "max_n": 30000,
+    "min_valid_n": 300,
+    "min_group_n": 40,
+    "rule": "Risk-Increasing if CI_low>0; Risk-Decreasing if CI_high<0; else Mixed/Uncertain."
+  },
+  "notes": [
+    "No clinical interpretation text included.",
+    "SHAP magnitude is on log-hazard scale.",
+    "Direction labels are exploratory and not causal."
+  ]
+}

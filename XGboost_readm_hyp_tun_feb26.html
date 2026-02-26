@@ -8,7 +8,7 @@
 
 <meta name="author" content="ags">
 <meta name="dcterms.date" content="2026-02-25">
-<meta name="description" content="This notebook performs hyperparameter tuning of an XGBoost survival model to predict readmission risk in a substance use disorder (SUD) treatment cohort. The modeling framework accounts for competing risks by modeling cause-specific readmission hazards using the survival:cox objective, while absolute risk calibration is evaluated through an Aalen–Johansen-consistent cumulative incidence approximation.Hyperparameter optimization is conducted using multi-objective Bayesian optimization (Optuna, NSGA-II sampler), jointly maximizing time-dependent discrimination (multi-horizon Uno’s C-index with IPCW at 3, 6, 12, 36, and 60 months) and minimizing calibration error (mean time-specific Brier score derived from the Aalen–Johansen-based cumulative incidence function).Five-fold stratified cross-validation is used to evaluate candidate configurations, with stratification by treatment plan type to preserve representation across clinical subgroups. The optimization process evaluates candidate hyperparameter combinations under a parallelized framework to identify Pareto-optimal trade-offs between discrimination and calibration.The resulting Pareto front provides a set of internally validated model configurations that balance predictive ranking performance and absolute risk calibration within a competing risks framework.">
+<meta name="description" content="This notebook tunes and validates an XGBoost model for readmission risk in a substance use disorder (SUD) treatment cohort, using 5 multiple imputations and ~56 predictors (demographic, clinical, socioeconomic, and treatment variables).The model uses survival:cox to estimate the cause-specific hazard for readmission. Because death is a competing event, absolute risk calibration is evaluated with an Aalen–Johansen-consistent cumulative incidence approximation derived from model risk scores.Hyperparameters are optimized with Optuna multi-objective Pareto search, maximizing multi-horizon IPCW Uno’s C-index and minimizing mean time-specific Brier score at 3, 6, 12, 36, and 60 months.Validation uses 5-fold cross-validation stratified by treatment plan type (readmission workflow is plan-stratified, not dual-stratified). The optimization follows a two-phase multiple-imputation strategy: Phase 1 stochastic MI (one imputation per trial), then Phase 2 rescoring of top Pareto candidates across all imputations to select a robust final configuration.Final reporting includes discrimination/calibration metrics, across-imputation stability, and bootstrap optimism correction with 95% confidence intervals. Runs are CPU-only with seed 2125 for reproducibility.">
 
 <title>Hyperparameter tuning based on readmission discrimination – Index</title>
 <style>
@@ -4047,10 +4047,11 @@ $headings-color: #5027c5;</style>
 
 <div>
   <div class="description">
-    <p>This notebook performs hyperparameter tuning of an XGBoost survival model to predict readmission risk in a substance use disorder (SUD) treatment cohort. The modeling framework accounts for competing risks by modeling cause-specific readmission hazards using the survival:cox objective, while absolute risk calibration is evaluated through an Aalen–Johansen-consistent cumulative incidence approximation.</p>
-    <p>Hyperparameter optimization is conducted using multi-objective Bayesian optimization (Optuna, NSGA-II sampler), jointly maximizing time-dependent discrimination (multi-horizon Uno’s C-index with IPCW at 3, 6, 12, 36, and 60 months) and minimizing calibration error (mean time-specific Brier score derived from the Aalen–Johansen-based cumulative incidence function).</p>
-    <p>Five-fold stratified cross-validation is used to evaluate candidate configurations, with stratification by treatment plan type to preserve representation across clinical subgroups. The optimization process evaluates candidate hyperparameter combinations under a parallelized framework to identify Pareto-optimal trade-offs between discrimination and calibration.</p>
-    <p>The resulting Pareto front provides a set of internally validated model configurations that balance predictive ranking performance and absolute risk calibration within a competing risks framework.</p>
+    <p>This notebook tunes and validates an XGBoost model for readmission risk in a substance use disorder (SUD) treatment cohort, using 5 multiple imputations and ~56 predictors (demographic, clinical, socioeconomic, and treatment variables).</p>
+    <p>The model uses <code>survival:cox</code> to estimate the cause-specific hazard for readmission. Because death is a competing event, absolute risk calibration is evaluated with an Aalen–Johansen-consistent cumulative incidence approximation derived from model risk scores.</p>
+    <p>Hyperparameters are optimized with Optuna multi-objective Pareto search, maximizing multi-horizon IPCW Uno’s C-index and minimizing mean time-specific Brier score at 3, 6, 12, 36, and 60 months.</p>
+    <p>Validation uses 5-fold cross-validation stratified by treatment plan type (readmission workflow is plan-stratified, not dual-stratified). The optimization follows a two-phase multiple-imputation strategy: Phase 1 stochastic MI (one imputation per trial), then Phase 2 rescoring of top Pareto candidates across all imputations to select a robust final configuration.</p>
+    <p>Final reporting includes discrimination/calibration metrics, across-imputation stability, and bootstrap optimism correction with 95% confidence intervals. Runs are CPU-only with seed 2125 for reproducibility.</p>
   </div>
 </div>
 
@@ -8955,7 +8956,7 @@ first_sub_used_other           float64         0.0, 0.0, 0.0, 0.0, 0.0
 <pre style="margin:0">Time taken: 18.77 minutes</pre>
 </div>
 </div>
-<div id="cell-49" class="cell" data-execution_count="31">
+<div id="cell-49" class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
