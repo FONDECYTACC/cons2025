@@ -1010,7 +1010,7 @@ corrected_datasets_nondum <- map(filled_datasets, function(df) {
 ```
 
 
-```{r prepare-data-exp}
+```{r prepare-data-exp, eval=F}
 # 2. Iterate and Export
 # iwalk automatically gives you the object (.x) and its index (.y)
 purrr::iwalk(corrected_datasets_nondum, function(df, i) {
@@ -1029,9 +1029,55 @@ rio::export(corrected_datasets_nondum, paste0(file.path(wdpath, "data/20241015_o
 
 # Proportionality
 
-```{r nonprop-def-models}
-df <- corrected_datasets_nondum[[1]]
+Assuming that `corrected_datasets_nondum` has not been modified since its last update on February 21, the order of the relevant rows in the dataset should remain unchanged (n=88,504). Therefore, the train–test split should be identical to the one used in Python. For this reason, we loaded `death_split_seed2125_test20.parquet` to partition observations into training and test sets.
 
+
+```{r }
+ split2125<- 
+nanoparquet::read_parquet("_out/death_split_seed2125_test20.parquet")
+```
+
+We generated a defensive reproducibility check with automatic triggers that stop execution if something changed of the 80/20 split (row order, split mismatch, unexpected counts, etc.).
+
+```{r nonprop-def-models}
+df <- cbind.data.frame(corrected_datasets_nondum[[1]],split2125) |> 
+  dplyr::filter(is_train==T)
+
+message(paste0("The training database is composed of ", nrow(df)," observations"))
+
+expected_n_train <- 70803  # replace with known expected value
+
+if (nrow(df) != expected_n_train) {
+  stop("❌ Inconsistency detected: Training sample size does not match expected value.")
+} else {
+  message("✔ Training sample size verified.")
+}
+
+expected_foreign_n <- 462
+
+observed_foreign_n <- df |>
+  dplyr::summarise(n = sum(national_foreign == 1, na.rm = TRUE)) |>
+  dplyr::pull(n)
+
+if (observed_foreign_n != expected_foreign_n) {
+  stop(paste0("❌ Inconsistency detected: national_foreign count is ",
+              observed_foreign_n,
+              " but expected ",
+              expected_foreign_n))
+} else {
+  message("✔ national_foreign count verified.")
+}
+
+
+expected_age_mean <- 35.79
+
+if (abs(mean(df$adm_age_rec3, na.rm = TRUE) - expected_age_mean) > 0.01) {
+  stop("❌ Age distribution changed — possible split mismatch.")
+}
+
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
 # Define the list of predictors based on your provided list
 predictors <- c(
   "adm_age_rec3", "porc_pobr", "dit_m", "sex_rec", "tenure_status_household", 
