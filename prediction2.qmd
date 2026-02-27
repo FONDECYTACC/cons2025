@@ -164,6 +164,8 @@ overflow-x: scroll;
 </style>
 ```
 ```{css, echo=F}
+#| label: css-format
+
 h1 {
     color: var(--heading-color);
     font-size: 2rem;
@@ -315,7 +317,8 @@ pre.scrollable-code {
 ## Loading Packages and uniting databases
 
 <div class="scrollable-content">
-```{r load}
+```{r}
+#| label: load
 #| message: false
 #| include: true
 #| warning: false
@@ -412,7 +415,8 @@ rm(env_pred)
 </div>
 
 <div class="scrollable-content">
-```{r setup}
+```{r}
+#| label: setup
 #| results: "hold"
 #https://github.com/rstudio/renv/issues/544
 #renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
@@ -622,7 +626,6 @@ pak::pak_sitrep()
 library(tidytable)
 library(ggplot2)
 library(readr)
-library(glmulti)
 library(tableone)
 library(survivalmodels)
 #renv::install("patchwork@1.2.0")
@@ -946,9 +949,6 @@ options(.gander_chat = ellmer::chat_openai(model = "o1-mini"))
 <br>
 
 ::: {.callout-note}
-** **
-
-
 **Aims**
 
 - To identify key prognostic and predictive factors associated with the risk of, and time to, the first readmission to treatment among patients aged 18-64 undergoing initial treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
@@ -966,7 +966,8 @@ This study has three primary objectives. First, we aim to identify key prognosti
 
 In this step, we imported the center identifiers and then applied a correction procedure across all imputed datasets to ensure consistency in event-time definitions. Specifically, we converted time and event variables to numeric and integer formats, identified cases where death occurred before or at the readmission endpoint (competing risks), and adjusted follow‑up times and event indicators accordingly by censoring readmission in those situations. After cleaning up temporary variables, we added the center ID as a factor to each dataset. We also excluded `high_uncertainty_imps`, which encompassed predictors with were not reliable. Finally, we exported the corrected datasets both individually as `.parquet` files named as `corrected_datasets_nondum` (nondum= not-dummified) and collectively as a single `.Rds` object, creating a clean and reproducible output ready for downstream analyses.
 
-```{r prepare-data}
+```{r}
+#| label: prepare-data
 #| echo: true
 #| error: false
 #| warning: true
@@ -1010,7 +1011,9 @@ corrected_datasets_nondum <- map(filled_datasets, function(df) {
 ```
 
 
-```{r prepare-data-exp, eval=F}
+```{r, eval=F}
+#| label: prepare-data-exp
+
 # 2. Iterate and Export
 # iwalk automatically gives you the object (.x) and its index (.y)
 purrr::iwalk(corrected_datasets_nondum, function(df, i) {
@@ -1027,20 +1030,22 @@ rio::export(corrected_datasets_nondum, paste0(file.path(wdpath, "data/20241015_o
 #corrected_datasets_nondum<- rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets_nondum.Rds"))
 ```
 
-# Proportionality
+# Split database
 
 Assuming that `corrected_datasets_nondum` has not been modified since its last update on February 21, the order of the relevant rows in the dataset should remain unchanged (n=88,504). Therefore, the train–test split should be identical to the one used in Python. For this reason, we loaded `death_split_seed2125_test20.parquet` to partition observations into training and test sets.
 
-
-```{r }
- split2125<- 
-nanoparquet::read_parquet("_out/death_split_seed2125_test20.parquet")
+```{r}
+#| label: import-parquet
+split2125<- 
+nanoparquet::read_parquet(paste0(getwd(), "/cons/_out/comb_split_seed2125_test20.parquet"))
 ```
 
 We generated a defensive reproducibility check with automatic triggers that stop execution if something changed of the 80/20 split (row order, split mismatch, unexpected counts, etc.).
 
-```{r nonprop-def-models}
-df <- cbind.data.frame(corrected_datasets_nondum[[1]],split2125) |> 
+```{r}
+#| label: format-python-split
+
+df <- cbind.data.frame(corrected_datasets_nondum[[1]], split2125)|> 
   dplyr::filter(is_train==T)
 
 message(paste0("The training database is composed of ", nrow(df)," observations"))
@@ -1074,16 +1079,235 @@ expected_age_mean <- 35.79
 if (abs(mean(df$adm_age_rec3, na.rm = TRUE) - expected_age_mean) > 0.01) {
   stop("❌ Age distribution changed — possible split mismatch.")
 }
+```
+
+```{r}
+#| label: format-db-to-python
+get_mode_numeric <- function(x) {
+  x_no_na <- x[!base::is.na(x)]
+  if (base::length(x_no_na) == 0) return(NA_real_)
+  tab <- base::table(x_no_na)
+  base::as.numeric(base::names(tab)[base::which.max(tab)])
+}
+
+preprocess_features_robust <- function(
+  df,
+  recode_first_sub_used_to_other = FALSE,  # TRUE solo para dataset 1
+  do_dummies = TRUE
+) {
+  # Fuerza data.frame para evitar errores de data.table en subsetting
+  df_clean <- df |> base::as.data.frame(stringsAsFactors = FALSE)|> 
+    cbind.data.frame(split2125)|> 
+    dplyr::filter(is_train==T)|> 
+    #dplyr::select(- center_id)
+    dplyr::mutate(center_id = suppressWarnings(as.numeric(center_id)))
+
+  get_mode_numeric <- function(x) {
+    x_no_na <- x[!base::is.na(x)]
+    if (base::length(x_no_na) == 0) return(NA_real_)
+    tab <- base::table(x_no_na)
+    base::as.numeric(base::names(tab)[base::which.max(tab)])
+  }
+
+  # Recode opcional (solo imputation_nodum_1 / dataset 1)
+  if (isTRUE(recode_first_sub_used_to_other) && "first_sub_used" %in% base::names(df_clean)) {
+    to_other <- c(
+      "hallucinogens",
+      "opioids",
+      "amphetamine-type stimulants",
+      "tranquilizers/hypnotics",
+      "inhalants",
+      "others"
+    )
+
+    df_clean[["first_sub_used_original"]] <- df_clean[["first_sub_used"]]
+
+    s <- df_clean[["first_sub_used"]]|>
+      base::as.character() |>
+      base::trimws() |>
+      base::tolower()
+
+    s[s %in% to_other] <- "other"
+    df_clean[["first_sub_used"]] <- base::factor(s)
+  }
+
+  # 1) Ordinal encoding
+  ordered_mappings <- list(
+    tenure_status_household = c(
+      "illegal settlement" = 4,
+      "stays temporarily with a relative" = 3,
+      "others" = 2,
+      "renting" = 1,
+      "owner/transferred dwellings/pays dividends" = 0
+    ),
+    urbanicity_cat = c(
+      "1.Rural" = 2,
+      "2.Mixed" = 1,
+      "3.Urban" = 0
+    ),
+    evaluacindelprocesoteraputico = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_consumo = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_fam = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_relinterp = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_ocupacion = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_sm = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_fisica = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    eva_transgnorma = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
+    prim_sub_freq_rec = c(
+      "1.≤1 day/wk" = 0,
+      "2.2–6 days/wk" = 1,
+      "3.Daily" = 2
+    ),
+    ed_attainment_corr = c(
+      "3-Completed primary school or less" = 2,
+      "2-Completed high school or less" = 1,
+      "1-Completed higher education" = 0
+    )
+  )
+
+  for (col in base::names(ordered_mappings)) {
+    if (col %in% base::names(df_clean)) {
+      values <- df_clean[[col]] |>
+        base::as.character() |>
+        base::trimws()
+
+      mapped <- ordered_mappings[[col]][values] |>
+        base::unname() |>
+        base::as.numeric()
+
+      n_missing <- base::sum(base::is.na(mapped))
+      if (n_missing > 0) {
+        if (n_missing == base::nrow(df_clean)) {
+          base::message(base::sprintf("WARNING: Mapping failed completely for '%s'.", col))
+        }
+        mode_val <- get_mode_numeric(mapped)
+        if (!base::is.na(mode_val)) {
+          mapped[base::is.na(mapped)] <- mode_val
+        }
+      }
+
+      df_clean[[col]] <- mapped
+    }
+  }
+
+  # 2) Fijar categoría de referencia
+  dummy_reference <- c(
+    sex_rec = "man",
+    plan_type_corr = "pg-pab",
+    marital_status_rec = "married/cohabiting",
+    cohabitation = "alone",
+    sub_dep_icd10_status = "hazardous consumption",
+    tr_outcome = "completion",
+    adm_motive = "spontaneous consultation",
+    tipo_de_vivienda_rec2 = "formal housing",
+    occupation_condition_corr24 = "employed",
+    any_violence = "0.No domestic violence/sex abuse",
+    first_sub_used = "marijuana"
+  )
+
+  for (col in base::names(dummy_reference)) {
+    if (col %in% base::names(df_clean)) {
+      values <- df_clean[[col]] |>
+        base::as.character() |>
+        base::trimws()
+
+      ref <- dummy_reference[[col]]
+      cats <- base::unique(values)
+
+      if (ref %in% cats) {
+        levs <- c(ref, cats[cats != ref])
+        df_clean[[col]] <- base::factor(values, levels = levs, ordered = FALSE)
+      } else {
+        base::message(base::sprintf("WARNING: Reference '%s' not found in %s", ref, col))
+        df_clean[[col]] <- values
+      }
+    }
+  }
+
+  if (!isTRUE(do_dummies)) {
+    return(df_clean)
+  }
+
+  # 3) One-hot (k-1, equivalente a drop_first=True)
+  cat_cols <- base::names(df_clean)[
+    base::vapply(
+      df_clean,
+      FUN = function(x) base::is.character(x) || base::is.factor(x),
+      FUN.VALUE = logical(1)
+    )
+  ]
+
+  if (base::length(cat_cols) == 0) {
+    return(df_clean)
+  }
+
+  df_cat <- df_clean |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(cat_cols), base::as.factor))
+
+  cat_df <- df_cat |>
+    dplyr::select(dplyr::all_of(cat_cols)) |>
+    base::as.data.frame(stringsAsFactors = FALSE)
+
+  # Critical fix: keep all rows (no implicit row drop in model.matrix)
+  cat_df[] <- lapply(cat_df, function(x) {
+    x <- base::as.factor(x)
+    x <- base::addNA(x, ifany = TRUE)
+    lev <- base::levels(x)
+    lev[base::is.na(lev)] <- "__MISSING__"
+    base::levels(x) <- lev
+    x
+  })
+
+  mm <- stats::model.matrix(
+    stats::as.formula("~ ."),
+    data = cat_df
+  ) |>
+    base::as.data.frame(check.names = FALSE)
+
+  if ("(Intercept)" %in% base::names(mm)) {
+    mm <- dplyr::select(mm, -`(Intercept)`)
+  }
+
+  non_cat_df <- df_cat |>
+    dplyr::select(-dplyr::all_of(cat_cols))
+
+  dplyr::bind_cols(non_cat_df, mm)
+}
 
 #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
 #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
 #_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# Process datasets [[1]]..[[5]] and replace in py_corrected_datasets_nondum
+#The Quarto LSP server crashed 5 times in the last 3 minutes. The server will not be restarted. See the output for more information.
+idx <- base::seq_len(base::min(5, base::length(corrected_datasets_nondum)))
+
+py_corrected_datasets_nondum <- list()
+py_corrected_datasets_nondum[idx] <- 
+  corrected_datasets_nondum[idx] |> 
+  purrr::imap(
+    \(x, i) {
+      x |>
+        preprocess_features_robust(
+          recode_first_sub_used_to_other = T,#(i == 1), # only dataset 1
+          do_dummies = TRUE
+        ) |>
+        janitor::clean_names()
+    }
+  )
+
+```
+
+# Proportionallity
+
+```{r}
+#| label: nonprop-def-models2
+
 # Define the list of predictors based on your provided list
 predictors <- c(
-  "adm_age_rec3", "porc_pobr", "dit_m", "sex_rec", "tenure_status_household", 
-  "cohabitation", "sub_dep_icd10_status", "any_violence", "prim_sub_freq_rec", 
-  "tr_outcome", "adm_motive", "first_sub_used", "primary_sub_mod", 
-  "tipo_de_vivienda_rec2", "national_foreign", 
+  "adm_age_rec3", "porc_pobr", "dit_m", "sex_rec", "tenure_status_household",
+  "cohabitation", "sub_dep_icd10_status", "any_violence",
+  "prim_sub_freq_rec","tr_outcome", "adm_motive", "first_sub_used",
+  "primary_sub_mod", "tipo_de_vivienda_rec2", "national_foreign", 
   "occupation_condition_corr24", "marital_status_rec", "urbanicity_cat", 
   "ed_attainment_corr", "evaluacindelprocesoteraputico", "eva_consumo", 
   "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", 
@@ -1099,7 +1323,11 @@ formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~"
 ```
 
 
-```{r nonprop2-test-coxzph-readm}
+### Residuals, readmission
+
+```{r}
+#| label: nonprop2-test-coxzph-readm
+
 # --- READMISSION MODEL ---
 cox_readmit <- coxph(formula_readmit, data = df)
 ph_test_readmit <- cox.zph(cox_readmit)
@@ -1145,8 +1373,11 @@ print(combined_plots)
 dev.off()
 ```
 
+### Residuals, death
 
-```{r nonprop3-test-coxzph}
+```{r}
+#| label: nonprop3-test-coxzph
+
 library(survminer)
 
 # --- DEATH MODEL ---
@@ -1202,7 +1433,8 @@ We should:
 
 -  Add time-interaction for `any_phys_dx` (Model the decaying association [ function(x, t, ...) x * log(t + 1) ]) for time to death.
 
-```{r nonprop5-log-log}
+```{r}
+#| label: nonprop5-log-log
 
 message("We had to handle ties")
 
@@ -1386,14 +1618,14 @@ ggsave(
 
 We see that treatment outcome has different baseline shapes.
 
-
 # Session info
 
-```{r session-info}
-#|echo: true
-#|error: true
-#|message: true
-#|paged.print: true
+```{r}
+#| label: session-info
+#| echo: true
+#| error: true
+#| message: true
+#| paged.print: true
 message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
 message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
 message(paste0("Editor context: ", path))
@@ -1424,12 +1656,13 @@ initComplete = htmlwidgets::JS(
 ```
 
 
-```{r session-info-python}
-#|echo: true
-#|error: true
-#|message: true
-#|paged.print: true
-#|class-output: center-table
+```{r}
+#| label: session-info-python
+#| echo: true
+#| error: true
+#| message: true
+#| paged.print: true
+#| class-output: center-table
 
 reticulate::py_list_packages()|> 
   DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
@@ -1452,7 +1685,8 @@ initComplete = htmlwidgets::JS(
 
 Save
 
-```{r save}
+```{r}
+#| label: save
 #| echo: true
 #| error: true
 #| warning: true
