@@ -1,0 +1,28 @@
+{
+  "source_tag": "20260228_1000",
+  "fdr_alpha": 0.01,
+  "clinical_effect_thresholds": {
+    "abs_r_min": 0.05,
+    "abs_smd_min": 0.2,
+    "rule": "clinically meaningful if |r|>=abs_r_min OR |SMD|>=abs_smd_min"
+  },
+  "smd_definitions": {
+    "continuous": "Q4-Q1 standardized mean difference of residual interaction signal",
+    "binarized": "binary(1-0) if interactor is binary else median(high-low) split SMD"
+  },
+  "time_dep_rule": {
+    "rank_range_min": 8,
+    "abs_corr_delta_min": 0.05,
+    "sensitivity_rank_grid": [
+      5,
+      8,
+      10,
+      15
+    ],
+    "sensitivity_delta_grid": [
+      0.02,
+      0.03,
+      0.05
+    ]
+  }
+}

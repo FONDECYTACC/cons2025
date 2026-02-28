@@ -1081,245 +1081,315 @@ if (abs(mean(df$adm_age_rec3, na.rm = TRUE) - expected_age_mean) > 0.01) {
 }
 ```
 
+To ensure complete consistency between our R and Python modeling environments, we implemented a harmonized feature preprocessing pipeline. First, we isolated and preserved our target and metadata variables (such as readmission and death events, time-to-event tracking, and center identifiers) to ensure they remained unaltered during transformations. We then generated **dummy variables** (one-hot encoding with k-1 categories) for nominal and ordinal features (such as housing status, urbanicity, clinical evaluations, and educational attainment). Crucially, we explicitly defined the **reference category** for each variable (e.g., 'marihuana' for the primary substance `primary_sub_mod` and first substance `first_sub_used`, and 'pg-pab' for the treatment plan type) to guarantee that both environments dropped the exact same baseline category. 
+
+To overcome native differences in how R and Python name generated dummy variables, we implemented a **custom string harmonization** step in R to perfectly replicate Python's snake_case format. Finally, to handle high cardinality and sparse dummy variables within the first_sub_used feature, we **collapsed low-frequency substances** (such as opioids, hallucinogens, inhalants, tranquilizers, and amphetamines) into a single, aggregated first_sub_used_other indicator. This combination of strict reference matching, naming harmonization, and dimensionality reduction guaranteed a uniform input shape of exactly 62 identically named columns (56 features and 6 metadata variables) across all datasets in both programming environments.
+
 ```{r}
 #| label: format-db-to-python
+
+#dg_psiq_cie_10_dg: This looks like a broader psychiatric diagnosis. Is it categorical or already a dummy?= this is the diagnosis of drug consumption
+#ehtnicity is ok
+#national_foreign is ok
+
+# ==========================================
+# 1. DEFINE TARGET COLUMNS TO ENFORCE
+# ==========================================
+meta_cols <- c(
+  "readmit_event", "death_event", 
+  "readmit_time_from_disch_m", "death_time_from_disch_m", 
+  "center_id", "row_id"
+)
+
+cox_columns <- c(
+  # 1. Numerical and natural binary variables (Unchanged)
+  "adm_age_rec3", "porc_pobr", "dit_m", "national_foreign", 
+  "ethnicity", "dg_psiq_cie_10_instudy", "dg_psiq_cie_10_dg", 
+  "dx_f3_mood", "dx_f6_personality", "dx_f_any_severe_mental", 
+  "any_phys_dx", "polysubstance_strict",
+  # 2. Original categorical dummies (Already existing in your vector)
+  "sex_rec_woman", "cohabitation_family_of_origin", 
+  "cohabitation_with_couple_children", "cohabitation_others", 
+  "sub_dep_icd10_status_drug_dependence", 
+  "any_violence_1_domestic_violence_sex_abuse", "tr_outcome_referral", 
+  "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", 
+  "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", 
+  "adm_motive_justice_sector", "adm_motive_other", "first_sub_used_alcohol", 
+  "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other",
+  "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder", #"primary_sub_mod_marijuana",
+   "primary_sub_mod_alcohol", "primary_sub_mod_others", 
+  "tipo_de_vivienda_rec2_other_unknown", "plan_type_corr_pg_pr", 
+  "plan_type_corr_m_pr", "plan_type_corr_pg_pai", "plan_type_corr_m_pai", 
+  "occupation_condition_corr24_unemployed", "occupation_condition_corr24_inactive", 
+  "marital_status_rec_single", "marital_status_rec_separated_divorced_annulled_widowed", 
+  # 3. NEW Dummies for ordinal variables
+  # (Automatically excluding your chosen reference categories) 
+  # Tenure status (Ref: owner/transferred dwellings/pays dividends)
+  "tenure_status_household_renting", 
+  "tenure_status_household_others", 
+  "tenure_status_household_stays_temporarily_with_a_relative", 
+  "tenure_status_household_illegal_settlement",
+  # Urbanicity (Reference: 3.Urban)
+  "urbanicity_cat_2_mixed", 
+  "urbanicity_cat_1_rural",
+  # Clinical evaluation variables (Reference: logro alto / high achievement)
+  "evaluacindelprocesoteraputico_logro_intermedio", "evaluacindelprocesoteraputico_logro_minimo",
+  "eva_consumo_logro_intermedio", "eva_consumo_logro_minimo",
+  "eva_fam_logro_intermedio", "eva_fam_logro_minimo",
+  "eva_relinterp_logro_intermedio", "eva_relinterp_logro_minimo",
+  "eva_ocupacion_logro_intermedio", "eva_ocupacion_logro_minimo",
+  "eva_sm_logro_intermedio", "eva_sm_logro_minimo",
+  "eva_fisica_logro_intermedio", "eva_fisica_logro_minimo",
+  "eva_transgnorma_logro_intermedio", "eva_transgnorma_logro_minimo",
+  # Substance use frequency (Reference: 1.≤1 day/wk)
+  "prim_sub_freq_rec_2_2_6_days_wk", 
+  "prim_sub_freq_rec_3_daily",
+  # Educational attainment (Reference: 1-More than high school)
+  "ed_attainment_corr_2_completed_high_school_or_less", 
+  "ed_attainment_corr_3_completed_primary_school_or_less"
+)
+python_columns <- cox_columns
+
+# ==========================================
+# 2. HELPER FUNCTION
+# ==========================================
 get_mode_numeric <- function(x) {
-  x_no_na <- x[!base::is.na(x)]
-  if (base::length(x_no_na) == 0) return(NA_real_)
-  tab <- base::table(x_no_na)
-  base::as.numeric(base::names(tab)[base::which.max(tab)])
+  x_no_na <- x[!is.na(x)]
+  if (!length(x_no_na)) return(NA_real_)
+  tab <- table(x_no_na)
+  as.numeric(names(tab)[which.max(tab)])
+}
+
+# ==========================================
+# 3. MAIN PREPROCESSING FUNCTION
+# ==========================================
+
+# Keep meta_cols and cox_columns exactly as you already defined above.
+# Compatibility alias if anything else still expects python_columns:
+python_columns <- cox_columns
+
+get_mode_numeric <- function(x) {
+  x_no_na <- x[!is.na(x)]
+  if (!length(x_no_na)) return(NA_real_)
+  tab <- table(x_no_na)
+  as.numeric(names(tab)[which.max(tab)])
+}
+
+DUMMY_REFERENCE <- c(
+  sex_rec = "man",
+  plan_type_corr = "pg-pab",
+  marital_status_rec = "married/cohabiting",
+  cohabitation = "alone",
+  sub_dep_icd10_status = "hazardous consumption",
+  tr_outcome = "completion",
+  adm_motive = "spontaneous consultation",
+  tipo_de_vivienda_rec2 = "formal housing",
+  occupation_condition_corr24 = "employed",
+  any_violence = "0.No domestic violence/sex abuse",
+  first_sub_used = "marijuana",
+  primary_sub_mod = "marijuana",
+  tenure_status_household = "owner/transferred dwellings/pays dividends",
+  urbanicity_cat = "3.Urban",
+  evaluacindelprocesoteraputico = "logro alto",
+  eva_consumo = "logro alto",
+  eva_fam = "logro alto",
+  eva_relinterp = "logro alto",
+  eva_ocupacion = "logro alto",
+  eva_sm = "logro alto",
+  eva_fisica = "logro alto",
+  eva_transgnorma = "logro alto",
+  prim_sub_freq_rec = "1.≤1 day/wk",
+  ed_attainment_corr = "1-More than high school"
+)
+
+apply_ordered_mappings <- function(df, ordered_mappings = NULL) {
+  if (is.null(ordered_mappings) || !length(ordered_mappings)) return(df)
+
+  for (col in intersect(names(ordered_mappings), names(df))) {
+    raw_values <- trimws(as.character(df[[col]]))
+    mapped <- as.numeric(unname(ordered_mappings[[col]][raw_values]))
+    failed <- is.na(mapped) & !is.na(raw_values) & nzchar(raw_values)
+    if (any(failed)) warning(paste("Mapping failed for some values in:", col))
+    mode_val <- get_mode_numeric(mapped)
+    mapped[is.na(mapped)] <- mode_val
+    df[[col]] <- mapped
+  }
+  df
+}
+
+set_reference_levels <- function(df, refs = DUMMY_REFERENCE) {
+  for (col in intersect(names(refs), names(df))) {
+    values <- trimws(as.character(df[[col]]))
+    ref <- refs[[col]]
+    cats <- unique(values)
+    df[[col]] <- if (ref %in% cats) {
+      factor(values, levels = c(ref, cats[cats != ref]), ordered = FALSE)
+    } else {
+      factor(values, ordered = FALSE)
+    }
+  }
+  df
+}
+
+make_dummies <- function(df) {
+  cat_cols <- names(df)[vapply(df, function(x) is.character(x) || is.factor(x), logical(1))]
+  if (!length(cat_cols)) return(df)
+
+  cat_df <- as.data.frame(df[cat_cols], stringsAsFactors = FALSE)
+  cat_df[] <- lapply(cat_df, function(x) {
+    x <- factor(x)
+    x <- addNA(x, ifany = TRUE)
+    lev <- levels(x)
+    lev[is.na(lev)] <- "__MISSING__"
+    levels(x) <- paste0("_", lev)
+    x
+  })
+
+  mm <- model.matrix(~ ., data = cat_df) |> as.data.frame(check.names = FALSE)
+  mm[["(Intercept)"]] <- NULL
+  cbind(df[setdiff(names(df), cat_cols)], mm)
 }
 
 preprocess_features_robust <- function(
   df,
-  recode_first_sub_used_to_other = FALSE,  # TRUE solo para dataset 1
-  do_dummies = TRUE
+  split_info = split2125,
+  recode_first_sub_used_to_other = FALSE,
+  do_dummies = TRUE,
+  ordered_mappings = NULL
 ) {
-  # Fuerza data.frame para evitar errores de data.table en subsetting
-  df_clean <- df |> base::as.data.frame(stringsAsFactors = FALSE)|> 
-    cbind.data.frame(split2125)|> 
-    dplyr::filter(is_train==T)|> 
-    #dplyr::select(- center_id)
-    dplyr::mutate(center_id = suppressWarnings(as.numeric(center_id)))
+  if (!"is_train" %in% names(split_info)) stop("split_info must include `is_train`.")
+  if (nrow(df) != nrow(split_info)) stop("`df` and `split_info` must have the same number of rows.")
 
-  get_mode_numeric <- function(x) {
-    x_no_na <- x[!base::is.na(x)]
-    if (base::length(x_no_na) == 0) return(NA_real_)
-    tab <- base::table(x_no_na)
-    base::as.numeric(base::names(tab)[base::which.max(tab)])
+  df_clean <- df |>
+    as.data.frame(stringsAsFactors = FALSE) |>
+    dplyr::bind_cols(dplyr::select(as.data.frame(split_info), is_train)) |>
+    dplyr::filter(is_train) |>
+    dplyr::select(-is_train)
+
+  if ("center_id" %in% names(df_clean)) {
+    df_clean$center_id <- suppressWarnings(as.numeric(df_clean$center_id))
   }
 
-  # Recode opcional (solo imputation_nodum_1 / dataset 1)
-  if (isTRUE(recode_first_sub_used_to_other) && "first_sub_used" %in% base::names(df_clean)) {
+  if (isTRUE(recode_first_sub_used_to_other) && "first_sub_used" %in% names(df_clean)) {
     to_other <- c(
-      "hallucinogens",
-      "opioids",
-      "amphetamine-type stimulants",
-      "tranquilizers/hypnotics",
-      "inhalants",
-      "others"
+      "hallucinogens", "opioids", "amphetamine-type stimulants",
+      "tranquilizers/hypnotics", "inhalants", "others"
     )
-
-    df_clean[["first_sub_used_original"]] <- df_clean[["first_sub_used"]]
-
-    s <- df_clean[["first_sub_used"]]|>
-      base::as.character() |>
-      base::trimws() |>
-      base::tolower()
-
+    s <- df_clean[["first_sub_used"]] |> as.character() |> trimws() |> tolower()
     s[s %in% to_other] <- "other"
-    df_clean[["first_sub_used"]] <- base::factor(s)
+    df_clean[["first_sub_used"]] <- factor(s)
   }
 
-  # 1) Ordinal encoding
-  ordered_mappings <- list(
-    tenure_status_household = c(
-      "illegal settlement" = 4,
-      "stays temporarily with a relative" = 3,
-      "others" = 2,
-      "renting" = 1,
-      "owner/transferred dwellings/pays dividends" = 0
-    ),
-    urbanicity_cat = c(
-      "1.Rural" = 2,
-      "2.Mixed" = 1,
-      "3.Urban" = 0
-    ),
-    evaluacindelprocesoteraputico = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_consumo = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_fam = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_relinterp = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_ocupacion = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_sm = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_fisica = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    eva_transgnorma = c("logro minimo" = 2, "logro intermedio" = 1, "logro alto" = 0),
-    prim_sub_freq_rec = c(
-      "1.≤1 day/wk" = 0,
-      "2.2–6 days/wk" = 1,
-      "3.Daily" = 2
-    ),
-    ed_attainment_corr = c(
-      "3-Completed primary school or less" = 2,
-      "2-Completed high school or less" = 1,
-      "1-Completed higher education" = 0
-    )
-  )
+  df_clean <- df_clean |>
+    apply_ordered_mappings(ordered_mappings = ordered_mappings) |>
+    set_reference_levels(refs = DUMMY_REFERENCE)
 
-  for (col in base::names(ordered_mappings)) {
-    if (col %in% base::names(df_clean)) {
-      values <- df_clean[[col]] |>
-        base::as.character() |>
-        base::trimws()
-
-      mapped <- ordered_mappings[[col]][values] |>
-        base::unname() |>
-        base::as.numeric()
-
-      n_missing <- base::sum(base::is.na(mapped))
-      if (n_missing > 0) {
-        if (n_missing == base::nrow(df_clean)) {
-          base::message(base::sprintf("WARNING: Mapping failed completely for '%s'.", col))
-        }
-        mode_val <- get_mode_numeric(mapped)
-        if (!base::is.na(mode_val)) {
-          mapped[base::is.na(mapped)] <- mode_val
-        }
-      }
-
-      df_clean[[col]] <- mapped
-    }
-  }
-
-  # 2) Fijar categoría de referencia
-  dummy_reference <- c(
-    sex_rec = "man",
-    plan_type_corr = "pg-pab",
-    marital_status_rec = "married/cohabiting",
-    cohabitation = "alone",
-    sub_dep_icd10_status = "hazardous consumption",
-    tr_outcome = "completion",
-    adm_motive = "spontaneous consultation",
-    tipo_de_vivienda_rec2 = "formal housing",
-    occupation_condition_corr24 = "employed",
-    any_violence = "0.No domestic violence/sex abuse",
-    first_sub_used = "marijuana"
-  )
-
-  for (col in base::names(dummy_reference)) {
-    if (col %in% base::names(df_clean)) {
-      values <- df_clean[[col]] |>
-        base::as.character() |>
-        base::trimws()
-
-      ref <- dummy_reference[[col]]
-      cats <- base::unique(values)
-
-      if (ref %in% cats) {
-        levs <- c(ref, cats[cats != ref])
-        df_clean[[col]] <- base::factor(values, levels = levs, ordered = FALSE)
-      } else {
-        base::message(base::sprintf("WARNING: Reference '%s' not found in %s", ref, col))
-        df_clean[[col]] <- values
-      }
-    }
-  }
-
-  if (!isTRUE(do_dummies)) {
-    return(df_clean)
-  }
-
-  # 3) One-hot (k-1, equivalente a drop_first=True)
-  cat_cols <- base::names(df_clean)[
-    base::vapply(
-      df_clean,
-      FUN = function(x) base::is.character(x) || base::is.factor(x),
-      FUN.VALUE = logical(1)
-    )
-  ]
-
-  if (base::length(cat_cols) == 0) {
-    return(df_clean)
-  }
-
-  df_cat <- df_clean |>
-    dplyr::mutate(dplyr::across(dplyr::all_of(cat_cols), base::as.factor))
-
-  cat_df <- df_cat |>
-    dplyr::select(dplyr::all_of(cat_cols)) |>
-    base::as.data.frame(stringsAsFactors = FALSE)
-
-  # Critical fix: keep all rows (no implicit row drop in model.matrix)
-  cat_df[] <- lapply(cat_df, function(x) {
-    x <- base::as.factor(x)
-    x <- base::addNA(x, ifany = TRUE)
-    lev <- base::levels(x)
-    lev[base::is.na(lev)] <- "__MISSING__"
-    base::levels(x) <- lev
-    x
-  })
-
-  mm <- stats::model.matrix(
-    stats::as.formula("~ ."),
-    data = cat_df
-  ) |>
-    base::as.data.frame(check.names = FALSE)
-
-  if ("(Intercept)" %in% base::names(mm)) {
-    mm <- dplyr::select(mm, -`(Intercept)`)
-  }
-
-  non_cat_df <- df_cat |>
-    dplyr::select(-dplyr::all_of(cat_cols))
-
-  dplyr::bind_cols(non_cat_df, mm)
+  if (!isTRUE(do_dummies)) return(df_clean)
+  make_dummies(df_clean)
 }
 
-#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
-#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
-#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
-# Process datasets [[1]]..[[5]] and replace in py_corrected_datasets_nondum
-#The Quarto LSP server crashed 5 times in the last 3 minutes. The server will not be restarted. See the output for more information.
-idx <- base::seq_len(base::min(5, base::length(corrected_datasets_nondum)))
-
-py_corrected_datasets_nondum <- list()
-py_corrected_datasets_nondum[idx] <- 
-  corrected_datasets_nondum[idx] |> 
-  purrr::imap(
-    \(x, i) {
-      x |>
-        preprocess_features_robust(
-          recode_first_sub_used_to_other = T,#(i == 1), # only dataset 1
-          do_dummies = TRUE
-        ) |>
-        janitor::clean_names()
-    }
+collapse_first_sub_used_other <- function(df) {
+  cols_to_group <- c(
+    "first_sub_used_opioids", "first_sub_used_others",
+    "first_sub_used_hallucinogens", "first_sub_used_inhalants",
+    "first_sub_used_tranquilizers_hypnotics",
+    "first_sub_used_amphetamine_type_stimulants"
   )
 
+  cols_present <- intersect(cols_to_group, names(df))
+  df$first_sub_used_other <- if (length(cols_present)) {
+    as.integer(rowSums(df[cols_present], na.rm = TRUE) > 0)
+  } else {
+    0L
+  }
+  df
+}
+
+idx <- seq_len(min(5, length(corrected_datasets_nondum)))
+all_required_cols <- c(meta_cols, cox_columns)
+
+py_corrected_datasets <- purrr::map(
+  corrected_datasets_nondum[idx],
+  \(x) {
+    x_proc <- x |>
+      preprocess_features_robust(
+        split_info = split2125,
+        recode_first_sub_used_to_other = FALSE,
+        do_dummies = TRUE,
+        ordered_mappings = NULL  # pass list(...) if you want ordinal encoding enabled
+      ) |>
+      janitor::clean_names() |>
+      collapse_first_sub_used_other()
+
+    missing_cols <- setdiff(all_required_cols, names(x_proc))
+    if (length(missing_cols)) x_proc[missing_cols] <- 0
+
+    dplyr::select(x_proc, dplyr::all_of(all_required_cols))
+  }
+)
+
+glimpse(py_corrected_datasets[[1]])
 ```
 
 # Proportionallity
+
 
 ```{r}
 #| label: nonprop-def-models2
 
 # Define the list of predictors based on your provided list
 predictors <- c(
-  "adm_age_rec3", "porc_pobr", "dit_m", "sex_rec", "tenure_status_household",
-  "cohabitation", "sub_dep_icd10_status", "any_violence",
-  "prim_sub_freq_rec","tr_outcome", "adm_motive", "first_sub_used",
-  "primary_sub_mod", "tipo_de_vivienda_rec2", "national_foreign", 
-  "occupation_condition_corr24", "marital_status_rec", "urbanicity_cat", 
-  "ed_attainment_corr", "evaluacindelprocesoteraputico", "eva_consumo", 
-  "eva_fam", "eva_relinterp", "eva_ocupacion", "eva_sm", "eva_fisica", 
-  "eva_transgnorma", "ethnicity", "dg_psiq_cie_10_instudy", 
+  # Numeric, Ordinal, and Boolean features
+  "adm_age_rec3", "porc_pobr", "dit_m", "national_foreign", 
+  "ethnicity", "dg_psiq_cie_10_instudy", 
   "dg_psiq_cie_10_dg", "dx_f3_mood", "dx_f6_personality", 
-  "dx_f_any_severe_mental", "any_phys_dx", "polysubstance_strict"
+  "dx_f_any_severe_mental", "any_phys_dx", "polysubstance_strict",
+  
+  # Dummy encoded features
+  "sex_rec_woman", 
+  "cohabitation_family_of_origin", "cohabitation_with_couple_children", "cohabitation_others", 
+  "sub_dep_icd10_status_drug_dependence", 
+  "any_violence_1_domestic_violence_sex_abuse", 
+  "tr_outcome_referral", "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", "adm_motive_justice_sector", "adm_motive_other", 
+  "first_sub_used_alcohol", "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other", 
+  "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder", "primary_sub_mod_alcohol", "primary_sub_mod_others", 
+  "tipo_de_vivienda_rec2_other_unknown", 
+  #"plan_type_corr_pg_pr", "plan_type_corr_m_pr", "plan_type_corr_pg_pai", "plan_type_corr_m_pai", 
+  "occupation_condition_corr24_unemployed", "occupation_condition_corr24_inactive", 
+  "marital_status_rec_single", "marital_status_rec_separated_divorced_annulled_widowed", 
+  # NEW Dummies for ordinal variables
+  # (Automatically excluding your chosen reference categories) 
+  # Tenure status (Reference: owner/transferred dwellings/pays dividends)
+  "tenure_status_household_renting", 
+  "tenure_status_household_others", 
+  "tenure_status_household_stays_temporarily_with_a_relative", 
+  "tenure_status_household_illegal_settlement",
+  # Urbanicity (Reference: 3.Urban)
+  "urbanicity_cat_2_mixed", 
+  "urbanicity_cat_1_rural",
+  # Clinical evaluation variables (Reference: logro alto / high achievement)
+  "evaluacindelprocesoteraputico_logro_intermedio", "evaluacindelprocesoteraputico_logro_minimo",
+  "eva_consumo_logro_intermedio", "eva_consumo_logro_minimo",
+  "eva_fam_logro_intermedio", "eva_fam_logro_minimo",
+  "eva_relinterp_logro_intermedio", "eva_relinterp_logro_minimo",
+  "eva_ocupacion_logro_intermedio", "eva_ocupacion_logro_minimo",
+  "eva_sm_logro_intermedio", "eva_sm_logro_minimo",
+  "eva_fisica_logro_intermedio", "eva_fisica_logro_minimo",
+  "eva_transgnorma_logro_intermedio", "eva_transgnorma_logro_minimo",
+  # Substance use frequency (Reference: 1.≤1 day/wk)
+  "prim_sub_freq_rec_2_2_6_days_wk", 
+  "prim_sub_freq_rec_3_daily",
+  # Educational attainment (Reference: 1-More than high school)
+  "ed_attainment_corr_2_completed_high_school_or_less", 
+  "ed_attainment_corr_3_completed_primary_school_or_less"
 )
 
 # Create the formulas
-formula_readmit <- as.formula(paste("Surv(readmit_time_from_disch_m, readmit_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_corr)"))
+formula_readmit <- as.formula(paste("Surv(readmit_time_from_disch_m, readmit_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_strata)"))
 
-formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_corr)"))
+formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_strata)"))
 ```
 
 
@@ -1329,7 +1399,20 @@ formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~"
 #| label: nonprop2-test-coxzph-readm
 
 # --- READMISSION MODEL ---
-cox_readmit <- coxph(formula_readmit, data = df)
+cox_readmit <- coxph(
+  formula_readmit,
+  data = py_corrected_datasets_nondum[[1]] |>
+  dplyr::mutate(
+    plan_type_strata = case_when(
+      plan_type_corr_pg_pr == 1 ~ "pg-pr",
+      plan_type_corr_m_pr == 1 ~ "m-pr",
+      plan_type_corr_pg_pai == 1 ~ "pg-pai",
+      plan_type_corr_m_pai == 1 ~ "m-pai",
+      TRUE ~ "pg-pab" # If all dummies are 0, it MUST be your reference category!
+    )
+  ) |>
+  dplyr::mutate(plan_type_strata = as.factor(plan_type_strata))
+)
 ph_test_readmit <- cox.zph(cox_readmit)
 
 ph_test_readmit$table |>
@@ -1337,38 +1420,46 @@ ph_test_readmit$table |>
   dplyr::arrange(desc(chisq)) |>
   dplyr::mutate(
     p_fmt = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
-    chi_fmt = sprintf("χ²(%d)= %.2f, p%s", df, chisq, ifelse(p < 0.001, "<0.001", paste0("=", p_fmt)))) |>
-  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt)|>
-  knitr::kable(caption="Schofeld residuals, readmission")
+    chi_fmt = sprintf(
+      "χ²(%d)= %.2f, p%s",
+      df,
+      chisq,
+      ifelse(p < 0.001, "<0.001", paste0("=", p_fmt))
+    )
+  ) |>
+  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt) |>
+  knitr::kable(caption = "Schofeld residuals, readmission")
 
 
 # 1. Identify violators (you already have this part)
-violations_readm <- ph_test_readmit$table |> 
-  data.table::data.table(keep.rownames = T) |> 
-  dplyr::mutate(p = as.numeric(p)) |> 
-  dplyr::filter(p < 0.05) |> 
-  dplyr::pull(rn) |> 
+violations_readm <- ph_test_readmit$table |>
+  data.table::data.table(keep.rownames = T) |>
+  dplyr::mutate(p = as.numeric(p)) |>
+  dplyr::filter(p < 0.05) |>
+  dplyr::pull(rn) |>
   setdiff("GLOBAL")
 
 # 2. Generate the combined plot
 # ggcoxzph creates a list of plots if you pass multiple variables
 combined_plots <- survminer::ggcoxzph(ph_test_readmit, var = violations_readm)
 
-# Open a PDF device 
-pdf("_figs/ph_test_violations_readm.pdf", width = 16*1.5, height = 12*1.5) 
-# Draw the combined plot 
-print(combined_plots) 
-# Close the device 
+# Open a PDF device
+pdf(paste0(project_root,"/cons/","_figs/ph_test_violations_readm.pdf"), 
+  width = 16 * 1.5, 
+  height = 12 * 1.5)
+# Draw the combined plot
+print(combined_plots)
+# Close the device
 dev.off()
 
 png(
-  filename = "_figs/ph_test_violations_readm.png",
-  width  = 16 * 1.5,
+  filename = paste0(project_root,"/cons/","_figs/ph_test_violations_readm.png"),
+  width = 16 * 1.5,
   height = 12 * 1.5,
-  units  = "in",
-  res    = 300
+  units = "in",
+  res = 300
 )
-print(combined_plots) 
+print(combined_plots)
 
 dev.off()
 ```
@@ -1376,12 +1467,21 @@ dev.off()
 ### Residuals, death
 
 ```{r}
-#| label: nonprop3-test-coxzph
-
-library(survminer)
+#| label: nonprop3-test-coxzph-death
 
 # --- DEATH MODEL ---
-cox_death <- coxph(formula_death, data = df)
+cox_death <- coxph(formula_death, data = py_corrected_datasets_nondum[[1]] |>
+  dplyr::mutate(
+    plan_type_strata = case_when(
+      plan_type_corr_pg_pr == 1 ~ "pg-pr",
+      plan_type_corr_m_pr == 1 ~ "m-pr",
+      plan_type_corr_pg_pai == 1 ~ "pg-pai",
+      plan_type_corr_m_pai == 1 ~ "m-pai",
+      TRUE ~ "pg-pab" # If all dummies are 0, it MUST be your reference category!
+    )
+  ) |>
+  dplyr::mutate(plan_type_strata = as.factor(plan_type_strata))
+)
 ph_test_death <- cox.zph(cox_death)
 
 ph_test_death$table|>
@@ -1406,13 +1506,15 @@ violations <- ph_test_death$table|>
 combined_plots <- survminer::ggcoxzph(ph_test_death, var = violations)
 
 # Open a PDF device 
-pdf("_figs/ph_test_violations_death.pdf", width = 16*1.5, height = 12*1.5) 
+pdf(paste0(project_root,"/cons/","_figs/ph_test_violations_death.pdf"), 
+    width = 16*1.5, 
+    height = 12*1.5) 
 # Draw the combined plot 
 print(combined_plots) 
 # Close the device 
 dev.off()
 png(
-  filename = "_figs/ph_test_violations_death.png",
+  filename = paste0(project_root,"/cons/","_figs/ph_test_violations_death.png"),
   width  = 16 * 1.5,
   height = 12 * 1.5,
   units  = "in",
@@ -1436,6 +1538,14 @@ We should:
 ```{r}
 #| label: nonprop5-log-log
 
+## Mortality model - these clearly need time-dependency
+#tr_outcome_adm_discharge_adm_reasons:tt
+#tr_outcome_adm_discharge_rule_violation_undet:tt
+#any_phys_dx:tt
+# For both outcomes - evaluate impact on coefficients
+#dg_psiq_cie_10_instudy:tt
+#eva_fisica_logro_minimo:tt
+#dit_m:tt (readmission only)
 message("We had to handle ties")
 
 fit_stratified <- survfit(Surv(readmit_time_from_disch_m, readmit_event) ~ tr_outcome, data = dplyr::filter(df, tr_outcome!="other")|> 

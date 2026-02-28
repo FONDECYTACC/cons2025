@@ -1,0 +1,50 @@
+{
+  "source_bundle_tag": "20260228_1000",
+  "run_timestamp": "20260228_1141",
+  "file_tag_used_for_outputs": "20260228_1000",
+  "source_files": {
+    "shap": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_SHAP_Aggregated_20260228_1000.pkl",
+    "raw": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_final_ev_hyp_20260228_1000.pkl",
+    "baseline_hazards": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_BaselineHazards_20260228_1000.pkl",
+    "cv_splits": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_CV_Splits_20260228_1000.pkl"
+  },
+  "n_patients": 70803,
+  "n_features": 56,
+  "horizons_months": [
+    12.0,
+    60.0
+  ],
+  "available_eval_times_months": [
+    3.0,
+    6.0,
+    9.0,
+    12.0,
+    24.0,
+    36.0,
+    48.0,
+    60.0,
+    72.0,
+    84.0,
+    96.0,
+    108.0
+  ],
+  "outcomes_processed": [
+    "readm",
+    "death"
+  ],
+  "shap_scale": "log-hazard",
+  "global_importance_metric": "mean absolute SHAP (log-hazard)",
+  "bootstrap_ci": {
+    "enabled": true,
+    "n_bootstrap": 500,
+    "alpha": 0.05,
+    "max_n_for_bootstrap": 90000
+  },
+  "multicollinearity_check": {
+    "method": "pairwise Pearson correlation",
+    "threshold_abs_r": 0.9,
+    "pairs_file": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb8_dual_feature_corr_pairs_20260228_1000.csv",
+    "corr_matrix_file": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb8_dual_feature_corr_matrix_20260228_1000.csv"
+  },
+  "note": "Absolute risk is used for extreme-case ranking at each horizon. SHAP values remain log-hazard contributions."
+}
