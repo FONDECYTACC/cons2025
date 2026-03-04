@@ -13,6 +13,7 @@
 *.RData
 #*.Rhistory
 *.pkl
+.vdoc.*
 
 # Exceptions (negating previous ignores)
 _input/!2_ndp_2025_03_08.Rdata.7z.001

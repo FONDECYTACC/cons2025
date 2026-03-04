@@ -1,0 +1,3685 @@
+---
+title: "SENDAs Agreement 1 Update 2010-2022 (Prediction, step 2)"
+description: |
+  This step involves exploring the behavior of the predictors and best subset selection algorithms.
+date: last-modified
+author: "Andrés González Santa Cruz"
+bibliography: [_lit/refs.bib]
+csl: "_lit/american-medical-association.csl" # (Opcional: estilo de citas, p.ej., APA)
+toc: true
+toc-location: left
+toc-float: true
+format: 
+  html:
+    css: [_lib/styles.scss]
+    code-fold: true
+    embed-resources: true
+    theme: 
+      - journal #https://quarto.org/docs/output-formats/html-themes-more.html
+      #- style.scss
+    fig-cap-location: top  
+    toc: true
+    toc-location: left
+execute:
+  error: true        # Show errors in the output
+  echo: true         # Show R code in the output
+  warning: true      # Show warnings
+  message: true      # Show messages from the code
+  freeze: auto       # Use cache to speed up rendering if there are no changes
+editor: source
+execute-dir: project
+lightbox: auto
+---
+```{=html}
+<style type="text/css">
+.showopt {
+background-color: #004c93; color: #FFFFFF; width: 100px; height: 20px; text-align: center; vertical-align: middle !important; float: right; font-family: sans-serif; border-radius: 8px;
+}
+.showopt:hover {
+background-color: #dfe4f2;
+color: #004c93;
+}
+pre.plot {
+background-color: white !important;
+}
+.tablelines table, .tablelines td, .tablelines th {
+border: 1px solid black;
+}
+.centrado {
+text-align: center;
+}
+.table.center {
+margin-left:auto;
+margin-right:auto;
+}
+/* https://vivekjaiskumar.medium.com/css-is-and-not-selector-17c942ec83f :is()*/
+/* Applies to outputs that are not code other than R*/
+pre {
+overflow-x: auto !important;
+}
+pre code {
+word-wrap: normal !important;
+white-space: pre !important;
+}
+/*
+pre:not(.sourceCode) {
+white-space: nowrap !important;
+}
+*/
+.sourceCode { /* Important gives precedence */
+font-size: 10px !important;
+line-height: 50% !important;
+}
+body{ /* Normal */
+text-align: justify;
+}
+.superbigimage{
+overflow-y:scroll;
+height:350px;
+white-space: nowrap;
+overflow-x: auto;
+width:100%;
+}
+.superbigimage img{
+overflow-y: scroll;
+overflow-x: hidden;
+}
+.message { color:#446C6E; font-family: monospace;font-size: 10px; line-height: 110%; font-weight: bold;}
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 5px; text-align: justify;}
+div.red { background-color:#e6bab1; border-radius: 5px; padding: 5px; text-align: justify;}
+.pandoc-table { /* Should add !important; but it seems no necessary */
+margin-left:auto; /* To center */
+margin-right:auto;
+border-collapse: collapse;
+table-layout: auto;
+font-size: 11px;
+overflow-y: auto;
+max-height:450px !important;
+white-space: nowrap;
+overflow-x: auto;
+width:450px;
+}
+.pandoc-table th {/* header */
+text-align: center !important;
+font-size: 10px;
+padding: 0px;
+}
+.pandoc-table td {
+text-align: left !important;
+font-size: 9px;
+padding: 0px;
+}
+.pandoc-table caption {
+text-align: left !important;
+font-size: 11px !important;
+}
+.center-table {
+text-align: left !important;
+font-size: 9px;
+overflow-y:scroll;
+height:450px;
+overflow-x: scroll;
+}
+.controlly{
+overflow-y:scroll;
+height:350px;
+overflow-x: scroll;
+}
+/*2025-03-07*/
+.callout-warning,
+.callout-error,
+.callout-message {
+  font-size: 0.7rem !important;  /* Adjust this value as needed */
+}
+.alert, .message {
+    font-size: 0.7em !important;
+}
+.alert.alert-warning,
+.alert.alert-danger,
+.message {
+    font-size: 0.7em !important;
+}
+</style>
+```
+```{css, echo=F}
+#| label: css-format
+h1 {
+    color: var(--heading-color);
+    font-size: 2rem;
+    margin-bottom: 1vh;
+}
+p {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+}
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  font-weight: bold;
+  &:hover, &:focus {
+      border-bottom: 3px solid currentColor;
+  }
+}
+section {
+  margin: 0 auto;
+}
+.post-meta {
+  font-size: 1rem;
+  font-style: italic;
+  display: block;
+  margin-bottom: 4vh;
+  color: var(--secondary-color);
+}
+nav {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px 0;
+}
+/*slider switch css */
+.theme-switch-wrapper {
+  display: flex;
+  align-items: center;
+  
+  em {
+    margin-left: 10px;
+    font-size: 1rem;
+  }
+}
+.theme-switch {
+  display: inline-block;
+  height: 34px;
+  position: relative;
+  width: 60px;
+}
+.theme-switch input {
+  display:none;
+}
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+```
+```{=html}
+<script>
+function myFunction1() {
+var x = document.getElementById("myDIV");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+<script>
+function myFunction2() {
+var x = document.getElementById("myDIV2");
+if (x.style.display === "none") {
+x.style.display = "block";
+} else {
+x.style.display = "none";
+}
+}
+</script>
+```
+<style>
+.scrollable-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+pre.scrollable-code {
+  max-height: 350px;
+  overflow-y: auto;
+}
+.superbigimage {
+  overflow-x: scroll;
+  white-space: nowrap;
+}
+.superbigimage img, 
+.superbigimage svg {
+  max-width: none;
+  height: auto;
+}
+</style>
+<br>
+
+# Data Loading and Exploration
+
+## Loading Packages and uniting databases
+
+<div class="scrollable-content">
+```{r}
+#| label: load
+#| message: false
+#| include: true
+#| warning: false
+#| results: "hold"
+# invisible("Only run from Ubuntu")
+# if (!(Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv"))) {
+#   if(Sys.info()["sysname"]!="Windows"){
+#     Sys.setenv(RETICULATE_PYTHON = "/home/fondecytacc/.pyenv/versions/3.11.5/bin/python")
+#   }
+# }
+#clean enviroment
+rm(list = ls()); gc()
+time_before_dedup2<-Sys.time()
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Busca .mamba_root/envs/py311/python.exe desde getwd() hacia padres
+# find_python_rel <- function(start = getwd(),
+#                            rel = file.path(".mamba_root","envs","py311","python.exe")) {
+#  cur <- normalizePath(start, winslash = "/", mustWork = FALSE)
+#  repeat {
+#    cand <- normalizePath(file.path(cur, rel), winslash = "/", mustWork = FALSE)
+#    if (file.exists(cand)) return(cand)
+#    parent <- dirname(cur)
+#    if (identical(parent, cur)) return(NA_character_)  # llegó a la raíz
+#    cur <- parent
+#  }
+# }
+# --- Bootstrap reticulate con ruta relativa a getwd() ---
+# if(Sys.info()["sysname"]!="Windows"){
+#  Sys.setenv(RETICULATE_PYTHON = "usr/bin/python3")
+#  reticulate::py_config()
+# } else {
+#  py <- find_python_rel()
+#  if (is.na(py)) {
+#    stop("No se encontró Python relativo a getwd() (buscando '.mamba_root/envs/py311/python.exe').\n",
+#         "Directorio actual: ", getwd())
+#  }
+#  # Forzar ese intérprete
+#  Sys.unsetenv(c("RETICULATE_CONDAENV","RETICULATE_PYTHON_FALLBACK"))
+#  Sys.setenv(RETICULATE_PYTHON = py)
+#  #reticulate::use_python(py, required=T)
+#  reticulate::py_config()  # verificación
+# }
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# --- Load pred1_ndp_2026_01_05.Rdata (simple, project-root aware, no functions) ---
+# 1) Locate the file anywhere under the project root (current WD with a trailing "/cons" trimmed)
+project_root <- sub("(/)?cons/?$", "", normalizePath(getwd(), winslash = "/", mustWork = FALSE))
+fname        <- "pred1_ndp_2026_01_05.Rdata"
+hits <- list.files(project_root, pattern = paste0("^", fname, "$"),
+                   recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
+if (!length(hits)) stop("File not found: ", fname, "\nSearched under: ", project_root)
+path <- hits[1]  # take first match
+message("Loading: ", path)
+# 2) Load into a dedicated environment (keeps .GlobalEnv clean)
+env_pred <- new.env(parent = emptyenv())
+loaded_objects <- load(path, envir = env_pred)
+message("Loaded ", length(loaded_objects), " object(s): ", paste(loaded_objects, collapse = ", "))
+# 3) Quick sanity check for each loaded object
+for (obj_name in loaded_objects) {
+  obj <- get(obj_name, envir = env_pred)
+  message("\n--- ", obj_name, " ---")
+  if (is.data.frame(obj)) {
+    message("Rows: ", nrow(obj), " | Cols: ", ncol(obj))
+  } else {
+    message("Class: ", paste(class(obj), collapse = ", "), " | Length/Size: ", length(obj))
+  }
+  #print(str(obj))
+}
+# 4) Extract all loaded objects to global environment
+for (obj_name in loaded_objects) {
+  assign(obj_name, get(obj_name, envir = env_pred), envir = .GlobalEnv)
+}
+# Clean up temporary environment
+rm(env_pred)
+# (Optional) If you want it in the global env, uncomment:
+# list2env(env_prev1y, envir = .GlobalEnv)
+```
+</div>
+
+<div class="scrollable-content">
+```{r}
+#| label: setup
+#| results: "hold"
+#renv falls back to copying rather than symlinking, which is evidently very slow in this configuration.
+renv::settings$use.cache(FALSE)
+#only use explicit dependencies (in DESCRIPTION)
+renv::settings$snapshot.type("implicit")
+#check if rstools is installed
+if(Sys.info()["sysname"]=="Windows"){
+try(installr::install.Rtools(check_r_update=F))
+}
+check_quarto_version <- function(required = "1.7.29", comparator = c("ge","gt","le","lt","eq")) {
+  comparator <- match.arg(comparator)
+  current <- package_version(paste(unlist(quarto::quarto_version()), collapse = "."))
+  req     <- package_version(required)
+  ok <- switch(comparator,
+               ge = current >= req,
+               gt = current >  req,
+               le = current <= req,
+               lt = current <  req,
+               eq = current == req)
+  if (!ok) {
+    stop(sprintf("Quarto version check failed: need %s %s (installed: %s).",
+                 comparator, required, current), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+check_quarto_version("1.7.29", "ge") 
+#change repository to CL
+local({
+  r <- getOption("repos")
+  r["CRAN"] <- "https://cran.dcc.uchile.cl/"
+  options(repos=r)
+})
+if(!require(pacman)){install.packages("pacman");require(pacman)}
+if(!require(pak)){install.packages("pak");require(pak)}
+pacman::p_unlock(lib.loc = .libPaths()) #para no tener problemas reinstalando paquetes
+if(Sys.info()["sysname"]=="Windows"){
+if (getRversion() != "4.4.1") { stop("Requires R version 4.4.1; Actual: ", getRversion()) }
+}
+#check docker
+check_docker_running <- function() {
+  # Try running 'docker info' to check if Docker is running
+  system("docker info", intern = TRUE, ignore.stderr = TRUE)
+}
+if(Sys.info()["sysname"]=="Windows"){
+  install_docker <- function() {
+    # Open the Docker Desktop download page in the browser for installation
+    browseURL("https://www.docker.com/products/docker-desktop")
+  }
+  # Main logic
+  if (inherits(try(check_docker_running(), silent = TRUE), "try-error")) {
+    liftr::install_docker()
+  } else {
+    message("Docker is running.")
+  }
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#PACKAGES#######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+unlink("*_cache", recursive=T)
+pak::pak_sitrep()
+# pak::sysreqs_check_installed(unique(unlist(paks)))
+#pak::lockfile_create(unique(unlist(paks)),  "dependencies_duplicates24.lock", dependencies=T)
+#pak::lockfile_install("dependencies_duplicates24.lock")
+#https://rdrr.io/cran/pak/man/faq.html
+#pak::cache_delete()
+library(tidytable)
+library(ggplot2)
+library(readr)
+library(tableone)
+library(survivalmodels)
+#renv::install("patchwork@1.2.0")
+library(rms)
+library(survidm)
+library(caret)
+library(survival)
+library(caret)
+library(dplyr)
+library(survex)
+library(pec)
+library(future)
+library(future.apply)
+library(parallel)
+library(mice)
+library(riskRegression)
+library(tidyr)
+
+#flexsurv
+#if(!require(compareCstat)){install.pacakges("compareCstat")}
+# library(shapr)#https://norskregnesentral.github.io/shapr/
+# library(SemiMarkov)#https://www.degruyterbrill.com/document/doi/10.1515/ijb-2020-0083/html?lang=en
+# #https://www.jclinepi.com/article/S0895-4356(24)00142-2/fulltext
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+# 3. Activate polars code completion (safe to try even if it fails)
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+#try(polars_code_completion_activate())
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+# 4. BPMN from GitHub (not on CRAN, so install via devtools if missing)
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+if (!requireNamespace("bpmn", quietly = TRUE)) {
+  devtools::install_github("bergant/bpmn")
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+# 5. PhantomJS Check (use webshot if PhantomJS is missing)
+#_#_#_#_#_#_#_#_#_#_#_#_#_-----------------------------
+# if (!webshot::is_phantomjs_installed()) {
+#   webshot::install_phantomjs()
+# }
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#FUNCTIONS######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+# NO MORE DEBUGS
+options(error = NULL)        # si antes tenías options(error = recover) o browser)
+options(browserNLdisabled = FALSE)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#NAs are replaced with "" in knitr kable
+options(knitr.kable.NA = '')
+pander::panderOptions('big.mark', ',')
+pander::panderOptions('decimal.mark', '.')
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#to format rows in bold
+format_cells <- function(df, rows ,cols, value = c("italics", "bold", "strikethrough")){
+  # select the correct markup
+  # one * for italics, two ** for bold
+  map <- setNames(c("*", "**", "~~"), c("italics", "bold", "strikethrough"))
+  markup <- map[value]  
+  for (r in rows){
+    for(c in cols){
+      # Make sure values are not factors
+      df[[c]] <- as.character( df[[c]])
+      # Update formatting
+      df[r, c] <- ifelse(nchar(df[r, c])==0,"",paste0(markup, gsub(" ", "", df[r, c]), markup))
+    }
+  }
+  return(df)
+}
+#To produce line breaks in messages and warnings
+knitr::knit_hooks$set(
+   error = function(x, options) {
+     paste('\n\n<div class="alert alert-danger" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Error', '**Error**', x)),
+           '</div>', sep = '\n')
+   },
+   warning = function(x, options) {
+     paste('\n\n<div class="alert alert-warning" style="font-size: small !important;">',
+           gsub('##', '\n', gsub('^##\ Warning:', '**Warning**', x)),
+           '</div>', sep = '\n')
+   },
+   message = function(x, options) {
+     paste('<div class="message" style="font-size: small !important;">',
+           gsub('##', '\n', x),
+           '</div>', sep = '\n')
+   }
+)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+sum_dates <- function(x){
+  cbind.data.frame(
+    min= as.Date(min(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01"),
+    p001= as.Date(quantile(unclass(as.Date(x)), .001, na.rm=T), origin = "1970-01-01"),
+    p005= as.Date(quantile(unclass(as.Date(x)), .005, na.rm=T), origin = "1970-01-01"),
+    p025= as.Date(quantile(unclass(as.Date(x)), .025, na.rm=T), origin = "1970-01-01"),
+    p25= as.Date(quantile(unclass(as.Date(x)), .25, na.rm=T), origin = "1970-01-01"),
+    p50= as.Date(quantile(unclass(as.Date(x)), .5, na.rm=T), origin = "1970-01-01"),
+    p75= as.Date(quantile(unclass(as.Date(x)), .75, na.rm=T), origin = "1970-01-01"),
+    p975= as.Date(quantile(unclass(as.Date(x)), .975, na.rm=T), origin = "1970-01-01"),
+    p995= as.Date(quantile(unclass(as.Date(x)), .995, na.rm=T), origin = "1970-01-01"),
+    p999= as.Date(quantile(unclass(as.Date(x)), .999, na.rm=T), origin = "1970-01-01"),
+    max= as.Date(max(unclass(as.Date(x)), na.rm=T), origin = "1970-01-01")
+  )
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# Define the function adapted for Polars
+sum_dates_polars <- function(df, date_col) {
+  # Create the list of quantiles
+  quantiles <- c(0.001, 0.005, 0.025, 0.25, 0.5, 0.75, 0.975, 0.995, 0.999)
+  # Create expressions to calculate min and max
+  expr_list <- list(
+    pl$col(date_col)$min()$alias("min"),
+    pl$col(date_col)$max()$alias("max")
+  )
+  # Add expressions for quantiles
+  for (q in quantiles) {
+    expr_list <- append(expr_list, pl$col(date_col)$quantile(q)$alias(paste0("p", sub("\\.", "", as.character(q)))))
+  }
+  # Apply the expressions and return a DataFrame with the results
+  df$select(expr_list)
+}
+# Custom function for sampling with a seed
+sample_n_with_seed <- function(data, size, seed) {
+  set.seed(seed)
+  dplyr::sample_n(data, size)
+}
+# Function to get the most frequent value 
+most_frequent <- function(x) { 
+  uniq_vals <- unique(x)
+  freq_vals <- sapply(uniq_vals, function(val) sum(x == val))
+  most_freq <- uniq_vals[which(freq_vals == max(freq_vals))]
+  
+  if (length(most_freq) == 1) {
+    return(most_freq)
+  } else {
+    return(NA)
+  }
+}
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+#CONFIG #######################################################################
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+options(scipen=2) #display numbers rather scientific number
+#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_#_
+# Define the function first
+#joins these values with semicolons and optionally truncates the result if it exceeds a specified width.
+toString2 <- function(x, width = NULL, ...) {
+    string <- paste(x, collapse = "; ")
+    if (missing(width) || is.null(width) || width == 0) 
+        return(string)
+    if (width < 0) 
+        stop("'width' must be positive")
+    if (nchar(string, type = "w") > width) {
+        width <- max(6, width)
+        string <- paste0(substr(string, 1, width - 3), "...")
+    }
+    string
+}
+normalize_txt <- function(x) {
+  x|>
+    stringi::stri_trans_general("Latin-ASCII")|>
+    tolower()|>
+    trimws()
+}
+pair_str <- function(main, sub) {
+  main <- as.character(main)
+  sub  <- as.character(sub)
+  both_na <- is.na(main) & is.na(sub)
+  out <- paste0(
+    tidytable::coalesce(main, "NA"),
+    "::",
+    tidytable::coalesce(sub,  "NA")
+  )
+  out[both_na] <- NA_character_
+  out
+}
+# ── Helpers ────────────────────────────────────────────────────────────
+mode_pick_int <- function(x){
+  x <- x[!is.na(x)]
+  if(length(x)==0) return(NA_integer_)
+  tx <- sort(table(x), decreasing = TRUE)
+  as.integer(names(tx)[1L])
+}
+subkey_to_label <- function(x){
+  y <- gsub("_"," ", tolower(x))
+  y <- gsub("amphetamine type stimulants","amphetamine-type stimulants", y)
+  y <- gsub("tranquilizers hypnotics","tranquilizers/hypnotics", y)
+  y
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Encryption ────────────────────────────────────────────────────────
+# Pack: [24-byte nonce][ciphertext] -> hex
+encrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        ct <- sodium::data_encrypt(charToRaw(as.character(v)), key)
+        nonce <- attr(ct, "nonce")                 # 24 bytes
+        sodium::bin2hex(c(nonce, ct))              # pack nonce + ct
+    }, FUN.VALUE = character(1))
+}
+# Unpack: hex -> [nonce|ciphertext], restore attr(nonce), then decrypt
+decrypt_chr <- function(x, key) {
+    vapply(x, function(v) {
+        if (is.na(v)) return(NA_character_)
+        buf <- sodium::hex2bin(v)
+        if (length(buf) < 25L) stop("Ciphertext too short or corrupted.")
+        nonce <- buf[1:24]
+        ct    <- buf[-(1:24)]
+        attr(ct, "nonce") <- nonce
+        rawToChar(sodium::data_decrypt(ct, key))
+    }, FUN.VALUE = character(1))
+}
+# Function to encrypt a character vector
+encrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item) || item == "") {
+      return(NA_character_)
+    }
+    encrypted_raw <- sodium::data_encrypt(charToRaw(item), key)
+    base64enc::base64encode(encrypted_raw)  # Convert to base64 for storage
+  }, USE.NAMES = FALSE)
+}
+decrypt_column <- function(x, key) {
+  sapply(x, function(item) {
+    if (is.na(item)) return(NA_character_)
+    encrypted_raw <- base64enc::base64decode(item)
+    rawToChar(sodium::data_decrypt(encrypted_raw, key))
+  }, USE.NAMES = FALSE)
+}
+is_stata_ok <- function(x) {
+  nchar(x) <= 32 & grepl("^[A-Za-z][A-Za-z0-9_]*$", x)
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# ── Tidy RMS ────────────────────────────────────────────────────────
+tidy_cph <- function(model) {
+  if (!inherits(model, "cph")) stop("Model must be an rms::cph object")
+  
+  # run summary
+  s <- summary(model)
+  df_s <- as.data.frame(unclass(s))
+  df_s$rown <- rownames(s)
+  
+  # find rows that are "Hazard Ratio"
+  hr_rows <- trimws(df_s$rown) == "Hazard Ratio"
+  
+  # build tidy tibble
+  tibble::tibble(
+    term     = trimws(rownames(s)[which(hr_rows) - 1L]), # previous row = variable name
+    estimate = df_s$Effect[hr_rows],                     # Hazard Ratio
+    conf.low = df_s$`Lower 0.95`[hr_rows],
+    conf.high= df_s$`Upper 0.95`[hr_rows],
+    p.value  = df_s$P[hr_rows]
+  )
+}
+```
+</div>
+
+<br>
+
+::: {.callout-note}
+**Aims**
+- To identify key prognostic and predictive factors associated with the risk of, and time to, the first readmission to treatment among patients aged 18-64 undergoing initial treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+- To identify key prognostic and predictive factors associated with the risk of, and time to, all-cause mortality among the same cohort of patients undergoing initial treatment for SUD in Chile.
+- To predict the risk and timing of first treatment readmission and all-cause mortality simultaneously, treating these outcomes within a semi-competing risks framework. This will allow for the estimation of cumulative incidence for each event in the presence of the other for patients aged 18-64 who initiated SUD treatment in Chile between 2010 and 2020.
+This study has three primary objectives. First, we aim to identify key prognostic and predictive factors associated with the risk and timing of two critical outcomes: (i) first readmission to treatment and (ii) all-cause mortality. Second, using a semi-competing risks framework, we will develop a model to simultaneously predict these two outcomes, accounting for the fact that death precludes the possibility of readmission. Finally, this model will be used to estimate the probability of various patient trajectories over time following initial treatment. The study population includes all patients aged 18-64 who began treatment for Substance Use Disorder (SUD) in Chile between 2010 and 2020.
+:::
+<br>
+
+## 0. Prepare data
+
+In this step, we imported the center identifiers and then applied a correction procedure across all imputed datasets to ensure consistency in event-time definitions. Specifically, we converted time and event variables to numeric and integer formats, identified cases where death occurred before or at the readmission endpoint (competing risks), and adjusted follow‑up times and event indicators accordingly by censoring readmission in those situations. After cleaning up temporary variables, we added the center ID as a factor to each dataset. We also excluded `high_uncertainty_imps`, which encompassed predictors with were not reliable. Finally, we exported the corrected datasets both individually as `.parquet` files named as `corrected_datasets_nondum` (nondum= not-dummified) and collectively as a single `.Rds` object, creating a clean and reproducible output ready for downstream analyses.
+
+```{r}
+#| label: prepare-data
+#| echo: true
+#| error: false
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+id_centro_vec<- 
+rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/id_centro.Rds"))
+# 1. Apply Correction to Each Dataset in the List
+corrected_datasets_nondum <- map(filled_datasets, function(df) {
+  # Ensure columns are numeric for comparison
+  df <- df|> 
+    mutate(
+      readmit_time = as.numeric(readmit_time_from_disch_m),
+      death_time   = as.numeric(death_time_from_disch_m),
+      # Ensure events are 0/1 integers
+      readmit_event = as.integer(as.character(readmit_event)), 
+      death_event   = as.integer(as.character(death_event))
+    )
+  # --- THE CORRECTION LOGIC ---
+  df <- df|>
+    dplyr::mutate(
+      # condition: Patient died (death_event==1) AND death happened before (or at) the readmission endpoint
+      is_competing_risk = (death_event == 1) & (death_time <= readmit_time),
+      # 1. Update Time: If competing risk, cut follow-up at death time. Otherwise keep original.
+      readmit_time_from_disch_m = dplyr::if_else(is_competing_risk, death_time, readmit_time),
+      # 2. Update Event: If competing risk, censor readmission (set to 0). Otherwise keep original.
+      readmit_event = dplyr::if_else(is_competing_risk, 0, readmit_event)
+    )|>
+    # Remove temporary helper columns if you want to keep the dataset clean
+    dplyr::select(-readmit_time, -death_time, -is_competing_risk)|>
+    dplyr::select(any_of(
+      setdiff(c(num_vars, cat_vars, "readmit_event", "death_event", "readmit_time_from_disch_m","death_time_from_disch_m"), high_uncertainty_imps)
+    ))|>
+    dplyr::mutate(center_id= factor(id_centro_vec))
+  return(df)
+})
+```
+```{r, eval=F}
+#| label: prepare-data-exp
+# 2. Iterate and Export
+# iwalk automatically gives you the object (.x) and its index (.y)
+purrr::iwalk(corrected_datasets_nondum, function(df, i) {
+  # Construct the full file path
+  # e.g. .../data/20241015_out/imputation_1.parquet
+  file_name <- file.path(output_dir, paste0("imputation_nondum_", i, ".parquet"))
+  # Export using rio
+  rio::export(df, file_name)
+  message(paste("Saved:", file_name))
+})
+#Export list
+rio::export(corrected_datasets_nondum, paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets_nondum.Rds"))
+#corrected_datasets_nondum<- rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/processed_datasets_nondum.Rds"))
+```
+
+# Split database
+
+Assuming that `corrected_datasets_nondum` has not been modified since its last update on February 21, the order of the relevant rows in the dataset should remain unchanged (n=88,504). Therefore, the train–test split should be identical to the one used in Python. For this reason, we loaded `death_split_seed2125_test20.parquet` to partition observations into training and test sets.
+
+```{r}
+#| label: import-parquet
+split2125<- 
+nanoparquet::read_parquet(paste0(gsub("/cons","/",getwd()), "/cons/_out/readm_split_seed2125_test20_mar26.parquet"))
+```
+
+We generated a defensive reproducibility check with automatic triggers that stop execution if something changed of the 80/20 split (row order, split mismatch, unexpected counts, etc.).
+
+```{r}
+#| label: format-python-split
+df <- cbind.data.frame(corrected_datasets_nondum[[1]], split2125)|> 
+  dplyr::filter(is_train==T)
+message(paste0("The training database is composed of ", nrow(df)," observations"))
+expected_n_train <- 70510   # replace with known expected value
+if (nrow(df) != expected_n_train) {
+  stop("❌ Inconsistency detected: Training sample size does not match expected value.")
+} else {
+  message("✔ Training sample size verified.")
+}
+
+observed_foreign_n <- df |>
+  dplyr::summarise(n = sum(national_foreign == 1, na.rm = TRUE)) |>
+  dplyr::pull(n)
+if (observed_foreign_n != 462) {
+  stop(paste0("❌ Inconsistency detected: national_foreign count is ",
+              observed_foreign_n,
+              " but expected ",
+              expected_foreign_n))
+} else {
+  message("✔ national_foreign count verified.")
+}
+if (abs(mean(df$adm_age_rec3, na.rm = TRUE) -  35.78624) > 0.01) {
+  stop("❌ Age distribution changed — possible split mismatch.")
+}
+```
+
+To ensure complete consistency between our R and Python modeling environments, we implemented a harmonized feature preprocessing pipeline. First, we isolated and preserved our target and metadata variables (such as readmission and death events, time-to-event tracking, and center identifiers) to ensure they remained unaltered during transformations. We then generated **dummy variables** (one-hot encoding with k-1 categories) for nominal and ordinal features (such as housing status, urbanicity, clinical evaluations, and educational attainment). Crucially, we explicitly defined the **reference category** for each variable (e.g., 'marihuana' for the primary substance `primary_sub_mod` and first substance `first_sub_used`, and 'pg-pab' for the treatment plan type) to guarantee that both environments dropped the exact same baseline category. 
+
+To overcome native differences in how R and Python name generated dummy variables, we implemented a **custom string harmonization** step in R to perfectly replicate Python's snake_case format. Finally, to handle high cardinality and sparse dummy variables within the first_sub_used feature, we **collapsed low-frequency substances** (such as opioids, hallucinogens, inhalants, tranquilizers, and amphetamines) into a single, aggregated first_sub_used_other indicator. This combination of strict reference matching, naming harmonization, and dimensionality reduction guaranteed a uniform input shape of exactly 62 identically named columns (56 features and 6 metadata variables) across all datasets in both programming environments.
+
+```{r}
+#| label: discard-great-databases
+# 1. Define your threshold in MB
+threshold_mb <- 50 
+# 2. Identify large objects that ARE NOT in your keep list
+heavy_to_remove <- Filter(function(x) {
+  # Calculate size in MB
+  obj_size <- object.size(get(x)) / (1024^2)
+  # Logic: Is it heavy AND is it NOT one of my protected objects?
+  obj_size > threshold_mb && !(x %in% c("corrected_datasets_nondum", "py_corrected_datasets"))
+}, ls())
+# Excepting the databases of focus
+heavy_to_remove<- setdiff(heavy_to_remove , c("py_corrected_datasets", "corrected_datasets_nondum"))
+# 3. Remove them and clean up
+if (length(heavy_to_remove) > 0) {
+  rm(list = heavy_to_remove)
+  message("Removed: ", paste(heavy_to_remove, collapse = ", "))
+} else {
+  message("No objects found above the threshold (excluding protected datasets).")
+}
+# 4. Release memory to Windows
+gc()
+```
+
+```{r}
+#| label: format-db-to-python
+#dg_psiq_cie_10_dg: This looks like a broader psychiatric diagnosis. Is it categorical or already a dummy?= this is the diagnosis of drug consumption
+#ehtnicity is ok
+#national_foreign is ok
+# ==========================================
+# 1. DEFINE TARGET COLUMNS TO ENFORCE
+# ==========================================
+meta_cols <- c(
+  "readmit_event", "death_event", 
+  "readmit_time_from_disch_m", "death_time_from_disch_m", 
+  "center_id", "row_id"
+)
+cox_columns <- c(
+  # 1. Numerical and natural binary variables (Unchanged)
+  "adm_age_rec3", "porc_pobr", "dit_m", "national_foreign", 
+  "ethnicity", "dg_psiq_cie_10_instudy", "dg_psiq_cie_10_dg", 
+  "dx_f3_mood", "dx_f6_personality", "dx_f_any_severe_mental", 
+  "any_phys_dx", "polysubstance_strict",
+  # 2. Original categorical dummies (Already existing in your vector)
+  "sex_rec_woman", "cohabitation_family_of_origin", 
+  "cohabitation_with_couple_children", "cohabitation_others", 
+  "sub_dep_icd10_status_drug_dependence", 
+  "any_violence_1_domestic_violence_sex_abuse", "tr_outcome_referral", 
+  "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", 
+  "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", 
+  "adm_motive_justice_sector", "adm_motive_other", "first_sub_used_alcohol", 
+  "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other",
+  "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder", #"primary_sub_mod_marijuana",
+   "primary_sub_mod_alcohol", "primary_sub_mod_others", 
+  "tipo_de_vivienda_rec2_other_unknown", "plan_type_corr_pg_pr", 
+  "plan_type_corr_m_pr", "plan_type_corr_pg_pai", "plan_type_corr_m_pai", 
+  "occupation_condition_corr24_unemployed", "occupation_condition_corr24_inactive", 
+  "marital_status_rec_single", "marital_status_rec_separated_divorced_annulled_widowed", 
+  # 3. NEW Dummies for ordinal variables
+  # (Automatically excluding your chosen reference categories) 
+  # Tenure status (Ref: owner/transferred dwellings/pays dividends)
+  "tenure_status_household_renting", 
+  "tenure_status_household_others", 
+  "tenure_status_household_stays_temporarily_with_a_relative", 
+  "tenure_status_household_illegal_settlement",
+  # Urbanicity (Reference: 3.Urban)
+  "urbanicity_cat_2_mixed", 
+  "urbanicity_cat_1_rural",
+  # Clinical evaluation variables (Reference: logro alto / high achievement)
+  "evaluacindelprocesoteraputico_logro_intermedio", "evaluacindelprocesoteraputico_logro_minimo",
+  "eva_consumo_logro_intermedio", "eva_consumo_logro_minimo",
+  "eva_fam_logro_intermedio", "eva_fam_logro_minimo",
+  "eva_relinterp_logro_intermedio", "eva_relinterp_logro_minimo",
+  "eva_ocupacion_logro_intermedio", "eva_ocupacion_logro_minimo",
+  "eva_sm_logro_intermedio", "eva_sm_logro_minimo",
+  "eva_fisica_logro_intermedio", "eva_fisica_logro_minimo",
+  "eva_transgnorma_logro_intermedio", "eva_transgnorma_logro_minimo",
+  # Substance use frequency (Reference: 1.≤1 day/wk)
+  "prim_sub_freq_rec_2_2_6_days_wk", 
+  "prim_sub_freq_rec_3_daily",
+  # Educational attainment (Reference: 1-More than high school)
+  "ed_attainment_corr_2_completed_high_school_or_less", 
+  "ed_attainment_corr_3_completed_primary_school_or_less"
+)
+python_columns <- cox_columns
+# ==========================================
+# 2. HELPER FUNCTION
+# ==========================================
+get_mode_numeric <- function(x) {
+  x_no_na <- x[!is.na(x)]
+  if (!length(x_no_na)) return(NA_real_)
+  tab <- table(x_no_na)
+  as.numeric(names(tab)[which.max(tab)])
+}
+# ==========================================
+# 3. MAIN PREPROCESSING FUNCTION
+# ==========================================
+# Keep meta_cols and cox_columns exactly as you already defined above.
+# Compatibility alias if anything else still expects python_columns:
+python_columns <- cox_columns
+get_mode_numeric <- function(x) {
+  x_no_na <- x[!is.na(x)]
+  if (!length(x_no_na)) return(NA_real_)
+  tab <- table(x_no_na)
+  as.numeric(names(tab)[which.max(tab)])
+}
+DUMMY_REFERENCE <- c(
+  sex_rec = "man",
+  plan_type_corr = "pg-pab",
+  marital_status_rec = "married/cohabiting",
+  cohabitation = "alone",
+  sub_dep_icd10_status = "hazardous consumption",
+  tr_outcome = "completion",
+  adm_motive = "spontaneous consultation",
+  tipo_de_vivienda_rec2 = "formal housing",
+  occupation_condition_corr24 = "employed",
+  any_violence = "0.No domestic violence/sex abuse",
+  first_sub_used = "marijuana",
+  primary_sub_mod = "marijuana",
+  tenure_status_household = "owner/transferred dwellings/pays dividends",
+  urbanicity_cat = "3.Urban",
+  evaluacindelprocesoteraputico = "logro alto",
+  eva_consumo = "logro alto",
+  eva_fam = "logro alto",
+  eva_relinterp = "logro alto",
+  eva_ocupacion = "logro alto",
+  eva_sm = "logro alto",
+  eva_fisica = "logro alto",
+  eva_transgnorma = "logro alto",
+  prim_sub_freq_rec = "1.≤1 day/wk",
+  ed_attainment_corr = "1-More than high school"
+)
+apply_ordered_mappings <- function(df, ordered_mappings = NULL) {
+  if (is.null(ordered_mappings) || !length(ordered_mappings)) return(df)
+  for (col in intersect(names(ordered_mappings), names(df))) {
+    raw_values <- trimws(as.character(df[[col]]))
+    mapped <- as.numeric(unname(ordered_mappings[[col]][raw_values]))
+    failed <- is.na(mapped) & !is.na(raw_values) & nzchar(raw_values)
+    if (any(failed)) warning(paste("Mapping failed for some values in:", col))
+    mode_val <- get_mode_numeric(mapped)
+    mapped[is.na(mapped)] <- mode_val
+    df[[col]] <- mapped
+  }
+  df
+}
+set_reference_levels <- function(df, refs = DUMMY_REFERENCE) {
+  for (col in intersect(names(refs), names(df))) {
+    values <- trimws(as.character(df[[col]]))
+    ref <- refs[[col]]
+    cats <- unique(values)
+    df[[col]] <- if (ref %in% cats) {
+      factor(values, levels = c(ref, cats[cats != ref]), ordered = FALSE)
+    } else {
+      factor(values, ordered = FALSE)
+    }
+  }
+  df
+}
+make_dummies <- function(df) {
+  cat_cols <- names(df)[vapply(df, function(x) is.character(x) || is.factor(x), logical(1))]
+  if (!length(cat_cols)) return(df)
+  cat_df <- as.data.frame(df[cat_cols], stringsAsFactors = FALSE)
+  cat_df[] <- lapply(cat_df, function(x) {
+    x <- factor(x)
+    x <- addNA(x, ifany = TRUE)
+    lev <- levels(x)
+    lev[is.na(lev)] <- "__MISSING__"
+    levels(x) <- paste0("_", lev)
+    x
+  })
+  mm <- model.matrix(~ ., data = cat_df) |> as.data.frame(check.names = FALSE)
+  mm[["(Intercept)"]] <- NULL
+  cbind(df[setdiff(names(df), cat_cols)], mm)
+}
+preprocess_features_robust <- function(
+  df,
+  split_info = split2125,
+  recode_first_sub_used_to_other = FALSE,
+  do_dummies = TRUE,
+  ordered_mappings = NULL
+) {
+  if (!"is_train" %in% names(split_info)) stop("split_info must include `is_train`.")
+  if (nrow(df) != nrow(split_info)) stop("`df` and `split_info` must have the same number of rows.")
+  df_clean <- df |>
+    as.data.frame(stringsAsFactors = FALSE) |>
+    dplyr::bind_cols(dplyr::select(as.data.frame(split_info), is_train)) |>
+    dplyr::filter(is_train) |>
+    dplyr::select(-is_train)
+  if ("center_id" %in% names(df_clean)) {
+    df_clean$center_id <- suppressWarnings(as.numeric(df_clean$center_id))
+  }
+  if (isTRUE(recode_first_sub_used_to_other) && "first_sub_used" %in% names(df_clean)) {
+    to_other <- c(
+      "hallucinogens", "opioids", "amphetamine-type stimulants",
+      "tranquilizers/hypnotics", "inhalants", "others"
+    )
+    s <- df_clean[["first_sub_used"]] |> as.character() |> trimws() |> tolower()
+    s[s %in% to_other] <- "other"
+    df_clean[["first_sub_used"]] <- factor(s)
+  }
+  df_clean <- df_clean |>
+    apply_ordered_mappings(ordered_mappings = ordered_mappings) |>
+    set_reference_levels(refs = DUMMY_REFERENCE)
+  if (!isTRUE(do_dummies)) return(df_clean)
+  make_dummies(df_clean)
+}
+collapse_first_sub_used_other <- function(df) {
+  cols_to_group <- c(
+    "first_sub_used_opioids", "first_sub_used_others",
+    "first_sub_used_hallucinogens", "first_sub_used_inhalants",
+    "first_sub_used_tranquilizers_hypnotics",
+    "first_sub_used_amphetamine_type_stimulants"
+  )
+  cols_present <- intersect(cols_to_group, names(df))
+  df$first_sub_used_other <- if (length(cols_present)) {
+    as.integer(rowSums(df[cols_present], na.rm = TRUE) > 0)
+  } else {
+    0L
+  }
+  df
+}
+idx <- seq_len(min(5, length(corrected_datasets_nondum)))
+all_required_cols <- c(meta_cols, cox_columns)
+py_corrected_datasets <- purrr::map(
+  corrected_datasets_nondum[idx],
+  \(x) {
+    x_proc <- x |>
+      preprocess_features_robust(
+        split_info = split2125,
+        recode_first_sub_used_to_other = FALSE,
+        do_dummies = TRUE,
+        ordered_mappings = NULL  # pass list(...) if you want ordinal encoding enabled
+      ) |>
+      janitor::clean_names() |>
+      collapse_first_sub_used_other()
+    missing_cols <- setdiff(all_required_cols, names(x_proc))
+    dplyr::select(x_proc, dplyr::any_of(all_required_cols))
+  }
+)
+glimpse(py_corrected_datasets[[1]])
+```
+
+```{r}
+# Define the list of predictors based on your provided list
+predictors <- c(
+  # Numeric, Ordinal, and Boolean features
+  "adm_age_rec3", "porc_pobr", "dit_m", "national_foreign", 
+  "ethnicity", "dg_psiq_cie_10_instudy", 
+  "dg_psiq_cie_10_dg", "dx_f3_mood", "dx_f6_personality", 
+  "dx_f_any_severe_mental", "any_phys_dx", "polysubstance_strict",
+  
+  # Dummy encoded features
+  "sex_rec_woman", 
+  "cohabitation_family_of_origin", "cohabitation_with_couple_children", "cohabitation_others", 
+  "sub_dep_icd10_status_drug_dependence", 
+  "any_violence_1_domestic_violence_sex_abuse", 
+  "tr_outcome_referral", "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", "adm_motive_justice_sector", "adm_motive_other", 
+  "first_sub_used_alcohol", "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other", 
+  "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder", "primary_sub_mod_alcohol", "primary_sub_mod_others", 
+  "tipo_de_vivienda_rec2_other_unknown", 
+  #"plan_type_corr_pg_pr", "plan_type_corr_m_pr", "plan_type_corr_pg_pai", "plan_type_corr_m_pai", 
+  "occupation_condition_corr24_unemployed", "occupation_condition_corr24_inactive", 
+  "marital_status_rec_single", "marital_status_rec_separated_divorced_annulled_widowed", 
+  # NEW Dummies for ordinal variables
+  # (Automatically excluding your chosen reference categories) 
+  # Tenure status (Reference: owner/transferred dwellings/pays dividends)
+  "tenure_status_household_renting", 
+  "tenure_status_household_others", 
+  "tenure_status_household_stays_temporarily_with_a_relative", 
+  "tenure_status_household_illegal_settlement",
+  # Urbanicity (Reference: 3.Urban)
+  "urbanicity_cat_2_mixed", 
+  "urbanicity_cat_1_rural",
+  # Clinical evaluation variables (Reference: logro alto / high achievement)
+  "evaluacindelprocesoteraputico_logro_intermedio", "evaluacindelprocesoteraputico_logro_minimo",
+  "eva_consumo_logro_intermedio", "eva_consumo_logro_minimo",
+  "eva_fam_logro_intermedio", "eva_fam_logro_minimo",
+  "eva_relinterp_logro_intermedio", "eva_relinterp_logro_minimo",
+  "eva_ocupacion_logro_intermedio", "eva_ocupacion_logro_minimo",
+  "eva_sm_logro_intermedio", "eva_sm_logro_minimo",
+  "eva_fisica_logro_intermedio", "eva_fisica_logro_minimo",
+  "eva_transgnorma_logro_intermedio", "eva_transgnorma_logro_minimo",
+  # Substance use frequency (Reference: 1.≤1 day/wk)
+  "prim_sub_freq_rec_2_2_6_days_wk", 
+  "prim_sub_freq_rec_3_daily",
+  # Educational attainment (Reference: 1-More than high school)
+  "ed_attainment_corr_2_completed_high_school_or_less", 
+  "ed_attainment_corr_3_completed_primary_school_or_less"
+)
+# Create the formulas
+formula_readmit <- as.formula(paste("Surv(readmit_time_from_disch_m, readmit_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_strata)"))
+formula_death <- as.formula(paste("Surv(death_time_from_disch_m, death_event) ~", paste(predictors, collapse = " + "),"+ strata(plan_type_strata)"))
+```
+
+## Correlation
+
+```{r}
+#| label: corr
+#| warning: false
+df <- py_corrected_datasets[[1]]
+is_num <- function(x) is.numeric(x) || is.integer(x)
+is_cat <- function(x) is.factor(x) || is.character(x) || is.logical(x)
+cramers_v <- function(x, y) {
+  tab <- table(x, y)
+  if (nrow(tab) < 2 || ncol(tab) < 2) return(NA_real_)
+  as.numeric(vcd::assocstats(tab)$cramer)
+}
+eta_num_cat <- function(num, cat) {
+  d <- data.frame(num = num, cat = as.factor(cat))
+  d <- d[stats::complete.cases(d), , drop = FALSE]
+  if (nrow(d) < 3 || nlevels(d$cat) < 2) return(NA_real_)
+  sqrt(max(summary(stats::lm(num ~ cat, data = d))$r.squared, 0))
+}
+mixed_assoc <- function(x, y) {
+  d <- data.frame(x = x, y = y)
+  d <- d[stats::complete.cases(d), , drop = FALSE]
+  if (nrow(d) < 3) return(NA_real_)
+  if (is_num(d$x) && is_num(d$y)) return(abs(stats::cor(d$x, d$y, method = "spearman")))
+  if (is_cat(d$x) && is_cat(d$y)) return(abs(cramers_v(d$x, d$y)))
+  if (is_num(d$x) && is_cat(d$y)) return(abs(eta_num_cat(d$x, d$y)))
+  if (is_cat(d$x) && is_num(d$y)) return(abs(eta_num_cat(d$y, d$x)))
+  NA_real_
+}
+vars <- names(df)
+pairs <- utils::combn(vars, 2, simplify = FALSE)
+pairs_gt_02 <- purrr::map_dfr(pairs, function(v) {
+  a <- mixed_assoc(df[[v[1]]], df[[v[2]]])
+  tibble::tibble(var1 = v[1], var2 = v[2], assoc = a)
+}) |>
+  dplyr::filter(!is.na(assoc), assoc > 0.20) |>
+  dplyr::arrange(dplyr::desc(assoc))
+pairs_gt_02 |> 
+  dplyr::filter(assoc>=.9)
+rm("df"); rm("series_dummies"); rm("series_collapsed")
+```
+
+There are no highly correlated variables.
+
+## GVIF
+
+```{r}
+#| label: gvif
+py_corrected_datasets <- purrr::map(
+  py_corrected_datasets,
+  \(df) df |>
+    dplyr::mutate(
+      plan_type_strata = dplyr::case_when(
+        plan_type_corr_pg_pr  == 1 ~ "pg-pr",
+        plan_type_corr_m_pr   == 1 ~ "m-pr",
+        plan_type_corr_pg_pai == 1 ~ "pg-pai",
+        plan_type_corr_m_pai  == 1 ~ "m-pai",
+        TRUE ~ "pg-pab"
+      ),
+      plan_type_strata = as.factor(plan_type_strata),
+      death_time_from_disch_m = dplyr::if_else(death_time_from_disch_m <= 0, 1e-6, death_time_from_disch_m),
+      readmit_time_from_disch_m = dplyr::if_else(readmit_time_from_disch_m <= 0, 1e-6, readmit_time_from_disch_m)
+    )
+)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#Large generalized VIF (as calculated by rms::vif()) suggests that there might be large off-diagonal elements in the variance-covariance matrix of the coefficient estimates
+cox_readmit <- coxph(  formula_readmit,  data = py_corrected_datasets[[1]] )
+cox_death <- coxph(formula_death, data = py_corrected_datasets[[1]] )
+ rms::vif(cox_death) |> 
+  as.data.frame() |> 
+  tibble::rownames_to_column("Variable") |> 
+   dplyr::rename(Gvif = 2) |>
+  dplyr::arrange(dplyr::desc(dplyr::pick(2)[[1]]))|> 
+    knitr::kable("markdown", caption= "Death")
+ rms::vif(cox_readmit) |> 
+  as.data.frame() |> 
+  tibble::rownames_to_column("Variable") |>
+  dplyr::rename(Gvif = 2) |>
+  dplyr::arrange(dplyr::desc(dplyr::pick(2)[[1]])) |> 
+  knitr::kable("markdown", caption= "Readmission")
+```
+
+Variables `evaluacindelprocesoteraputico_logro_minimo` was highly collinear.
+
+```{r}
+#| label: update-model-to-gvif
+formula_readmit_updated <- update(
+  formula_readmit,
+  . ~ . - evaluacindelprocesoteraputico_logro_minimo
+)
+formula_death_updated <- update(
+  formula_death,
+  . ~ . - evaluacindelprocesoteraputico_logro_minimo
+)
+```
+
+### Functions for comparison
+
+```{r}
+#| label: EVALUATE-MI-CV
+
+registerDoFuture()  # Register with foreach
+options(future.globals.maxSize = 2 * 1024^3)  # 2 GiB
+#HELPER FUNCTION: Evaluates a Cox model with multiple imputation and cross-validation, computing C-index, Uno's C, and IBS at specified time points. Handles parallel processing and ensures reproducibility with seeds. Validates input schema and provides detailed error messages for missing variables.
+# Define these at TOP LEVEL, outside evaluate_mi_cv()
+to01 <- function(x) {
+  if (is.factor(x)) x <- as.character(x)
+  x <- suppressWarnings(as.numeric(x))
+  if (all(is.na(x) | x %in% c(0,1))) return(as.integer(x))
+  if (all(is.na(x) | x %in% c(1,2))) return(as.integer(x - 1))
+  stop("event_col must be binary 0/1 (or 1/2).")
+}
+ibs_ipcw_train <- function(df_train, df_test, surv_mat, times,
+                            time_col, event_col, eps = 1e-8, g_min = 0.05) {
+  ev_train <- to01(df_train[[event_col]])
+  sf_cens  <- survival::survfit(
+  )
+  # ── KEY FIX: find the last time G(t) >= g_min in THIS fold's training KM ──
+  safe_times <- sf_cens$time[sf_cens$surv >= g_min]
+  tau_ipcw   <- if (length(safe_times)) max(safe_times) else max(times)
+  # Restrict integration to times <= tau_ipcw
+  keep  <- times <= tau_ipcw
+  if (sum(keep) < 2L) return(NA_real_)   # not enough support
+  times <- times[keep]
+  surv_mat <- surv_mat[, keep, drop = FALSE]
+  G_at <- function(tt) {
+    g <- summary(sf_cens, times = tt, extend = TRUE)$surv
+    pmax(g, g_min)   # not eps, to avoid extreme weights and infinite variance in IPCW
+    #pmax(g, eps)
+  }
+  Tt <- as.numeric(df_test[[time_col]])
+  Dt <- to01(df_test[[event_col]])
+  bs_t <- vapply(seq_along(times), function(j) {
+    t0 <- times[j]
+    S0 <- surv_mat[, j]
+    Y0 <- as.numeric(Tt > t0)
+    w  <- ifelse(
+      Tt <= t0 & Dt == 1L,
+      1 / G_at(pmax(Tt - 1e-8, 0)),
+      ifelse(Tt > t0, 1 / G_at(t0), 0)
+    )
+    mean(w * (Y0 - S0)^2, na.rm = TRUE)
+  }, numeric(1))
+  as.numeric(
+    sum(diff(times) * (head(bs_t, -1) + tail(bs_t, -1)) / 2) /
+      (max(times) - min(times))
+  )
+}
+
+evaluate_mi_cv <- function(formula, imputed_list, time_col, event_col, cv_strata_col = "plan_type_strata", k = 5, seed = 2125, n_eval_times = 100, n_repeats=20, cpus=16, verbose = FALSE, log_every = 100L) {
+  #horizons at 1,3,5 years
+  horizons_month <- c(12, 36, 60)
+  
+  t_start <- Sys.time()
+  H <- length(horizons_month)
+  M <- length(imputed_list)
+  r <- as.numeric(n_repeats)
+  cat(sprintf("Starting Evaluation: %d Imputations x %d Folds = %d Total Models\n", M, k, M*k*r))
+  cat("------------------------------------------------------------\n")
+  validate_imputed_schema <- function(formula, imputed_list, time_col, event_col, cv_strata_col) {
+    fml <- if (inherits(formula, "formula")) formula else stats::as.formula(formula)
+    required <- unique(c(all.vars(fml), time_col, event_col, cv_strata_col))
+    missing_by_imp <- lapply(imputed_list, function(df) setdiff(required, names(df)))
+    bad <- which(lengths(missing_by_imp) > 0L)
+    if (length(bad)) {
+      detail <- paste(
+        vapply(bad, function(i) {
+          sprintf("imputation %d missing: %s", i, paste(missing_by_imp[[i]], collapse = ", "))
+        }, character(1)),
+        collapse = "\n"
+      )
+      stop(
+        sprintf("Input schema mismatch.\nRequired vars: %s\n%s",
+                paste(required, collapse = ", "), detail),
+        call. = FALSE
+      )
+    }
+    invisible(required)
+  }
+  validate_imputed_schema(formula, imputed_list, time_col, event_col, cv_strata_col)
+  
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # PARALLEL CLUSTER SETUP
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # use
+  n_cores <- max(1L, min(cpus, parallel::detectCores(logical = TRUE) - 16L))# Leave some cores free for other processes
+  seeds <- seed + seq_len(n_repeats) - 1L# Generate a unique seed for each repeat, ensuring reproducibility across runs
+  cat(sprintf("Booting up %d CPU cores using future backend...\n", n_cores))
+  
+  # Use multisession (works on Windows + Positron)
+  plan(multisession, workers = n_cores)
+  on.exit(plan(sequential), add = TRUE)  # Cleanup
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # PRE-FLIGHT CHECKS / DEFINE FOLDS & METADATA
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  stopifnot("Row counts across imputed datasets do not match!" = 
+              all(sapply(imputed_list, nrow) == nrow(imputed_list[[1]])))
+  
+  tau <- as.numeric(quantile(imputed_list[[1]][[time_col]], 0.90, na.rm = TRUE))
+  c_tau <- tau * 0.95
+  cat(paste0("\n#:_:_:_:_:_\nTau: ", round(tau,2), "; C-tau: ", c_tau,"\n#:_:_:_:_:_\n"))
+  eval_times <- sort(unique(c(seq(1e-6, tau, length.out = n_eval_times), horizons_month)))
+  set.seed(seed)
+  cv_strata <- interaction(imputed_list[[1]][[event_col]],
+                          imputed_list[[1]][[cv_strata_col]], drop = TRUE)
+  folds_by_repeat <- lapply(seq_len(n_repeats), function(r) {
+    set.seed(seeds[r])
+    caret::createFolds(cv_strata, k = k, list = TRUE)
+  }) 
+  folds <- folds_by_repeat[[1]]
+  
+  cv_strata_table <- as.data.frame(table(cv_strata), stringsAsFactors = FALSE)
+  names(cv_strata_table) <- c("cv_strata", "n")
+  fold_sizes <- vapply(folds, length, integer(1))
+  fold_id <- integer(length(cv_strata))
+  for (ii in seq_along(folds)) fold_id[folds[[ii]]] <- ii
+  cv_strata_by_fold <- as.data.frame(table(fold = fold_id, cv_strata = cv_strata), stringsAsFactors = FALSE)
+  # Result matrices
+  c_array    <- array(NA_real_, dim = c(n_repeats, M, k))
+  unoC_array <- array(NA_real_, dim = c(n_repeats, M, k))
+  ibs_array  <- array(NA_real_, dim = c(n_repeats, M, k))
+  ibs_ipcw_array <- array(NA_real_, dim = c(n_repeats, M, k))   # ← NEW
+  #storage of RMSTs and Concordance at specific horizons (1,3,5 years)
+  c_horizon  <- array(NA_real_, dim = c(n_repeats, M, k, H),
+                      dimnames = list(NULL, NULL, NULL, paste0("t", horizons_month)))                   
+  # Build a grid of all tasks so the parallel workers can grab them. 
+  # checklist of all 25 models (5 imputations x 5 folds) x repetitions
+  task_grid <- expand.grid(r = seq_len(n_repeats), m = seq_len(M), i = seq_len(k))
+  log_every <- as.integer(log_every)
+  if (!is.finite(log_every) || log_every < 1L) log_every <- 100L
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # THE TRIPLE LOOP: Repeats -> Imputations -> Folds
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # Single parallel execution via future.apply
+  all_results <- future.apply::future_lapply(
+    X = seq_len(nrow(task_grid)),
+    FUN = function(row) {
+      r <- task_grid$r[row]
+      m <- task_grid$m[row]
+      i <- task_grid$i[row]
+      
+      # Use pre-computed folds
+      test_idx <- folds_by_repeat[[r]][[i]]
+      df_train <- imputed_list[[m]][-test_idx, , drop = FALSE]
+      df_test  <- imputed_list[[m]][test_idx, , drop = FALSE]
+      n_test_before <- nrow(df_test)
+      
+      # Filter FIRST before fitting model and predicting      
+      local_formula <- as.formula(paste(deparse(formula), collapse = " "))
+      ## Don't change environment - let it inherit naturally
+      #environment(local_formula) <- environment()      
+
+      # Parse formula and extract ALL strata variables
+      local_formula <- as.formula(paste(deparse(formula), collapse = " "))
+      formula_char <- paste(deparse(local_formula), collapse = " ")
+      # Find all strata(var) terms and extract variable names
+      strata_matches <- gregexpr("strata\\([^)]+\\)", formula_char)
+      if (strata_matches[[1]][1] != -1) {
+        strata_terms <- regmatches(formula_char, strata_matches)[[1]]
+        strata_vars <- gsub("strata\\(([^)]+)\\)", "\\1", strata_terms)
+        strata_vars <- trimws(strata_vars)
+        
+        # Filter test set by each strata variable
+        for (sv in strata_vars) {
+          if (sv %in% names(df_train)) {
+            train_levels <- unique(df_train[[sv]])
+            before_nrow <- nrow(df_test)
+            df_test <- df_test[df_test[[sv]] %in% train_levels, , drop = FALSE]
+            dropped <- before_nrow - nrow(df_test)
+            if (verbose && dropped > 0) {
+              message(sprintf("   -> Filtered %d rows: strata '%s' not in training", dropped, sv))
+            }
+          }
+        }
+      }
+      # Check if we have enough data left
+      if (nrow(df_test) < 10) {
+        warning(sprintf("Imp %d Fold %d: Only %d rows after strata filtering, returning NA", m, i, nrow(df_test)))
+        return(list(r = r, m = m, i = i, c_uno = NA_real_, unoC = NA_real_,
+                   ibs = NA_real_, ibs_ipcw = NA_real_, c_horizons = rep(NA_real_, H)))
+      }
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # 1. GENERATE THE ABSOLUTE SURVIVAL MATRIX
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # NOW fit model and predict (after filtering)
+      # Fit model and predict
+      cv_model <- coxph(local_formula, data = df_train, x = TRUE, y = TRUE, model = TRUE)
+      surv_mat <- pec::predictSurvProb(cv_model, newdata = df_test, times = eval_times)         
+      if (is.vector(surv_mat)) {
+          surv_mat <- matrix(surv_mat, nrow = nrow(df_test), ncol = length(eval_times))
+      }
+      stopifnot("Survival matrix dimensions do not match test data!" = nrow(surv_mat) == nrow(df_test))
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # 2. CALCULATE ABSOLUTE RISK (RMST) 
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # Matrix multiplication (%*%) perfectly calculates the area under the step-curve (rectandular integration; not trapezoidal)
+      intervals <- diff(eval_times)
+      df_test$rmst_score <- as.numeric(surv_mat[, -ncol(surv_mat)] %*% intervals)
+      # CRITICAL FIX: concordance() expects Higher Score = Higher Risk.
+      # Higher RMST = Lower Risk. We must NEGATE it.
+      df_test$risk_score <- -df_test$rmst_score 
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # METRIC 1: Uno's C-Index 
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # We define a slightly shorter tau (95%) for the C-index calculation
+      # to prevent the IPCW weights from hitting divide-by-zero at the tail.
+      c_uno_val <- tryCatch(
+              survival::concordance(
+              Surv(df_test[[time_col]], df_test[[event_col]]) ~ risk_score, 
+              data = df_test, 
+              timewt = "n/G2",
+              ymax = c_tau,
+              reverse = TRUE #to flip direction.  You are passing a Risk Score (High = Bad) but telling the function it's a Protective Score (High = Good).#RMST negation + reverse=TRUE = valid //I'm giving you a score where high = bad, but you expect high = good, so please invert your interpretation."
+              )$concordance,
+              error = function(e) {
+              message("Fold ", i, " C-index Error: ", e$message)
+              NA_real_
+              }
+          )    
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # METRIC 2: Integrated Brier Score
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      y_true_test <- Surv(df_test[[time_col]], df_test[[event_col]])
+      ibs_val <- survex::integrated_brier_score(
+          y_true = y_true_test,
+          surv   = surv_mat,
+          times  = eval_times
+      )
+      # ── NEW: IPCW IBS using training censoring distribution ──
+      ibs_ipcw_val <- tryCatch(
+        ibs_ipcw_train(df_train, df_test, surv_mat, eval_times,
+                       time_col, event_col),
+        error = function(e) { message("IBS-IPCW error: ", e$message); NA_real_ }
+      )
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # METRIC 3: survAUC::UnoC (WITH DIAGNOSTICS)
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      ev_train <- to01(df_train[[event_col]])
+      ev_test  <- to01(df_test[[event_col]])
+      ok <- is.finite(df_test$risk_score) &
+          is.finite(df_test[[time_col]]) &
+          is.finite(ev_test) &
+          complete.cases(surv_mat)
+      # Censoring distribution diagnostics (Version 1)
+      sf_cens <- survival::survfit(Surv(df_train[[time_col]], 1 - ev_train) ~ 1)
+      g_ctau  <- summary(sf_cens, times = c_tau, extend = TRUE)$surv
+      tau_uno <- c_tau
+      if (!is.finite(g_ctau) || g_ctau <= 1e-6) {
+        tt <- sf_cens$time[sf_cens$surv > 1e-6]
+        tau_uno <- if (length(tt)) min(c_tau, max(tt)) else NA_real_
+      }
+      # Before calling UnoC, check event count at tau_uno
+      n_evt_tau <- sum(ev_test[ok] == 1L & df_test[[time_col]][ok] <= tau_uno)
+      # Break ties for survAUC (Version 2)
+      lp_u <- rank(df_test$risk_score[ok], ties.method = "average")
+      # Initialize u
+      u <- NA_real_
+      if (n_evt_tau < 50) {
+        message(sprintf("    → WARNING: Only %d events <= tau_uno. UnoC may be unstable.", n_evt_tau))
+      } else {
+        # Attempt UnoC with FULL error reporting
+        u <- tryCatch({
+          withCallingHandlers(
+            survAUC::UnoC(
+              Surv(df_train[[time_col]], ev_train),
+              Surv(df_test[[time_col]][ok], ev_test[ok]),
+              lp_u,
+              time = tau_uno
+            ),
+            warning = function(w) {
+              message(sprintf("    → UnoC WARNING: %s", w$message))
+              invokeRestart("muffleWarning")
+            }
+          )
+        }, error = function(e) {
+          message(sprintf("    → UnoC ERROR: %s", e$message))
+          NA_real_
+        })
+      }
+      # Now u is always defined
+      unoC_val <- if (is.finite(u)) u else NA_real_
+      if (verbose && (row == 1L || row %% log_every == 0L)) {
+        surv_f <- surv_mat[is.finite(surv_mat)]
+        surv_min <- if (length(surv_f)) min(surv_f) else NA_real_
+        surv_max <- if (length(surv_f)) max(surv_f) else NA_real_
+        in01 <- length(surv_f) > 0L && all(surv_f >= 0 & surv_f <= 1)
+        rmst_min <- if (any(is.finite(df_test$rmst_score))) min(df_test$rmst_score, na.rm = TRUE) else NA_real_
+        rmst_max <- if (any(is.finite(df_test$rmst_score))) max(df_test$rmst_score, na.rm = TRUE) else NA_real_
+        message(sprintf(
+          "Rep %d Imp %d Fold %d | surv=[%.4f, %.4f] in01=%s NA=%d rowNA=%d/%d | RMST=[%.2f, %.2f] | G(c_tau)=%.3g tau_uno=%.3f evt<=tau=%d UnoC=%s",
+          r, m, i,
+          surv_min, surv_max, in01,
+          sum(is.na(surv_mat)), sum(!complete.cases(surv_mat)), nrow(surv_mat),
+          rmst_min, rmst_max,
+          g_ctau, tau_uno, n_evt_tau, format(unoC_val, digits = 6)
+        ))
+      }
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # METRIC 4: RMSTs and Uno's C for time horizons
+      #_#_#_#_#_#_#_#_#_#_#_#_#_
+      # Full diagnostic output (Version 1)
+      # message(sprintf(
+      #   "Rep %d | Imp %d | Fold %d: G(c_tau)=%.3g tau_uno=%.3f events<=tau=%d UnoC=%s",
+      #   r, m, i, g_ctau, tau_uno, n_evt_tau, as.character(unoC_val)
+      # ))
+      c_horizons_vec <- rep(NA_real_, H)
+      for (h in seq_along(horizons_month)) {
+        t0 <- horizons_month[h]
+        idx <- which(eval_times <= t0)
+        if (length(idx) < 2) next
+        rmst_t0 <- as.numeric(surv_mat[, idx[-length(idx)], drop = FALSE] %*% diff(eval_times[idx]))
+        risk_t0 <- -rmst_t0  # ← defined but not used!
+        c_horizons_vec[h] <- tryCatch(
+          survival::concordance(
+            Surv(df_test[[time_col]], df_test[[event_col]]) ~ risk_t0,
+            timewt = "n/G2", ymax = t0, reverse = TRUE
+          )$concordance,
+          error = function(e) NA_real_
+        )
+      }
+      list(
+        r = r, m = m, i = i, c_uno = c_uno_val, unoC = unoC_val,
+        ibs = ibs_val, ibs_ipcw = ibs_ipcw_val,
+        c_horizons = c_horizons_vec
+      )
+    },
+    future.seed = TRUE,
+    future.packages = c("survival", "pec", "survex", "survAUC", "dplyr")
+  )
+    # Aggregation AFTER the parallel loop
+    for (res in all_results) {
+      c_array[res$r, res$m, res$i]    <- res$c_uno
+      unoC_array[res$r, res$m, res$i] <- res$unoC
+      ibs_array[res$r, res$m, res$i]  <- res$ibs
+      ibs_ipcw_array[res$r, res$m, res$i] <- res$ibs_ipcw
+      c_horizon[res$r, res$m, res$i, ] <- res$c_horizons
+    }
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  # AGGREGATE & POOL
+  #_#_#_#_#_#_#_#_#_#_#_#_#_----------------
+  rep_mean <- function(arr3) apply(arr3, 1, function(x) mean(x, na.rm = TRUE))
+  c_rep <- rep_mean(c_array)
+  unoC_rep <- rep_mean(unoC_array)
+  ibs_rep <- rep_mean(ibs_array)
+  ibs_ipcw_rep <- rep_mean(ibs_ipcw_array)
+  ci95_c <- quantile(c_rep, c(0.025, 0.975), na.rm = TRUE)
+  ci95_unoC <- quantile(unoC_rep, c(0.025, 0.975), na.rm = TRUE)
+  ci95_ibs <- quantile(ibs_rep, c(0.025, 0.975), na.rm = TRUE)
+  ci95_ibs_ipcw <- quantile(ibs_ipcw_rep, c(0.025, 0.975), na.rm = TRUE)
+  
+  final_pooled_ibs_ipcw <- mean(ibs_ipcw_rep, na.rm = TRUE)
+  final_pooled_c <- mean(c_rep, na.rm = TRUE)
+  final_pooled_unoC <- mean(unoC_rep, na.rm = TRUE)
+  final_pooled_ibs <- mean(ibs_rep, na.rm = TRUE)
+  h_rep <- sapply(seq_len(H), function(h) {
+    apply(c_horizon[,,,h], 1, function(x) {
+      x <- x[is.finite(x)]
+      if (length(x) == 0L) NA_real_ else mean(x)
+    })
+  })
+  rmst_h_summary <- data.frame(
+    horizon_month = horizons_month,
+    c_mean = colMeans(h_rep, na.rm = TRUE),
+    ci95_lower = apply(h_rep, 2, quantile, probs = 0.025, na.rm = TRUE),
+    ci95_upper = apply(h_rep, 2, quantile, probs = 0.975, na.rm = TRUE),
+    valid_repeats = colSums(is.finite(h_rep))
+  )
+  cat("\n============================================================\n")
+  cat("FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)\n")
+  cat("============================================================\n")
+  cat(sprintf("Global Evaluation Time (tau): %.2f months\n", tau))
+  cat(sprintf("Pooled Uno's C-Index: %.4f (95%% CI %.4f-%.4f)\n",
+            final_pooled_c, ci95_c[1], ci95_c[2]))
+  cat(sprintf("Pooled UnoC (survAUC::UnoC): %.4f (95%% CI %.4f-%.4f)\n",
+              final_pooled_unoC, ci95_unoC[1], ci95_unoC[2]))
+  cat(sprintf("Pooled IBS: %.4f (95%% CI %.4f-%.4f)\n",
+              final_pooled_ibs, ci95_ibs[1], ci95_ibs[2]))
+  cat(sprintf("Pooled IBS (IPCW-train): %.4f (95%% CI %.4f-%.4f)\n",
+              final_pooled_ibs_ipcw, ci95_ibs_ipcw[1], ci95_ibs_ipcw[2]))               
+  cat("RMST-based Uno C-index by horizon:\n")
+    for (hh in seq_len(nrow(rmst_h_summary))) {
+      cat(sprintf("  t=%d m: C=%.4f (95%% CI %.4f-%.4f, valid repeats=%d)\n",
+                  rmst_h_summary$horizon_month[hh],
+                  rmst_h_summary$c_mean[hh],
+                  rmst_h_summary$ci95_lower[hh],
+                  rmst_h_summary$ci95_upper[hh],
+                  rmst_h_summary$valid_repeats[hh]))
+    }
+  cat("============================================================\n")
+  
+  si <- utils::sessionInfo()
+  other_pkgs <- if (is.null(si$otherPkgs)) character(0) else names(si$otherPkgs)
+  
+  t_end <- Sys.time()
+  elapsed_sec <- as.numeric(difftime(t_end, t_start, units = "secs"))
+  cat(sprintf("\nTotal runtime: %.2f sec (%.2f min)\n", elapsed_sec, elapsed_sec / 60))
+  return(invisible(list(
+    raw_c_array = c_array,
+    raw_unoC_array = unoC_array,
+    raw_ibs_array = ibs_array,
+    raw_ibs_ipcw_array = ibs_ipcw_array, 
+    ci95_pooled_c = unname(ci95_c),
+    ci95_pooled_unoC = unname(ci95_unoC),
+    ci95_pooled_ibs = unname(ci95_ibs),
+    ci95_pooled_ibs_ipcw = unname(ci95_ibs_ipcw),
+    repeat_values = list(c = c_rep, unoC = unoC_rep,
+                         ibs = ibs_rep, ibs_ipcw = ibs_ipcw_rep),
+    reproducibility = list(
+      call = match.call(),
+      seed = seed,
+      k = k,
+      M = M,
+      time_col = time_col,
+      event_col = event_col,
+      formula = paste(deparse(formula), collapse = " "),
+      tau = tau,
+      c_tau = c_tau,                            # NEW
+      n_eval_times = n_eval_times,
+      eval_times = eval_times,
+      fold_sizes = fold_sizes,
+      rmst_unoC_by_horizon = c_horizon,
+      rmst_unoC_summary = rmst_h_summary,
+      cv_strata_table = cv_strata_table,
+      cv_strata_by_fold = cv_strata_by_fold,
+      timestamp = as.character(Sys.time()),
+      R_version = R.version.string,
+      attached_packages = other_pkgs
+    )
+  )))
+}
+
+#survex::integrated_brier_score uses the test-set censoring distribution for IPCW weights. Your new ibs_ipcw_train uses the training-set censoring KM, which is the methodologically correct approach for out-of-sample evaluation 
+
+library(survival)
+library(rms)
+library(pec)
+library(future)
+library(future.apply)
+library(dplyr)
+
+#' Bootstrap OOB IBS Evaluation for Cox Models with Multiple Imputation
+#' 
+#' Fully corrected version addressing:
+#' - Missing helper functions
+#' - Undefined variables
+#' - Stratified model handling
+#' - Robust error handling
+#' - Proper event value extraction
+
+cph_evaluate_boot_oob_mi_corrected <- function(
+    formula,
+    imputed_list,
+    time_col,
+    event_col,
+    tau = NULL,
+    B = 200,
+    n_eval_times = 100,
+    seed = 2125,
+    cpus = 8,
+    verbose = TRUE,
+    min_oob_n = 10,
+    min_oob_events = 3,
+    min_valid_imputations = NULL,
+    id_col = NULL
+) {
+    # =========================================================================
+    # HELPER FUNCTIONS (previously missing)
+    # =========================================================================
+    is_pos_int <- function(x) {
+        is.numeric(x) && length(x) == 1 && !is.na(x) && x > 0 && x == as.integer(x)
+    }
+    # =========================================================================
+    # 1) INPUT VALIDATION
+    # =========================================================================
+    t_start <- Sys.time()
+    if (!inherits(formula, "formula")) {
+        stop("formula must be a formula.")
+    }
+    if (!is.list(imputed_list) || length(imputed_list) == 0L) {
+        stop("imputed_list must be a non-empty list.")
+    }
+    if (!is.character(time_col) || length(time_col) != 1L) {
+        stop("time_col must be a single column name.")
+    }
+    if (!is.character(event_col) || length(event_col) != 1L) {
+        stop("event_col must be a single column name.")
+    }
+    if (!is_pos_int(B)) stop("B must be a positive integer.")
+    if (!is_pos_int(min_oob_n)) stop("min_oob_n must be a positive integer.")
+    if (!is_pos_int(min_oob_events)) stop("min_oob_events must be a positive integer.")
+    if (!is_pos_int(n_eval_times)) stop("n_eval_times must be a positive integer.")
+    if (!is_pos_int(cpus)) stop("cpus must be a positive integer.")
+    
+    B <- as.integer(B)
+    min_oob_n <- as.integer(min_oob_n)
+    min_oob_events <- as.integer(min_oob_events)
+    n_eval_times <- as.integer(n_eval_times)
+    cpus <- as.integer(cpus)
+    # Convert to data.frames
+    df_list <- lapply(imputed_list, as.data.frame)
+    M <- length(df_list)
+    # Check consistent row counts
+    n_by_imp <- vapply(df_list, nrow, integer(1))
+    if (length(unique(n_by_imp)) != 1L) {
+        stop("All imputations must have same number of rows.")
+    }
+    n <- n_by_imp[1]
+    # Extract model variables from formula
+    model_vars <- unique(all.vars(formula))
+    required_cols <- unique(c(model_vars, time_col, event_col))
+    # Check all required columns exist
+    for (m in seq_len(M)) {
+        miss <- setdiff(required_cols, names(df_list[[m]]))
+        if (length(miss) > 0L) {
+            stop(sprintf("Imputation %d is missing columns: %s", 
+                        m, paste(miss, collapse = ", ")))
+        }
+    }
+    # Check ID column consistency
+    if (!is.null(id_col)) {
+        if (!is.character(id_col) || length(id_col) != 1L) {
+            stop("id_col must be NULL or a single column name.")
+        }
+        if (!all(vapply(df_list, function(d) id_col %in% names(d), logical(1)))) {
+            stop("id_col not found in at least one imputation.")
+        }
+        ref_id <- df_list[[1]][[id_col]]
+        same_order <- vapply(df_list, function(d) identical(d[[id_col]], ref_id), logical(1))
+        if (!all(same_order)) {
+            stop("Row order differs across imputations (checked with id_col).")
+        }
+    }
+    # Set default for min_valid_imputations
+    if (is.null(min_valid_imputations)) {
+        min_valid_imputations <- M
+    }
+    if (!is_pos_int(min_valid_imputations) || min_valid_imputations > M) {
+        stop("min_valid_imputations must be an integer between 1 and M.")
+    }
+    min_valid_imputations <- as.integer(min_valid_imputations)
+    # =========================================================================
+    # 2) EXTRACT EVENT VALUE AND CREATE INDICATORS
+    # =========================================================================
+    # Auto-detect event value from first imputation
+    event_values <- unique(df_list[[1]][[event_col]])
+    event_values <- event_values[!is.na(event_values)]
+    if (length(event_values) == 0) {
+        stop("No non-missing event values found.")
+    }
+    # Use highest value as event (convention: 0=censored, 1=event, or 1=censored, 2=event)
+    event_value <- max(event_values)
+    if (verbose && length(event_values) > 2) {
+        warning("More than 2 unique event values detected. Using max as event: ", event_value)
+    }
+    # Create event indicators (1 = event, 0 = censored)
+    event_indicator <- lapply(df_list, function(d) {
+        as.integer(d[[event_col]] == event_value)
+    })
+    # =========================================================================
+    # 3) SET UP EVALUATION TIMES AND FORMULAS
+    # =========================================================================
+    # Determine tau if not provided
+    if (is.null(tau)) {
+        all_times <- unlist(lapply(df_list, function(d) d[[time_col]]), use.names = FALSE)
+        tau <- as.numeric(stats::quantile(all_times, probs = 0.90, na.rm = TRUE))
+        if (verbose) {
+            message("Auto-selected tau (90th percentile): ", round(tau, 2))
+        }
+    }
+    if (!is.numeric(tau) || length(tau) != 1L || !is.finite(tau) || tau <= 0) {
+        stop("tau must be a finite positive scalar.")
+    }
+    # Evaluation time grid
+    eval_times <- seq(1e-6, tau, length.out = n_eval_times)
+    fallback_times <- rev(eval_times[eval_times < tau])
+    # Censoring formula for pec
+    cens_fml <- stats::as.formula(sprintf("Hist(%s, %s) ~ 1", time_col, event_col))
+    # Convert strata() to strat() for rms::cph
+    model_formula_txt <- paste(deparse(formula), collapse = " ")
+    model_formula_txt <- gsub("\\bstrata\\(", "strat(", model_formula_txt)
+    model_formula <- stats::as.formula(model_formula_txt, env = environment(formula))
+    # Check for stratification
+    has_strata <- grepl("strat\\(", model_formula_txt)
+    if (verbose && has_strata) {
+        message("Stratified model detected: ", 
+                "ensure stratification variable has consistent levels across imputations.")
+    }
+    model_name <- "CPH_Model"
+    # =========================================================================
+    # 4) IBS EXTRACTION FUNCTION (robust version)
+    # =========================================================================
+    extract_ibs <- function(pe_obj, t_value, model_name) {
+        # Validate pec object
+        if (!inherits(pe_obj, "pec")) {
+            return(list(value = NA_real_, err = "invalid_pec_object"))
+        }
+        # Extract CRPS at specific time
+        cr <- tryCatch(
+            suppressWarnings(pec::crps(pe_obj, times = t_value)),
+            error = function(e) return(NULL)
+        )
+        if (is.null(cr)) {
+            return(list(value = NA_real_, err = "crps_extraction_failed"))
+        }
+        # Extract value for our model
+        val <- NA_real_
+        if (is.matrix(cr) || is.data.frame(cr)) {
+            if (model_name %in% rownames(cr)) {
+                val <- as.numeric(cr[model_name, 1])
+            } else if (nrow(cr) > 0) {
+                val <- as.numeric(cr[1, 1])
+                if (verbose) {
+                    warning("Model name '", model_name, "' not found, using first available.")
+                }
+            }
+        } else {
+            val <- as.numeric(cr[1])
+        }
+        if (!is.finite(val)) {
+            return(list(value = NA_real_, err = "non_finite_crps"))
+        }
+        list(value = val, err = "")
+    }
+    # =========================================================================
+    # 5) PARALLEL SETUP
+    # =========================================================================
+    detected <- suppressWarnings(parallel::detectCores(logical = TRUE))
+    if (!is.numeric(detected) || length(detected) != 1L || !is.finite(detected) || detected < 1L) {
+        detected <- 1L
+    }
+    n_cores <- as.integer(max(1L, min(cpus, B, max(1L, detected - 1L))))
+    old_plan <- future::plan()
+    on.exit(future::plan(old_plan), add = TRUE)
+    if (n_cores > 1L) {
+        future::plan(future::multisession, workers = n_cores)
+    } else {
+        future::plan(future::sequential)
+    }
+    if (verbose) {
+        cat(sprintf("Starting OOB bootstrap + MI: B=%d, M=%d\n", B, M))
+        cat(sprintf("Evaluating IBS up to tau = %.4f\n", tau))
+        cat(sprintf("Using %d worker(s)...\n", n_cores))
+        cat("------------------------------------------------------------\n")
+    }
+    # =========================================================================
+    # 6) PARALLEL BOOTSTRAP LOOP
+    # =========================================================================
+    boot_results <- future.apply::future_lapply(
+        X = seq_len(B),
+        FUN = function(b) {
+            row_ibs <- rep(NA_real_, M)
+            row_fails <- rep("", M)
+            split_fail <- ""
+            # Bootstrap sample
+            idx_train <- sample.int(n = n, size = n, replace = TRUE)
+            idx_test <- setdiff(seq_len(n), unique(idx_train))
+            # Check OOB size
+            if (length(idx_test) < min_oob_n) {
+                split_fail <- "too_few_oob_rows"
+                return(list(ibs = row_ibs, fails = row_fails, split_fail = split_fail))
+            }
+            # Process each imputation
+            for (m in seq_len(M)) {
+                # Check OOB events
+                oob_events <- sum(event_indicator[[m]][idx_test] == 1L, na.rm = TRUE)
+                if (oob_events < min_oob_events) {
+                    row_fails[m] <- "too_few_oob_events"
+                    next
+                }
+                # Check events before tau
+                n_evt_tau <- sum(
+                    event_indicator[[m]][idx_test] == 1L & 
+                    df_list[[m]][idx_test, time_col] <= tau,
+                    na.rm = TRUE
+                )
+                if (n_evt_tau < 1L) {
+                    row_fails[m] <- "no_events_before_tau"
+                    next
+                }
+                # Split data
+                df_train <- df_list[[m]][idx_train, , drop = FALSE]
+                df_test <- df_list[[m]][idx_test, , drop = FALSE]
+                # Handle factor levels
+                fchar_cols <- intersect(
+                    model_vars,
+                    names(df_train)[vapply(df_train, function(x) is.factor(x) || is.character(x), logical(1))]
+                )
+                bad_col <- NA_character_
+                if (length(fchar_cols) > 0L) {
+                    for (fc in fchar_cols) {
+                        tr_chr <- as.character(df_train[[fc]])
+                        te_chr <- as.character(df_test[[fc]])
+                        tr_levels <- unique(tr_chr[!is.na(tr_chr)])
+                        unseen <- !is.na(te_chr) & !(te_chr %in% tr_levels)
+                        if (any(unseen)) {
+                            bad_col <- fc
+                            break
+                        }
+                        df_train[[fc]] <- factor(tr_chr, levels = tr_levels)
+                        df_test[[fc]] <- factor(te_chr, levels = tr_levels)
+                    }
+                }
+                if (!is.na(bad_col)) {
+                    row_fails[m] <- paste0("unseen_factor_level:", bad_col)
+                    next
+                }
+                # Fit model and evaluate
+                res <- tryCatch({
+                    fit <- rms::cph(
+                        model_formula,
+                        data = df_train,
+                        x = TRUE,
+                        y = TRUE,
+                        surv = TRUE,
+                        time.inc = tau
+                    )
+                    # Ensure data reference for pec
+                    fit$call$data <- quote(df_train)
+                    # Calculate prediction error
+                    pec_args <- list(
+                        object = stats::setNames(list(fit), model_name),
+                        data = df_test,
+                        formula = cens_fml,
+                        splitMethod = "none",
+                        times = eval_times,
+                        cens.model = "marginal",
+                        exact = TRUE,
+                        verbose = FALSE
+                    )
+                    pe <- do.call(pec::pec, pec_args)
+                    ibs_res <- extract_ibs(pe, tau, model_name = model_name)
+                    # Try fallback times if needed
+                    if (is.na(ibs_res$value) && length(fallback_times) > 0L) {
+                        for (tt in fallback_times) {
+                            ibs_try <- extract_ibs(pe, tt, model_name = model_name)
+                            if (!is.na(ibs_try$value)) {
+                                ibs_res <- ibs_try
+                                break
+                            }
+                        }
+                    }
+                    if (is.na(ibs_res$value)) {
+                        list(value = NA_real_, err = ibs_res$err)
+                    } else {
+                        list(value = ibs_res$value, err = "")
+                    }
+                }, error = function(e) {
+                    list(value = NA_real_, err = paste0("cph_or_pec_error:", conditionMessage(e)))
+                })
+                row_ibs[m] <- res$value
+                if (nzchar(res$err)) row_fails[m] <- res$err
+            }
+            list(ibs = row_ibs, fails = row_fails, split_fail = split_fail)
+        },
+        future.seed = seed,
+        future.packages = c("survival", "pec", "rms")
+    )
+    # =========================================================================
+    # 7) RESULTS AGGREGATION
+    # =========================================================================
+    results_matrix <- do.call(rbind, lapply(boot_results, `[[`, "ibs"))
+    fail_matrix <- do.call(rbind, lapply(boot_results, `[[`, "fails"))
+    split_fail_reason <- vapply(boot_results, `[[`, "", "split_fail")
+    # Pool across imputations for each bootstrap
+    boot_pooled <- apply(results_matrix, 1, function(x) {
+        valid <- x[is.finite(x)]
+        if (length(valid) < min_valid_imputations) NA_real_ else mean(valid)
+    })
+    boot_pooled <- boot_pooled[is.finite(boot_pooled)]
+    # Check for complete failure
+    if (length(boot_pooled) < 2L) {
+        cat("\n[!] CRITICAL FAILURE: Almost all bootstrap replicates failed.\n")
+        cat("\n--- TOP REASONS FOR FAILURE ---\n")
+        all_fails <- c(
+            as.vector(fail_matrix[fail_matrix != ""]), 
+            split_fail_reason[split_fail_reason != ""]
+        )
+        if (length(all_fails) > 0L) {
+            print(sort(table(all_fails), decreasing = TRUE))
+        } else {
+            cat("No explicit errors captured.\n")
+        }
+        cat("-------------------------------\n")
+        stop("Too few valid bootstrap replicates to estimate IBS or confidence intervals.")
+    }
+    # Final statistics
+    pooled_ibs <- mean(boot_pooled)
+    ci <- stats::quantile(boot_pooled, probs = c(0.025, 0.975), na.rm = TRUE, names = FALSE)
+    # =========================================================================
+    # 8) OUTPUT
+    # =========================================================================
+    if (verbose) {
+        cat("\n============================================================\n")
+        cat("FINAL POOLED RESULTS (OOB Bootstrap + MI)\n")
+        cat("============================================================\n")
+        cat(sprintf("Pooled OOB IBS: %.4f (95%% CI: %.4f - %.4f)\n", 
+                   pooled_ibs, ci[1], ci[2]))
+        cat(sprintf("Valid bootstrap replicates: %d / %d\n", 
+                   length(boot_pooled), B))
+        cat(sprintf("Event value used: %s\n", as.character(event_value)))
+        cat("============================================================\n")
+        cat(sprintf("Total runtime: %.2f min\n", 
+                   as.numeric(difftime(Sys.time(), t_start, units = "mins"))))
+    }
+    invisible(list(
+        pooled_ibs = pooled_ibs,
+        ci_95 = c(lower = ci[1], upper = ci[2]),
+        boot_pooled = boot_pooled,
+        imputation_means = colMeans(results_matrix, na.rm = TRUE),
+        raw_matrix = results_matrix,
+        fail_matrix = fail_matrix,
+        split_fail_reason = split_fail_reason,
+        event_value = event_value,
+        reproducibility = list(
+            call = match.call(),
+            seed = seed,
+            B = B,
+            M = M,
+            tau = tau,
+            min_oob_n = min_oob_n,
+            min_oob_events = min_oob_events,
+            min_valid_imputations = min_valid_imputations,
+            event_value = event_value,
+            n_eval_times = n_eval_times,
+            n_cores = n_cores,
+            valid_boot = length(boot_pooled),
+            has_strata = has_strata
+        )
+    ))
+}
+
+
+#' Calibration Analysis and Plotting for Cox Models
+#' 
+#' Performs calibration analysis using riskRegression methods and generates
+#' calibration plots (predicted vs observed risk) at multiple time horizons.
+
+#' Calibration Analysis for Cox Models (Corrected Version)
+#' 
+#' Addresses Gemini audit findings:
+#' 1. Generic variable extraction from formula
+#' 2. No look-ahead bias using summary(survfit, times = ...)
+#' 3. Proper confidence intervals from survfit
+#' 4. Correct terminology (ECE not ICI)
+#' 5. Explicit namespace usage
+
+
+calibrate_cph_corrected <- function(
+        formula,
+        data,
+        times = c(12, 36, 60),  # Months
+        seed = 2125L,
+        n_imputations = NULL
+) {
+    set.seed(seed)
+    
+    # =========================================================================
+    # FORMULA PARSING
+    # =========================================================================
+    surv_call <- formula[[2]]
+    if (surv_call[[1]] != as.name("Surv")) {
+        stop("Formula must have a Surv() response variable.")
+    }
+    
+    time_var <- as.character(surv_call[[2]])
+    event_var <- as.character(surv_call[[3]])
+    
+    message("Detected time variable: ", time_var)
+    message("Detected event variable: ", event_var)
+    
+    # =========================================================================
+    # DATA PREPARATION (Time conversion removed)
+    # =========================================================================
+    if (is.list(data) && !is.data.frame(data)) {
+        df_list <- data
+        if (!is.null(n_imputations)) {
+            df_list <- df_list[1:min(n_imputations, length(df_list))]
+        }
+    } else {
+        df_list <- list(data)
+    }
+    
+    M <- length(df_list)
+    results_all <- list()
+    plots_data <- list()
+    
+    # =========================================================================
+    # MAIN LOOP
+    # =========================================================================
+    for (i in seq_len(M)) {
+        message("Processing imputation ", i, "/", M, "...", appendLF = FALSE)
+        d <- df_list[[i]]
+        
+        # Fit Cox model
+        fit <- survival::coxph(formula, data = d, x = TRUE, y = TRUE)
+        
+        for (j in seq_along(times)) {
+            t_months <- times[j]
+            
+            #_#_#_#_#_#_#_#_#_#_#_#_#_------------------------
+            # 1. PREDICTED RISK (NATIVE STRATA HANDLING)
+            # Temporarily set follow-up time to target horizon for all patients
+            #_#_#_#_#_#_#_#_#_#_#_#_#_------------------------
+            d_temp <- d
+            d_temp[[time_var]] <- t_months
+            
+            # Predict expected cumulative hazard (handles all strata dynamically)
+            cum_haz <- stats::predict(fit, newdata = d_temp, type = "expected")
+            
+            # Risk = 1 - S(t) = 1 - exp(-Lambda(t))
+            pred_risk <- 1 - exp(-cum_haz)
+            pred_risk[is.na(pred_risk)] <- 0
+            
+            # Create Deciles
+            deciles <- dplyr::ntile(pred_risk, 10)
+            
+            #_#_#_#_#_#_#_#_#_#_#_#_#_------------------------
+            # 2. OBSERVED RISK (KAPLAN-MEIER BY DECILE)
+            #_#_#_#_#_#_#_#_#_#_#_#_#_------------------------
+            calib_summary <- lapply(1:10, function(dec) {
+                idx <- which(deciles == dec)
+                if (length(idx) < 10) return(NULL)
+                
+                mean_pred <- mean(pred_risk[idx], na.rm = TRUE)
+                d_sub <- d[idx, ]
+                
+                # Unstratified KM for actual observed event rate in this decile
+                km_formula <- stats::as.formula(
+                    paste("survival::Surv(", time_var, ", ", event_var, ") ~ 1")
+                )
+                km_fit <- survival::survfit(km_formula, data = d_sub)
+                
+                # Extract survival at exact time
+                km_sum <- base::summary(km_fit, times = t_months, extend = TRUE)
+                
+                obs_risk <- 1 - km_sum$surv[1]
+                obs_upper <- 1 - km_sum$lower[1]
+                obs_lower <- 1 - km_sum$upper[1]
+                
+                if (is.na(obs_lower)) obs_lower <- obs_risk
+                if (is.na(obs_upper)) obs_upper <- obs_risk
+                
+                data.frame(
+                    imputation = i,
+                    time_months = t_months,
+                    decile = dec,
+                    mean_predicted = mean_pred,
+                    observed = obs_risk,
+                    observed_lower = obs_lower,
+                    observed_upper = obs_upper,
+                    n_patients = length(idx),
+                    stringsAsFactors = FALSE
+                )
+            })
+            calib_df <- do.call(rbind, calib_summary)
+            if (!is.null(calib_df)) {
+                plots_data[[length(plots_data) + 1]] <- calib_df
+                ece <- stats::weighted.mean(
+                    abs(calib_df$mean_predicted - calib_df$observed),
+                    w = calib_df$n_patients
+                )
+                ici <- tryCatch({
+                    smooth_obs <- stats::loess(observed ~ mean_predicted, 
+                                               data = calib_df, 
+                                               weights = n_patients)$fitted
+                    stats::weighted.mean(abs(calib_df$mean_predicted - smooth_obs),
+                                         w = calib_df$n_patients)
+                }, error = function(e) NA)
+
+                km_form_overall <- stats::as.formula(
+                    paste("survival::Surv(", time_var, ", ", event_var, ") ~ 1")
+                )
+                km_overall <- survival::survfit(km_form_overall, data = d)
+                km_sum_overall <- base::summary(km_overall, times = t_months, extend = TRUE)
+                obs_risk_overall <- 1 - km_sum_overall$surv[1]
+                exp_risk_overall <- mean(pred_risk, na.rm = TRUE)
+                # E/O Ratio: 1.0 is perfect. < 1.0 means under-prediction.
+                eo_ratio <- exp_risk_overall / obs_risk_overall
+                
+                results_all[[length(results_all) + 1]] <- data.frame(
+                    imputation = i,
+                    time_months = t_months,
+                    ece = ece,
+                    ici = ici,
+                    eo_ratio = eo_ratio,
+                    mean_pred_risk = exp_risk_overall,
+                    n_events = sum(d[[time_var]] <= t_months & d[[event_var]] == 1, na.rm = TRUE),
+                    total_n = nrow(d),
+                    stringsAsFactors = FALSE
+                )
+            }
+        }
+        message(" done")
+    }
+    
+    # =========================================================================
+    # POOLING AND PLOTTING
+    # =========================================================================
+    by_imp <- dplyr::bind_rows(results_all)
+    plots_df <- dplyr::bind_rows(plots_data)
+    
+    pooled_curves <- plots_df %>%
+        dplyr::group_by(time_months, decile) %>%
+        dplyr::summarise(
+            mean_predicted = mean(mean_predicted),
+            observed_pooled = mean(observed),
+            observed_lower = mean(observed_lower, na.rm = TRUE),
+            observed_upper = mean(observed_upper, na.rm = TRUE),
+            n_total = sum(n_patients),
+            .groups = "drop"
+        )
+    
+    pooled_summary <- by_imp %>%
+        dplyr::group_by(time_months) %>%
+        dplyr::summarise(
+            ece_mean = mean(ece, na.rm = TRUE),
+            ece_sd = stats::sd(ece, na.rm = TRUE),
+            ici_mean = mean(ici, na.rm = TRUE),
+            eo_mean = mean(eo_ratio, na.rm = TRUE),
+            eo_sd = stats::sd(eo_ratio, na.rm = TRUE),
+            n_imp = dplyr::n(),
+            .groups = "drop"
+        )
+    
+    plot_list <- list()
+    for (t in times) {
+        p_data <- pooled_curves %>% dplyr::filter(time_months == t)
+        
+        p <- ggplot2::ggplot(p_data, ggplot2::aes(x = mean_predicted, y = observed_pooled)) +
+            ggplot2::geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray50") +
+            ggplot2::geom_errorbar(
+                ggplot2::aes(ymin = observed_lower, ymax = observed_upper),
+                width = 0.005, alpha = 0.6, color = "steelblue"
+            ) +
+            ggplot2::geom_point(size = 3, color = "steelblue", fill = "white", shape = 21) +
+            ggplot2::geom_line(ggplot2::aes(group = 1), color = "steelblue", alpha = 0.5) +
+            ggplot2::labs(
+                title = paste(t, "Months"),
+                subtitle = paste0("ECE = ", formatC(pooled_summary$ece_mean[pooled_summary$time_months == t], digits = 4),
+                                  " | ICI = ", formatC(pooled_summary$ici_mean[pooled_summary$time_months == t], digits = 4)),
+                x = "Predicted Probability",
+                y = "Observed Proportion"
+            ) +
+            ggplot2::coord_equal(
+                xlim = c(0, max(p_data$mean_predicted, na.rm = TRUE) * 1.1),
+                ylim = c(0, max(p_data$observed_pooled, na.rm = TRUE) * 1.1)
+            ) +
+            ggplot2::theme_minimal()
+        
+        plot_list[[paste0("month_", t)]] <- p
+    }
+    
+    combined_plot <- ggplot2::ggplot(pooled_curves, ggplot2::aes(x = mean_predicted, y = observed_pooled)) +
+        ggplot2::geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "gray50") +
+        ggplot2::geom_errorbar(ggplot2::aes(ymin = observed_lower, ymax = observed_upper), width = 0.005, alpha = 0.5, color = "steelblue") +
+        ggplot2::geom_point(ggplot2::aes(color = as.factor(time_months)), size = 2) +
+        ggplot2::geom_line(ggplot2::aes(group = time_months, color = as.factor(time_months)), alpha = 0.5) +
+        ggplot2::facet_wrap(~time_months, labeller = ggplot2::label_both) +
+        ggplot2::labs(title = "Calibration Plots (ECE/ICI)", x = "Predicted", y = "Observed") +
+        ggplot2::coord_equal() +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(legend.position = "none")
+    
+    structure(list(
+        by_imputation = by_imp,
+        pooled_summary = pooled_summary,
+        calibration_curves = pooled_curves,
+        plots = plot_list,
+        combined_plot = combined_plot,
+        variable_names = list(time = time_var, event = event_var),
+        n_imputations = M
+    ), class = "cph_calibration_corrected")
+}
+
+#' Updated Print Method (Removed misleading thresholds)
+#' Updated Print Method (Includes E/O Ratio)
+print.cph_calibration_corrected <- function(x, ...) {
+    cat("Cox Model Calibration Analysis (Corrected)\n")
+    cat("==========================================\n")
+    cat("Time variable:", x$variable_names$time, "\n")
+    cat("Event variable:", x$variable_names$event, "\n")
+    cat("Imputations:", x$n_imputations, "\n\n")
+    
+    cat("Pooled Results:\n")
+    print(x$pooled_summary %>% 
+              dplyr::select(time_months, ece_mean, ici_mean, eo_mean, n_imp), 
+          row.names = FALSE)
+    
+    cat("\nNote: ECE = Expected Calibration Error (binned)\n")
+    cat("      ICI = Integrated Calibration Index (smoothed)\n")
+    cat("      E/O = Expected / Observed Ratio (1.0 is perfect, < 1.0 means under-prediction)\n")
+    cat("      Lower values for ECE/ICI are better. Interpret alongside visual plots.\n")
+    
+    invisible(x)
+}
+
+
+compare_mi_models_d1 <- function(formula_full, formula_reduced, imputed_list) {
+  # 1. Validate that the input is a list of dataframes
+  if (!is.list(imputed_list) || length(imputed_list) == 0) {
+    stop("imputed_list must be a list of dataframes.")
+  }
+  cat("Fitting the FULL model on", length(imputed_list), "imputations...\n")
+  fits_full <- lapply(imputed_list, function(df) {
+    survival::coxph(formula_full, data = df)
+  })
+  cat("Fitting the REDUCED model on", length(imputed_list), "imputations...\n")
+  fits_reduced <- lapply(imputed_list, function(df) {
+    survival::coxph(formula_reduced, data = df)
+  })
+  # 2. Convert to MIRA objects (Multiple Imputation Repeated Analyses)
+  mira_full    <- mice::as.mira(fits_full)
+  mira_reduced <- mice::as.mira(fits_reduced)
+  # 3. Execute the Multivariate Wald Test (D1)
+  cat("Executing the Wald Test (D1)...\n")
+  comparison <- mice::D1(mira_full, mira_reduced)
+  cat("\n============================================================\n")
+  cat("MODEL COMPARISON RESULT (D1 Statistic)\n")
+  cat("============================================================\n")
+  print(comparison)
+  cat("============================================================\n")
+  # Quick interpretation printed to console
+  p_val <- comparison$p.value[1]
+}
+compute_mi_aicc <- function(formula, imputed_list) {
+    # Adjust the model in each imputation
+    fits <- lapply(imputed_list, function(df) {
+        survival::coxph(formula, data = df)
+    })
+    # Extract metrics from each model
+    results <- lapply(fits, function(fit) {
+        aic_val <- stats::AIC(fit)
+        k <- length(fit$coefficients) # No. of parameters (df)
+        n_events <- fit$nevent        # Effective sample size (no. of events)
+        # Calcular la corrección para muestras pequeñas
+        correction <- (2 * k * (k + 1)) / (n_events - k - 1)
+        aicc_val <- aic_val + correction
+        c(aic = aic_val, correction = correction, aicc = aicc_val, k = k, n_events = n_events)
+    })
+    # As dataframe
+    res_df <- as.data.frame(do.call(rbind, results))
+    mean_aic <- mean(res_df$aic)
+    mean_aicc <- mean(res_df$aicc)
+    mean_correction <- mean(res_df$correction)
+    cat("\n============================================================\n")
+    cat("AICc ANALYSIS FOR MULTIPLY IMPUTED DATA\n")
+    cat("============================================================\n")
+    cat(sprintf("Mean AIC:  %.2f\n", mean_aic))
+    cat(sprintf("Mean AICc: %.2f\n", mean_aicc))
+    cat(sprintf("Correction added (Penalty): %.6f\n", mean_correction))
+    cat(sprintf("Parameters (k): %d | Effective Sample Size (Events): %d\n", 
+                res_df$k[1], res_df$n_events[1]))
+    cat("============================================================\n")
+    return(list(mean_aicc = mean_aicc, full_results = res_df))
+}
+
+plot_schoenfeld_residuals <- function(formula, variable, df, span = 0.50) {
+    
+    df <- as.data.frame(lapply(as.data.frame(df), as.vector))
+    .GlobalEnv$.tmp_df <- df
+    on.exit(rm(".tmp_df", envir = .GlobalEnv))
+    
+    fit <- survival::coxph(formula, data = .tmp_df)
+    res <- residuals(fit, type = "scaledsch")
+    time <- as.numeric(rownames(res))
+    
+    # NUEVO: Filtrar solo el rango con suficientes datos (percentiles 10-90 del tiempo)
+    t_range <- quantile(time, c(0.1, 0.9), na.rm = TRUE)
+    valid <- time >= t_range[1] & time <= t_range[2]
+    
+    time_clean <- time[valid]
+    res_clean <- res[valid, variable]
+    
+    z2 <- loess(res_clean ~ time_clean, span = span)
+    
+    plot(time_clean, fitted(z2), type = "l", col = "blue", lwd = 2,
+         main = paste("Sch. res. –", variable),
+         xlab = "Time", ylab = "Residuals")
+    lines(supsmu(time_clean, res_clean), lty = 2, col = "darkgray")
+    abline(h = 0, col = "red", lty = 3)
+}
+```
+
+### Evaluate models
+
+```{r}
+#| label: update-gvif-cindex-ibs
+results_readmit <- evaluate_mi_cv(
+  formula = formula_readmit, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_death <- evaluate_mi_cv(
+  formula = formula_death, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_readmit_ibs <- cph_evaluate_boot_oob_mi_corrected(
+    formula = formula_readmit,
+    imputed_list = py_corrected_datasets,
+    time_col = "readmit_time_from_disch_m", 
+    event_col = "readmit_event",
+    tau = 99,             # Your maximum time horizon
+    B = 2,              # Standard for stable 95% CIs
+    seed = 2125,
+    cpus= 16,
+    verbose = TRUE
+)
+results_death_ibs <- cph_evaluate_boot_oob_mi_corrected(
+    formula = formula_death,
+    imputed_list = py_corrected_datasets,
+    time_col = "death_time_from_disch_m", 
+    event_col = "death_event",
+    tau = 107,             # Your maximum time horizon
+    B = 2,              # Standard for stable 95% CIs
+    seed = 2125,
+    cpus=16,
+    verbose = TRUE
+)
+
+cal_readmit<- 
+calibrate_cph_corrected(
+    formula = formula_readmit,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+print(cal_readmit)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00201  0.00147   0.990     5
+# 2          36  0.00292  0.00223   0.987     5
+# 3          60  0.00461  0.00408   0.982     5
+# 4          96  0.00497  0.00398   0.975     5
+cal_death<- 
+calibrate_cph_corrected(
+    formula = formula_death,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+print(cal_death)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00196  0.00183    1.02     5
+# 2          36  0.00256  0.00241    1.02     5
+# 3          60  0.00269  0.00246    1.04     5
+# 4          96  0.00421  0.00428    1.08     5
+```
+
+```{r}
+#| label: update-gvif-cindex-ibs2-noncolinear
+
+cox_readmit2 <- coxph(
+  formula_readmit_updated,
+  data = py_corrected_datasets[[1]]
+)
+cox_death2 <- coxph(
+  formula_death_updated, 
+  data = py_corrected_datasets[[1]])
+results_readmit2 <- evaluate_mi_cv(
+  formula = formula_readmit_updated, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_readmit2_ibs <- cph_evaluate_boot_oob_mi_corrected(
+  formula = formula_readmit_updated,
+  imputed_list = py_corrected_datasets, # List of data.frames
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  tau = 99,                # Evaluate up to 60 months
+  B = 2,                  # Small number for testing
+  cpus = 16
+)
+results_death2 <- evaluate_mi_cv(
+  formula = formula_death_updated, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_death2_ibs <- cph_evaluate_boot_oob_mi_corrected(
+  formula = formula_death_updated,
+  imputed_list = py_corrected_datasets, # List of data.frames
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  tau = 107,                # Evaluate up to 60 months
+  B = 2,                  # Small number for testing
+  cpus = 16
+)
+aicc_readmit_upd <- compute_mi_aicc(formula_readmit_updated, py_corrected_datasets)
+aicc_readmit <- compute_mi_aicc(formula_readmit, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_upd$mean_aic - aicc_readmit$mean_aic))
+#Difference in Mean AIC: 0.02
+
+compare_mi_models_d1(
+    formula_full = formula_readmit,           # This one has 'logro_minimo'
+    formula_reduced = formula_readmit_updated,# This one does not
+    imputed_list = py_corrected_datasets
+)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test  statistic df1 df2 dfcom   p.value         riv
+#  1 ~~ 2 0.04459632   1   4  3091 0.8430707 0.002728568
+# ============================================================
+#not nested: compare_mi_models_d1(formula_readmit_updated, formula_readmit, py_corrected_datasets)
+aicc_death_upd <- compute_mi_aicc(formula_death_updated, py_corrected_datasets)
+aicc_death <- compute_mi_aicc(formula_death, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_upd$mean_aic - aicc_death$mean_aic))
+#Difference in Mean AIC: -2.04
+compare_mi_models_d1(
+    formula_full = formula_death,           # This one has 'logro_minimo'
+    formula_reduced = formula_death_updated,# This one does not
+    imputed_list = py_corrected_datasets
+)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test statistic df1 df2 dfcom   p.value          riv
+#  1 ~~ 2    2.0308   1   4 15190 0.2272661 0.0009341646
+# ============================================================
+
+cal_readmit2<- 
+calibrate_cph_corrected(
+    formula = formula_readmit_updated,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+print(cal_readmit2)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00233  0.00144   0.990     5
+# 2          36  0.00322  0.00221   0.987     5
+# 3          60  0.00468  0.00401   0.983     5
+# 4          96  0.00492  0.00398   0.975     5
+cal_death2<- 
+calibrate_cph_corrected(
+    formula = formula_death_updated,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+print(cal_death2)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00195  0.00182    1.02     5
+# 2          36  0.00255  0.00242    1.02     5
+# 3          60  0.00269  0.00244    1.04     5
+# 4          96  0.00422  0.00429    1.08     5
+```
+
+## Proportionallity
+
+### Residuals, readmission
+
+```{r}
+#| label: nonprop2-test-coxzph-readm
+# --- READMISSION MODEL ---
+ph_test_readmit <- cox.zph(cox_readmit2)
+ph_test_readmit$table |>
+  data.table::data.table(keep.rownames = TRUE) |>
+  dplyr::arrange(desc(chisq)) |>
+  dplyr::mutate(
+    p_fmt = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
+    chi_fmt = sprintf(
+      "χ²(%d)= %.2f, p%s",
+      df,
+      chisq,
+      ifelse(p < 0.001, "<0.001", paste0("=", p_fmt))
+    )
+  ) |>
+  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt) |>
+  knitr::kable(caption = "Schofeld residuals, readmission")
+# 1. Identify violators (you already have this part)
+violations_readm <- ph_test_readmit$table |>
+  data.table::data.table(keep.rownames = T) |>
+  dplyr::mutate(p = as.numeric(p)) |>
+  dplyr::filter(p < 0.05) |>
+  dplyr::pull(rn) |>
+  setdiff("GLOBAL")
+# 2. Generate the combined plot
+# ggcoxzph creates a list of plots if you pass multiple variables
+combined_plots <- survminer::ggcoxzph(ph_test_readmit, var = violations_readm)
+# Open a PDF device
+pdf(paste0(project_root,"/cons/","_figs/ph_test_violations_readm.pdf"), 
+  width = 16 * 1.5, 
+  height = 12 * 1.5)
+# Draw the combined plot
+print(combined_plots)
+# Close the device
+dev.off()
+png(
+  filename = paste0(project_root,"/cons/","_figs/ph_test_violations_readm.png"),
+  width = 16 * 1.5,
+  height = 12 * 1.5,
+  units = "in",
+  res=300
+)
+print(combined_plots)
+dev.off()
+
+combined_plots
+```
+
+
+```{r}
+#| label: nonprop2-5-test-coxzph-readm-spec
+
+#fixed windows based on data density rather than percentiles, and show raw residuals as points
+
+par(mfrow=c(2,2))
+plot_schoenfeld_residuals(
+    formula = formula_readmit_updated,
+    variable = "tr_outcome_adm_discharge_rule_violation_undet",
+    df = py_corrected_datasets[[1]]
+)
+plot_schoenfeld_residuals(
+    formula = formula_readmit_updated,
+    variable = "adm_motive_justice_sector",
+    df = py_corrected_datasets[[1]]
+)
+plot_schoenfeld_residuals(
+    formula = formula_readmit_updated,
+    variable = "dit_m",
+    df = py_corrected_datasets[[1]]
+)
+```
+
+The protective effect of "rule violation undetermined" diminishes over time. Initially associated with higher risk (or less protection), later becomes protective or neutral. Complex non-monotonic pattern. The effect of justice sector referral changes direction multiple times - initially neutral, then protective, then risk factor, then strongly protective again. Despite small scale, this shows the effect of dit_m is not constant - changes from positive to negative association over time.
+
+### Residuals, death
+
+```{r}
+#| label: nonprop3-test-coxzph-death
+# --- DEATH MODEL ---
+ph_test_death <- cox.zph(cox_death2)
+ph_test_death$table|>
+  data.table::data.table(keep.rownames = TRUE)|>
+  dplyr::arrange(desc(chisq))|>
+  dplyr::mutate(
+    p_fmt = ifelse(p < 0.001, "<0.001", sprintf("%.3f", p)),
+    chi_fmt = sprintf("χ²(%d)= %.2f, p%s", df, chisq, ifelse(p < 0.001, "<0.001", paste0("=", p_fmt))))|>
+  dplyr::select(covariable = rn, `χ²(gl), p` = chi_fmt)|>
+  knitr::kable(caption="Schofeld residuals, death")
+# 1. Identify violators (you already have this part)
+violations <- ph_test_death$table|> 
+  data.table::data.table(keep.rownames = T)|> 
+  dplyr::mutate(p = as.numeric(p))|> 
+  dplyr::filter(p < 0.05)|> 
+  dplyr::pull(rn)|> 
+  setdiff("GLOBAL")
+# 2. Generate the combined plot
+# ggcoxzph creates a list of plots if you pass multiple variables
+combined_plots <- survminer::ggcoxzph(ph_test_death, var = violations)
+# Open a PDF device 
+pdf(paste0(project_root,"/cons/","_figs/ph_test_violations_death.pdf"), 
+    width = 16*1.5, 
+    height = 12*1.5) 
+# Draw the combined plot 
+print(combined_plots) 
+# Close the device 
+dev.off()
+png(
+  filename = paste0(project_root,"/cons/","_figs/ph_test_violations_death.png"),
+  width  = 16 * 1.5,
+  height = 12 * 1.5,
+  units  = "in",
+  res = 300
+)
+print(combined_plots) 
+dev.off()
+combined_plots
+```
+
+We decided to stratify by treatment outcome for mortality by `tr_outcome_adm_discharge_adm_reasons` and `tr_outcome_adm_discharge_rule_violation_undet`.
+
+
+
+```{r}
+#| label: nonprop3-5-test-coxzph-death-spec
+par(mfrow=c(1,2))
+plot_schoenfeld_residuals(
+    formula = formula_death_updated,
+    variable = "tr_outcome_adm_discharge_rule_violation_undet",
+    df = py_corrected_datasets[[1]]
+)
+plot_schoenfeld_residuals(
+    formula = formula_death_updated,
+    variable = "tr_outcome_adm_discharge_adm_reasons",
+    df = py_corrected_datasets[[1]]
+)
+```
+
+
+We suspect an administrative artifact behind the concentration and violation of proportionallity of hazards
+
+
+```{r}
+#| label: nonprop3-5-test-coxzph-death-artifact
+
+# Create time intervals
+time_breaks <- c(0, 5, 10, 20, 60, 120)
+time_labels <- c("(0,5]", "(5,10]", "(10,20]", "(20,60]", "(60,120]")
+
+# Cut the time variable
+time_cut <- cut(py_corrected_datasets[[1]]$death_time_from_disch_m, 
+                breaks = time_breaks, 
+                labels = time_labels)
+
+# Get variable names dynamically
+var1 <- "tr_outcome_adm_discharge_rule_violation_undet"
+var2 <- "tr_outcome_adm_discharge_adm_reasons"
+
+# Create tables
+total_table <- table(time_cut)
+var1_table <- table(dplyr::pull(py_corrected_datasets[[1]], var1), time_cut)
+var2_table <- table(dplyr::pull(py_corrected_datasets[[2]], var2), time_cut)
+
+# Build data frame adaptively
+result_df <- data.frame(
+  Time_interval = time_labels,
+  Total = as.numeric(total_table)
+)
+
+# Add var1 levels (excluding first level as reference)
+for(i in 2:nrow(var1_table)) {
+  col_name <- paste0(var1, "_", rownames(var1_table)[i])
+  result_df[[col_name]] <- as.numeric(var1_table[i, ])
+}
+
+# Add var2 levels (excluding first level as reference)
+for(i in 2:nrow(var2_table)) {
+  col_name <- paste0(var2, "_", rownames(var2_table)[i])
+  result_df[[col_name]] <- as.numeric(var2_table[i, ])
+}
+
+# Generate markdown table
+knitr::kable(result_df, 
+      format = "markdown",
+      col.names = c("Intervals", "total", "Rule violation", "Adm reasons"),
+      caption = "Distribution of death times by discharge outcome categories",
+      align = c("l", rep("r", ncol(result_df) - 1)))
+
+# Table: Distribution of death times by discharge outcome categories
+# 
+# |Intervals | total| Rule violation| Adm reasons|
+# |:---------|-----:|--------------:|-----------:|
+# |(0,5]     |  6294|            243|         258|
+# |(5,10]    |  1452|             49|          32|
+# |(10,20]   |  5686|            174|         160|
+# |(20,60]   | 25594|           1194|         605|
+# |(60,120]  | 29474|           3252|           5|
+```
+
+
+```{r}
+#| label: nonprop5-log-log
+
+message("We had to handle ties")
+df_surv <- py_corrected_datasets[[1]] %>%
+  dplyr::mutate(
+    tr_outcome_strata = case_when(
+      tr_outcome_referral == 1 ~ "referral",
+      tr_outcome_dropout == 1 ~ "dropout",
+      tr_outcome_adm_discharge_rule_violation_undet == 1 ~ "rule violation/undet",
+      tr_outcome_adm_discharge_adm_reasons == 1 ~ "adm reasons",
+      tr_outcome_other == 1 ~ "other",
+      T~ "completion"
+    ),
+    tr_outcome_strata = factor(
+      tr_outcome_strata,
+      levels = c(
+        "completion",
+        "referral",
+        "dropout",
+        "rule violation/undet",
+        "adm reasons",
+        "other"
+      )
+    )
+  )
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+fit_stratified_readmit <- survfit(
+  Surv(readmit_time_from_disch_m, readmit_event) ~ tr_outcome_strata,
+  data = df_surv |> dplyr::filter(tr_outcome_strata!="other"))
+fit_stratified_death <- survfit(
+  Surv(death_time_from_disch_m, death_event) ~ tr_outcome_strata,
+  data = df_surv |> dplyr::filter(tr_outcome_strata!="other"))
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# 1. Define tus colores en un vector claro
+mis_colores <- c("#000000", "#545454", "#808080", "#A9A9A9", "#D3D3D3")
+p <-survminer::ggsurvplot(
+  fit_stratified_readmit, 
+  fun = "cloglog", 
+  conf.int = FALSE,              # Saca esto si se ve muy "sucio" o amontonado
+  palette = mis_colores,         # AQUÍ se definen los colores
+  title = "LML Plot: Proportional Hazards Check",
+  xlab = "log(Time)",
+  ylab = "log(-log(Survival))",
+  legend.title = "Treatment Outcome",
+  legend.labs = c("Completion", "Referral", "Dropout", "Violation", "Adm Reasons"),
+  ggtheme = theme_bw()           # Fondo blanco limpio para tesis
+)
+p$plot <- p$plot + 
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(nrow = 2)) # Organiza la leyenda en 2 filas si es muy larga
+p$plot
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+# 1. Define tus colores en un vector claro
+mis_colores <- c("#000000", "#545454", "#808080", "#A9A9A9", "#D3D3D3")
+p_death_eng <-survminer::ggsurvplot(
+  fit_stratified_death, 
+  fun = "cloglog", 
+  conf.int = FALSE,              # Saca esto si se ve muy "sucio" o amontonado
+  palette = mis_colores,         # AQUÍ se definen los colores
+  title = "LML Plot: Proportional Hazards Check",
+  xlab = "log(Time)",
+  ylab = "log(-log(Survival))",
+  legend.title = "Treatment Outcome",
+  legend.labs = c("Completion", "Referral", "Dropout", "Violation", "Adm Reasons"),
+  ggtheme = theme_bw()           # Fondo blanco limpio para tesis
+)
+p_death_eng$plot <- p_death_eng$plot + 
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(nrow = 2)) # Organiza la leyenda en 2 filas si es muy larga
+p_death_eng$plot
+```
+
+```{r}
+#| label: nonprop5-log-log-esp
+# Readmission
+p_esp_readm <- survminer::ggsurvplot(
+  fit_stratified_readmit,
+  fun = "cloglog",
+  conf.int = TRUE,
+  censor = FALSE,
+  xlab = "log(Tiempo desde el alta)",
+  ylab = "log(-log(Supervivencia))",
+  legend.labs = c("Razones\nadministrativas",
+                  "Violación\nde reglas",
+                  "Finalización",
+                  "Abandono",
+                  "Derivación"),
+  legend.title = "Resultado\ndel tratamiento",
+  palette = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+  ggtheme = theme_minimal(base_family = "Arial")
+)
+p_esp_readm$plot <- p_esp_readm$plot +
+  geom_point(aes(shape = strata, color = strata), size = 2) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  theme(
+    text = element_text(family = "Arial"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    plot.title = element_blank()
+  )
+# Death
+p_esp_death <- survminer::ggsurvplot(
+  fit_stratified_death,
+  fun = "cloglog",
+  conf.int = TRUE,
+  censor = FALSE,
+  xlab = "log(Tiempo desde el alta)",
+  ylab = "log(-log(Supervivencia))",
+  legend.labs = c("Razones\nadministrativas",
+                  "Violación\nde reglas",
+                  "Finalización",
+                  "Abandono",
+                  "Derivación"),
+  legend.title = "Resultado\ndel tratamiento",
+  palette = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+  ggtheme = theme_minimal(base_family = "Arial")
+)
+p_esp_death$plot <- p_esp_death$plot +
+  geom_point(aes(shape = strata, color = strata), size = 2) +
+  scale_color_manual(
+    values = c("#000000", "#505050", "#808080", "#B0B0B0", "#D9D9D9"),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  scale_shape_manual(
+    values = c(16, 17, 15, 18, 3),
+    name = "Resultado\ndel tratamiento",
+    labels = c("Razones\nadministrativas", "Violación\nde reglas", "Finalización", "Abandono", "Derivación")
+  ) +
+  theme(
+    text = element_text(family = "Arial"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold"),
+    plot.title = element_blank()
+  ) +
+  labs(y = NULL) # remove Y label from readmission panel
+# Combine with A) and B) in bold
+plot_cloglog_comb <- (p_esp_readm$plot + p_esp_death$plot) +
+  patchwork::plot_layout(ncol = 2, guides = "collect") +
+  patchwork::plot_annotation(
+    tag_levels = "A",
+    tag_suffix = ")",
+    theme = theme(plot.tag = element_text(face = "bold", family = "Arial"))
+  ) &
+  theme(legend.position = "bottom")
+ggsave(
+  filename = paste0(project_root, "/cons/", "_figs/supervivencia_cloglog_comb.png"),
+  plot = plot_cloglog_comb,
+  dpi = 300,
+  width = 12*.75,
+  height = 6*.75,
+  units = "in"
+)
+```
+
+We see that treatment outcome has different baseline shapes.
+
+### Correction of strata
+
+
+```{r}
+#| label: update-model-to-nph
+# 1. Clean the Readmission Formula (Subtract the 1 violator)
+formula_readmit_updated2 <- update(
+  formula_readmit_updated, 
+  . ~ . - tr_outcome_adm_discharge_rule_violation_undet
+)
+# 2. Clean the Death Formula (Subtract both violators)
+formula_death_updated2 <- update(
+  formula_death_updated, 
+  . ~ . - tr_outcome_adm_discharge_rule_violation_undet - tr_outcome_adm_discharge_adm_reasons
+)
+# 1. READMISSION FORMULA
+# Safely collapse the formula into a single text string first
+formula_readmit_updated2 <- as.formula(
+  gsub(
+    "strata\\(plan_type_strata\\)",
+    "strata(plan_type_strata)+ strata(tr_outcome_adm_discharge_rule_violation_undet)",
+    paste(deparse(formula_readmit_updated2), collapse = " ")
+  )
+)
+# 2. DEATH FORMULA
+# Safely collapse the formula into a single text string first
+formula_death_updated2 <- as.formula(
+  gsub(
+    "strata\\(plan_type_strata\\)",
+    "strata(plan_type_strata) +strata(tr_outcome_adm_discharge_rule_violation_undet)+ strata(tr_outcome_adm_discharge_adm_reasons)",
+    paste(deparse(formula_death_updated2), collapse = " ")
+  )
+)
+
+results_readmit3 <- evaluate_mi_cv(
+  formula = formula_readmit_updated2, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_death3 <- evaluate_mi_cv(
+  formula = formula_death_updated2, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_readmit3_ibs <- cph_evaluate_boot_oob_mi_corrected(
+  formula = formula_readmit_updated2,
+  imputed_list = py_corrected_datasets, # List of data.frames
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  tau = 99,                # Evaluate up to 60 months
+  B = 2,                  # Small number for testing
+  cpus = 16                # Number of CPU cores to use
+)
+results_death3_ibs <- cph_evaluate_boot_oob_mi_corrected(
+    formula = formula_death_updated2,
+    imputed_list = py_corrected_datasets, # List of data.frames
+    time_col = "death_time_from_disch_m", 
+    event_col = "death_event",
+    tau = 107,                # Evaluate up to 60 months
+    B = 2,                  # Small number for testing
+    cpus = 16
+)
+aicc_readmit_upd2 <- compute_mi_aicc(formula_readmit_updated2, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_upd2$mean_aic - aicc_readmit_upd$mean_aic))
+aicc_death_upd2 <- compute_mi_aicc(formula_death_updated2, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_upd2$mean_aic - aicc_death_upd$mean_aic))
+#compare_mi_models_d1(formula_readmit_updated2, formula_readmit_updated, py_corrected_datasets)
+# Error en mitml::testModels(fit1, fit0, method = "D1", df.com = dfcom): 
+#   The 'model' and 'null.model' appear not to be nested or include the same set of parameters.
+# Called from: mitml::testModels(fit1, fit0, method = "D1", df.com = dfcom)
+
+compare_mi_models_d1(formula_readmit_updated,update(
+   formula_readmit_updated, 
+   . ~ . - tr_outcome_adm_discharge_rule_violation_undet
+), py_corrected_datasets)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test statistic df1 df2 dfcom     p.value          riv
+#  1 ~~ 2  54.34984   1   4 15191 0.001804165 0.0002539622
+# ============================================================
+compare_mi_models_d1(formula_death_updated,update(
+    formula_death_updated, 
+    . ~ . - tr_outcome_adm_discharge_rule_violation_undet - tr_outcome_adm_discharge_adm_reasons
+), py_corrected_datasets)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test statistic df1      df2 dfcom      p.value         riv
+#  1 ~~ 2  145.0107   2 3075.751  3092 6.568309e-61 0.001838865
+# ============================================================
+
+cal_readmit3<- 
+calibrate_cph_corrected(
+    formula = formula_readmit_updated2,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+print(cal_readmit3)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00233  0.00147   0.989     5
+# 2          36  0.00337  0.00251   0.987     5
+# 3          60  0.00438  0.00366   0.984     5
+# 4          96  0.00450  0.00376   0.976     5
+cal_death3<- 
+calibrate_cph_corrected(
+    formula = formula_death_updated2,  # Original formula with months variable
+    data = py_corrected_datasets,      # Original data (months)
+    times = c(12, 36, 60, 96),
+    seed = 2125,
+    n_imputations = 5
+)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00100 0.000923    1.01     5
+# 2          36  0.00274 0.00260     1.01     5
+# 3          60  0.00359 0.00342     1.02     5
+# 4          96  0.00411 0.00400     1.06     5
+print(cal_death3)
+#plot(cal_death2$combined_plot)
+```
+
+# SHAP criteria
+
+```{r}
+#| label: shap-criteria
+
+# # Linear time interaction
+# coxph(Surv(time, death) ~ var + var:time + other_covariates, data = df)
+# # Log-time interaction
+# coxph(Surv(time, death) ~ var + var:log(time) + other_covariates, data = df)
+# # Step function at 1 year (365 days)
+# df$late_period <- as.numeric(df$time > 365)
+# coxph(Surv(time, death) ~ var + var:late_period + other_covariates, data = df)
+# # Using splines (requires splines package)
+# library(splines)
+# coxph(Surv(time, death) ~ var + var:ns(time, df=3) + other_covariates, data = df)
+vars_shap_r <- c(
+  "primary_sub_mod_cocaine_paste",
+  "adm_age_rec3",
+  "porc_pobr",
+  "sex_rec_woman",
+  #"plan_type_corr_pg_pr",
+  #"plan_type_corr_m_pr",
+  "ethnicity",
+  "dit_m",
+  #"eva_consumo",
+  "eva_consumo_logro_intermedio",
+  "eva_consumo_logro_minimo",
+  #"ed_attainment_corr",
+  "ed_attainment_corr_2_completed_high_school_or_less",
+  "ed_attainment_corr_3_completed_primary_school_or_less",
+  "sub_dep_icd10_status_drug_dependence",
+  "occupation_condition_corr24_unemployed",
+  "polysubstance_strict",
+  "primary_sub_mod_cocaine_powder",
+  #"evaluacindelprocesoteraputico",
+  "evaluacindelprocesoteraputico_logro_intermedio",
+  "evaluacindelprocesoteraputico_logro_minimo", #this variable may be a composite of items, so we are keeping it as a single predictor for now; GVIF
+  "dg_psiq_cie_10_dg",
+  "tr_outcome_adm_discharge_rule_violation_undet",
+  #"eva_sm",
+  "eva_sm_logro_intermedio",
+  "eva_sm_logro_minimo",   
+  "adm_motive_justice_sector",
+  #"tenure_status_household",
+  "tenure_status_household_others",
+  "tenure_status_household_renting",
+  "tenure_status_household_stays_temporarily_with_a_relative",
+  "tenure_status_household_illegal_settlement",
+  "tr_outcome_referral",
+  #"eva_ocupacion",
+  "eva_ocupacion_logro_intermedio",
+  "eva_ocupacion_logro_minimo",   
+  #"eva_transgnorma",
+  "eva_transgnorma_logro_intermedio",
+  "eva_transgnorma_logro_minimo",    
+  #"prim_sub_freq_rec",
+  "prim_sub_freq_rec_2_2_6_days_wk",
+  "prim_sub_freq_rec_3_daily",  
+  "cohabitation_with_couple_children",
+  #"primary_sub_mod_marijuana", #changed because of reference category changed
+  "primary_sub_mod_alcohol",
+  #"eva_relinterp",
+  "eva_relinterp_logro_intermedio",
+  "eva_relinterp_logro_minimo",  
+  "tr_outcome_dropout",
+  #"urbanicity_cat",
+  "dx_f6_personality",
+  "any_phys_dx",
+  "any_violence_1_domestic_violence_sex_abuse",
+  "adm_motive_sanitary_sector",
+  #"eva_fam"
+  "eva_fam_logro_intermedio",
+  "eva_fam_logro_minimo"
+)
+vars_shap_d <- c(
+  "adm_age_rec3",
+  "primary_sub_mod_cocaine_paste",
+  #"prim_sub_freq_rec", #no longer used because of nominal transfoemation
+  "prim_sub_freq_rec_2_2_6_days_wk",
+  "prim_sub_freq_rec_3_daily",
+  "primary_sub_mod_cocaine_powder",
+  "occupation_condition_corr24_unemployed",
+  "any_phys_dx",
+  #"eva_ocupacion",
+  "eva_ocupacion_logro_intermedio",
+  "eva_ocupacion_logro_minimo",  
+  "first_sub_used_alcohol",
+  "sex_rec_woman",
+  #"eva_fisica"
+  "eva_fisica_logro_intermedio",
+  "eva_fisica_logro_minimo"
+)
+formula_shap_readmit <- as.formula(
+  paste("Surv(readmit_time_from_disch_m, readmit_event) ~", 
+        paste(vars_shap_r, collapse = " + "), "+ strata(plan_type_strata)")
+)
+formula_shap_death <- as.formula(
+  paste("Surv(death_time_from_disch_m, death_event) ~", 
+        paste(vars_shap_d, collapse = " + "), "+ strata(plan_type_strata)")
+)
+dplyr::bind_rows(
+  rms::vif(survival::coxph(formula_shap_death, data = py_corrected_datasets[[1]])) |>
+    as.data.frame() |>
+    tibble::rownames_to_column("Variable") |>
+    dplyr::rename(Gvif = 2) |>
+    dplyr::arrange(dplyr::desc(dplyr::pick(2)[[1]])) |>
+    dplyr::filter(Gvif > 10) |>
+    dplyr::mutate(Outcome = "Death"),
+  rms::vif(survival::coxph(formula_shap_readmit, data = py_corrected_datasets[[1]])) |>
+    as.data.frame() |>
+    tibble::rownames_to_column("Variable") |>
+    dplyr::rename(Gvif = 2) |>
+    dplyr::filter(Gvif > 10) |>
+    dplyr::mutate(Outcome = "Readmission")
+) |>
+  knitr::kable("markdown", caption = "GVIF for SHAP-based Cox models, using one imputed dataset")
+
+cat("Removing collineal variable\n")
+formula_shap_readmit_clean <- as.formula(
+  paste(gsub("evaluacindelprocesoteraputico_logro_minimo \\+\\s*","",paste(deparse(formula_shap_readmit), collapse = " "))))
+
+results_readmit_shap <- evaluate_mi_cv(
+  formula = formula_shap_readmit_clean, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 99.10 months
+# Pooled Uno's C-Index: 0.6076 (95% CI 0.6076-0.6076)
+# Pooled UnoC (survAUC::UnoC): 0.6385 (95% CI 0.6162-0.6609)
+# Pooled IBS: 0.1598 (95% CI 0.1598-0.1599)
+# Pooled IBS (IPCW-train): 0.3466 (95% CI 0.3464-0.3467)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.6331 (95% CI 0.6331-0.6332, valid repeats=2)
+#   t=36 m: C=0.6162 (95% CI 0.6162-0.6162, valid repeats=2)
+#   t=60 m: C=0.6106 (95% CI 0.6106-0.6106, valid repeats=2)
+# ============================================================
+#Total runtime: 148.87 sec (2.48 min)
+
+results_death_shap <- evaluate_mi_cv(
+  formula = formula_shap_death, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 107.94 months
+# Pooled Uno's C-Index: 0.7387 (95% CI 0.7387-0.7387)
+# Pooled UnoC (survAUC::UnoC): NaN (95% CI NA-NA)
+# Pooled IBS: 0.0368 (95% CI 0.0368-0.0368)
+# Pooled IBS (IPCW-train): 0.0951 (95% CI 0.0951-0.0951)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.7518 (95% CI 0.7503-0.7532, valid repeats=2)
+#   t=36 m: C=0.7623 (95% CI 0.7623-0.7623, valid repeats=2)
+#   t=60 m: C=0.7555 (95% CI 0.7555-0.7555, valid repeats=2)
+# ============================================================
+
+results_readmit_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
+    formula = formula_shap_readmit_clean,
+    imputed_list = py_corrected_datasets, # List of data.frames
+    time_col = "readmit_time_from_disch_m", 
+    event_col = "readmit_event",
+    tau = 99,                # Evaluate up to 60 months
+    B = 2,                  # Small number for testing
+    cpus = 16
+)
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.1613 (95% CI: 0.1605 - 0.1621)
+# Valid bootstrap replicates: 2 / 2
+# ============================================================
+results_death_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
+    formula = formula_shap_death,
+    imputed_list = py_corrected_datasets, # List of data.frames
+    time_col = "death_time_from_disch_m", 
+    event_col = "death_event",
+    tau = 107,                # Evaluate up to 60 months
+    B = 2,                  # Small number for testing
+    cpus = 16
+)
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.0354 (95% CI: 0.0343 - 0.0364)
+# Valid bootstrap replicates: 2 / 2
+# ============================================================
+
+aicc_readmit_shap <- compute_mi_aicc(formula_shap_readmit_clean, py_corrected_datasets)
+# ============================================================
+# AICc ANALYSIS FOR MULTIPLY IMPUTED DATA
+# ============================================================
+# Mean AIC:  56436.40
+# Mean AICc: 56436.51
+# Correction added (Penalty): 0.115813
+# Parameters (k): 13 | Effective Sample Size (Events): 3157
+# ============================================================
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_shap$mean_aic - aicc_readmit_upd2$mean_aic))
+aicc_death_shap <- compute_mi_aicc(formula_shap_death, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_shap$mean_aic - aicc_death_upd2$mean_aic))
+
+cat("Comparing readmission w/o collinear var and only one strata(plan)\n")
+compare_mi_models_d1(formula_readmit_updated,formula_shap_readmit_clean, py_corrected_datasets)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test statistic df1      df2 dfcom      p.value        riv
+#  1 ~~ 2  2.345907  23 9310.963 15191 0.0002797448 0.06296083
+# ============================================================
+
+compare_mi_models_d1(formula_death_updated,formula_shap_death, py_corrected_datasets)
+# ============================================================
+# MODEL COMPARISON RESULT (D1 Statistic)
+# ============================================================
+#    test statistic df1      df2 dfcom       p.value        riv
+#  1 ~~ 2  13.84099  52 3029.701  3092 1.991781e-104 0.03716365
+# ============================================================
+
+cal_readmit_shap<- 
+    calibrate_cph_corrected(
+        formula = formula_shap_readmit_clean,  # Original formula with months variable
+        data = py_corrected_datasets,      # Original data (months)
+        times = c(12, 36, 60, 96),
+        seed = 2125,
+        n_imputations = 5
+    )
+print(cal_readmit_shap)
+
+
+cal_death_shap<- 
+    calibrate_cph_corrected(
+        formula = formula_shap_death,  # Original formula with months variable
+        data = py_corrected_datasets,      # Original data (months)
+        times = c(12, 36, 60, 96),
+        seed = 2125,
+        n_imputations = 5  
+    )
+print(cal_death_shap)
+```
+
+```{r}
+#| label: shap-criteria-nph
+
+cox.zph(coxph(formula_shap_death, data= py_corrected_datasets[[1]]))
+```
+
+
+```{r}
+#| label: shap-criteria-additional-strata
+
+# Residuals: discharge to readmission
+res <- resid(coxph(formula_shap_readmit_clean, data= py_corrected_datasets[[1]]), "scaledsch")
+time <- as.numeric(dimnames(res)[[1]])
+z2 <- loess(res[,"tr_outcome_adm_discharge_rule_violation_undet"] ~ time, span=0.50)
+
+plot(time, fitted(z2), type="l", col="blue",
+     main="Sch. res. – Completion (Violation of tules of the center)",
+     xlab="Time", ylab="Residuals")
+lines(supsmu(time, res[,"tr_outcome_adm_discharge_rule_violation_undet"]), lty=2, col="darkgray")
+
+
+formula_shap_readmit_clean_updated <- update(
+  formula_shap_readmit_clean,
+  . ~ . - tr_outcome_adm_discharge_rule_violation_undet + strat(tr_outcome_adm_discharge_adm_reasons)
+)
+
+results_readmit_shap2 <- evaluate_mi_cv(
+  formula = formula_shap_readmit_clean_updated, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_death_shap <- evaluate_mi_cv(
+  formula = formula_shap_death, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+results_readmit_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
+  formula = formula_shap_readmit_clean,
+  imputed_list = py_corrected_datasets, # List of data.frames
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  tau = 99,                # Evaluate up to 60 months
+  B = 2,                  # Small number for testing
+  cpus = 16
+)
+results_death_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
+  formula = formula_shap_death,
+  imputed_list = py_corrected_datasets, # List of data.frames
+  time_col = "death_time_from_disch_m", 
+  event_col = "death_event",
+  tau = 107,                # Evaluate up to 60 months
+  B = 2,                  # Small number for testing
+  cpus = 16
+)
+aicc_readmit_shap <- compute_mi_aicc(formula_shap_readmit_clean, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_shap$mean_aic - aicc_readmit_upd2$mean_aic))
+aicc_death_shap <- compute_mi_aicc(formula_shap_death, py_corrected_datasets)
+cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_shap$mean_aic - aicc_death_upd2$mean_aic))
+
+
+
+
+cal_readmit_shap<- 
+    calibrate_cph_corrected(
+        formula = formula_shap_readmit2,  # Original formula with months variable
+        data = py_corrected_datasets,      # Original data (months)
+        times = c(12, 36, 60, 96),
+        seed = 2125,
+        n_imputations = 5
+    )
+print(cal_readmit_shap)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00346  0.00211   0.988     5
+# 2          36  0.00368  0.00262   0.986     5
+# 3          60  0.00412  0.00347   0.982     5
+# 4          96  0.00449  0.00347   0.975     5
+
+cal_death_shap<- 
+    calibrate_cph_corrected(
+        formula = formula_shap_death,  # Original formula with months variable
+        data = py_corrected_datasets,      # Original data (months)
+        times = c(12, 36, 60, 96),
+        seed = 2125,
+        n_imputations = 5  
+    )
+print(cal_death_shap)
+#   time_months ece_mean ici_mean eo_mean n_imp
+#         <dbl>    <dbl>    <dbl>   <dbl> <int>
+# 1          12  0.00148  0.00142    1.01     5
+# 2          36  0.00304  0.00283    1.01     5
+# 3          60  0.00379  0.00346    1.02     5
+# 4          96  0.00428  0.00398    1.05     5
+```
+
+```{r}
+#| label: shap-criteria-nph
+zph_cox_model_readmit <- cox.zph(coxph(
+  formula_shap_readmit,
+  data = py_corrected_datasets[[1]]   # usa una imputación para el test
+))
+zph_cox_model_death <- cox.zph(coxph(
+  formula_shap_death,
+  data = py_corrected_datasets[[1]]   # usa una imputación para el test
+))
+formula_shap_readmit2 <- as.formula(
+  paste("Surv(readmit_time_from_disch_m, readmit_event) ~", 
+        paste(setdiff(vars_shap_r, "tr_outcome_adm_discharge_rule_violation_undet"), 
+        collapse = " + "), 
+        "+ strata(plan_type_strata,tr_outcome_adm_discharge_rule_violation_undet)")
+)
+results_readmit_shap2 <- evaluate_mi_cv(
+  formula = formula_shap_readmit2, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 99.10 months
+# Pooled Uno's C-Index: 0.6075 (95% CI 0.6074-0.6076)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.6338 (SD=0.0000, valid M=5)
+#   t=36 m: C=0.6161 (SD=0.0001, valid M=5)
+#   t=60 m: C=0.6105 (SD=0.0001, valid M=5)
+# ============================================================
+
+
+```
+
+```{r}
+#| label: shap-criteria-null
+formula_shap_readmit_intonly <- as.formula(
+  paste("Surv(readmit_time_from_disch_m, readmit_event) ~1", 
+        #paste(setdiff(vars_shap_r, "tr_outcome_adm_discharge_rule_violation_undet"), collapse = " + "), 
+        "+ strata(plan_type_strata,tr_outcome_adm_discharge_rule_violation_undet)")
+)
+results_readmit_shap_intonly <- evaluate_mi_cv(
+  formula = formula_shap_readmit_intonly, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+formula_shap_readmit_intonly <- as.formula(
+  paste("Surv(readmit_time_from_disch_m, readmit_event) ~1", 
+        #paste(setdiff(vars_shap_r, "tr_outcome_adm_discharge_rule_violation_undet"), collapse = " + "), 
+        "+ strata(plan_type_strata,tr_outcome_adm_discharge_rule_violation_undet)")
+)
+results_readmit_shap_intonly <- evaluate_mi_cv(
+  formula = formula_shap_readmit_intonly, 
+  imputed_list = py_corrected_datasets, 
+  time_col = "readmit_time_from_disch_m", 
+  event_col = "readmit_event",
+  k = length(py_corrected_datasets),
+  n_repeats=2
+)
+```
+
+With stratification, individuals in different strata have different baseline hazards, and therefore different predicted survival probabilities. This creates some discrimination purely from the stratum membership.
+
+For the Wald test (𝐷1) to be valid, the ‘Reduced’ model must be a perfect subset of the ‘Full’ model. You cannot change the underlying structure (strata).
+
+## Interactions
+
+```{r}
+#| label: shap-criteria-int
+# Option A: convert list → mids, then use mice::with()
+mids_obj <- mice::as.mids(
+  dplyr::bind_rows(py_corrected_datasets, .id = ".imp") |>
+    dplyr::rename(.id = ".imp") |>
+    dplyr::mutate(.id = as.integer(.id))
+)
+fit_model_1 <- mice::with(mids_obj, survival::coxph(formula_shap_readmit))
+fit_model_2 <- mice::with(mids_obj, survival::coxph(formula_shap_readmit2))
+model_comparison <- mice::D3(fit_model_1, fit_model_2)
+# Option B: fit per-imputation and wrap into mira manually
+fits1 <- lapply(py_corrected_datasets, \(d) survival::coxph(formula_shap_readmit, data = d))
+fits2 <- lapply(py_corrected_datasets, \(d) survival::coxph(formula_shap_readmit2, data = d))
+fit_model_1 <- mice::as.mira(fits1)
+fit_model_2 <- mice::as.mira(fits2)
+mice::D3(fit_model_1, fit_model_2)
+```
+
+## Functional forms
+
+```{r}
+#| label: shap-criteria-func-form
+```
+
+## Other
+
+```{r}
+#| label: calibration
+start_clock <- base::proc.time()
+formula_death_rms <- update(
+  formula_death_updated,
+  . ~ . 
+    - tr_outcome_adm_discharge_rule_violation_undet
+    - strata(plan_type_strata) 
+    + strat(plan_type_strata) +strat(tr_outcome_adm_discharge_rule_violation_undet)
+)
+library(rms)
+rms::datadist(py_corrected_datasets[[1]]) -> ddist
+base::options(datadist = "ddist")
+# 2. Fit the model and run the bootstrap calibration
+# Ensure formula_death_rms uses rms::strat() for your strata
+model_death_cph <- rms::cph(
+  formula = formula_death_rms, 
+  data = py_corrected_datasets[[1]],
+  x = TRUE, y = TRUE, surv = TRUE,
+  time.inc = 12  # Defines the 12-month increment
+)
+# B = 1000 is computationally heavy; this is where the time is spent
+cal_boot <- rms::calibrate(
+  model_death_cph, 
+  method = "boot", 
+  B = 20, 
+  u = 12  # Matches the 12-month horizon to fix the '30 days' message
+)
+# 3. Stop the timer
+end_clock <- base::proc.time()
+# 4. Calculate total time taken
+total_time <- end_clock - start_clock
+# 5. Extract ICI (Integrated Calibration Index) from the 'corrected' column
+# In rms, 'Mean |a|' is exactly the ICI from Austin & Steyerberg
+stats_output <- base::print(cal_boot)
+ici_value <- stats_output["Mean |a|", "corrected"]
+# Display Results
+base::cat("\n--- TIMING RESULTS ---\n")
+base::print(total_time)
+```
+# Session info
+```{r}
+#| label: session-info
+#| echo: true
+#| error: true
+#| message: true
+#| paged.print: true
+message(paste0("R library: ", Sys.getenv("R_LIBS_USER")))
+message(paste0("Date: ",withr::with_locale(new = c('LC_TIME' = 'C'), code =Sys.time())))
+message(paste0("Editor context: ", path))
+cat("quarto version: "); quarto::quarto_version()
+sesion_info <- devtools::session_info()
+dplyr::select(
+  tibble::as_tibble(sesion_info$packages),
+  c(package, loadedversion, source)
+)|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('R packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}")))
+```
+```{r}
+#| label: session-info-python
+#| echo: true
+#| error: true
+#| message: true
+#| paged.print: true
+#| class-output: center-table
+reticulate::py_list_packages()|> 
+  DT::datatable(filter = 'top', colnames = c('Row number' =1,'Package' = 2, 'Version'= 3),
+              caption = htmltools::tags$caption(
+        style = 'caption-side: top; text-align: left;',
+        '', htmltools::em('Python packages')),
+      options=list(
+initComplete = htmlwidgets::JS(
+        "function(settings, json) {",
+        "$(this.api().tables().body()).css({
+            'font-family': 'Helvetica Neue',
+            'font-size': '70%', 
+            'code-inline-font-size': '15%', 
+            'white-space': 'nowrap',
+            'line-height': '0.75em',
+            'min-height': '0.5em'
+            });",
+        "}"))) 
+```
+Save
+```{r}
+#| label: save
+#| echo: true
+#| error: true
+#| warning: true
+#| message: true
+#| paged.print: true
+#| results: "hold"
+#| eval: true
+wdpath<-
+paste0(gsub("/cons","",gsub("cons","",paste0(getwd(),"/cons"))))
+envpath<- if(regmatches(wdpath, regexpr("[A-Za-z]+", wdpath))=="G"){"G:/Mi unidad/Alvacast/SISTRAT 2023/"}else{"E:/Mi unidad/Alvacast/SISTRAT 2023/"}
+paste0(getwd(),"/cons")
+file.path(paste0(wdpath,"data/20241015_out"))
+file.path(paste0(envpath,"data/20241015_out"))
+# Save
+rdata_path <- file.path(wdpath, "data/20241015_out", paste0("pred2_ndp_", format(Sys.time(), "%Y_%m_%d"), ".Rdata"))
+save.image(rdata_path)
+cat("Saved in:",
+    rdata_path)
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  password <- Sys.getenv("PASSWORD_SECRET")
+} else {
+  if (interactive()) {
+    utils::savehistory(tempfile())
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+    utils::loadhistory()
+  }
+  Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+save.image(paste0(rdata_path,".enc"))
+# Encriptar el archivo en el mismo lugar
+httr2::secret_encrypt_file(path = paste0(rdata_path,".enc"), key = "PASSWORD_SECRET")
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+cat("Copy renv lock into cons folder\n")
+if (Sys.getenv("RSTUDIO_SESSION_TYPE") == "server" || file.exists("/.dockerenv")) {
+  message("Running on RStudio Server or inside Docker. Folder copy skipped.")
+} else {
+    
+  source_folder <- 
+  destination_folder <- paste0(wdpath,"cons/renv")
+  
+  # Copy the folder recursively
+    file.copy(paste0(wdpath,"renv.lock"), paste0(wdpath,"cons/renv.lock"), overwrite = TRUE)
+  
+  message("Renv lock copy performed.")
+}
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:
+time_after_dedup2<-Sys.time()
+
+
+
+```

@@ -1,0 +1,18 @@
+{
+  "source_tag": "20260228_1513",
+  "run_timestamp": "20260228_1513",
+  "n_bootstrap": 500,
+  "seed": 2125,
+  "max_n": 90000,
+  "max_n_definition": "Maximum patients used in bootstrap stability analysis; if dataset size <= max_n, all patients are used.",
+  "top_k": 20,
+  "primary_stability_rule": "freq_in_top_20_pct >= 90.0",
+  "secondary_metrics_reported": [
+    "cv_rank_pct",
+    "rank_ci2p5",
+    "rank_ci97p5",
+    "cv_numerator_sd_rank",
+    "cv_denominator_mean_rank",
+    "mean_rank_pct_of_feature_count"
+  ]
+}
