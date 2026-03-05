@@ -447,6 +447,9 @@ library(parallel)
 library(mice)
 library(riskRegression)
 library(tidyr)
+library(doFuture)
+library(vcd)
+library(survAUC)
 
 #flexsurv
 #if(!require(compareCstat)){install.pacakges("compareCstat")}
@@ -686,6 +689,21 @@ tidy_cph <- function(model) {
 ```
 </div>
 
+```{r}
+# Instala 'here' si no lo tienes: if(!require(here)) install.packages("here")
+
+# Define la raíz del proyecto sin importar el OS
+# 'here' siempre apunta a la carpeta que contiene el archivo .Rproj
+root <- here::here()
+
+# Si necesitas la ruta "padre" de /cons (como haces en tu script):
+project_root <- gsub("/cons$", "", root) 
+
+# Definir carpetas de salida de forma relativa
+data_out <- file.path(project_root, "data", "20241015_out")
+figs_out <- file.path(root, "_figs")
+```
+
 <br>
 
 ::: {.callout-note}
@@ -710,8 +728,9 @@ In this step, we imported the center identifiers and then applied a correction p
 #| paged.print: true
 #| results: "hold"
 #| eval: true
-id_centro_vec<- 
-rio::import(paste0(file.path(wdpath, "data/20241015_out/pred1"),"/id_centro.Rds"))
+
+id_centro_vec <- rio::import(paste0(data_out, "/pred1/id_centro.Rds"))
+
 # 1. Apply Correction to Each Dataset in the List
 corrected_datasets_nondum <- map(filled_datasets, function(df) {
   # Ensure columns are numeric for comparison
@@ -742,8 +761,10 @@ corrected_datasets_nondum <- map(filled_datasets, function(df) {
   return(df)
 })
 ```
-```{r, eval=F}
+```{r }
 #| label: prepare-data-exp
+#| eval: False
+
 # 2. Iterate and Export
 # iwalk automatically gives you the object (.x) and its index (.y)
 purrr::iwalk(corrected_datasets_nondum, function(df, i) {
@@ -766,17 +787,90 @@ Assuming that `corrected_datasets_nondum` has not been modified since its last u
 ```{r}
 #| label: import-parquet
 split2125<- 
-nanoparquet::read_parquet(paste0(gsub("/cons","/",getwd()), "/cons/_out/readm_split_seed2125_test20_mar26.parquet"))
+nanoparquet::read_parquet(paste0(project_root, "/cons/_out/readm_split_seed2125_test20_mar26.parquet"))
+
+```
+
+```{r}
+# 2. Filter the dataset list
+corrected_datasets_nondum_filt <- corrected_datasets_nondum |> 
+  purrr::map(\(df) df |> 
+    dplyr::mutate(esto= dplyr::case_when(grepl("adm reasons",tr_outcome) & death_event==1 & death_time_from_disch_m <= 0.23~"artifact", grepl("other", tr_outcome)~"other", T~NA_character_)) |> 
+    dplyr::filter(is.na(esto)) |> 
+    dplyr::select(-esto))
+
+corrected_datasets_nondum[[1]] |> 
+  dplyr::mutate(esto= dplyr::case_when(grepl("adm reasons",tr_outcome) & death_event==1 & death_time_from_disch_m <= 0.23~"artifact", grepl("other", tr_outcome)~"other", T~NA_character_)) |> 
+  janitor::tabyl(esto) |> 
+  knitr::kable("markdown", caption="Distribution of Excluded Observations")
+#      esto     n     percent valid_percent
+#  artifact   137 0.001547953     0.3892045
+#     other   215 0.002429269     0.6107955
+#      <NA> 88152 0.996022779            NA    
+# 
+nrow(corrected_datasets_nondum_filt[[1]])          
+```
+
+
+```{r}
+# 1. Read Python's split file
+py_split <- split2125
+cat("Python split:\n")
+cat("Total rows:", nrow(py_split), "\n")
+cat("Train:", sum(py_split$is_train), "\n")
+cat("Test:", sum(!py_split$is_train), "\n\n")
+
+# 2. Check your R data dimensions
+cat("Your R data:\n")
+cat("Rows in corrected_datasets_nondum_filt[[1]]:", nrow(corrected_datasets_nondum_filt[[1]]), "\n")
+
+# 3. Create matching signature in R (combine death_time + age)
+r_data <- corrected_datasets_nondum_filt[[1]] %>%
+  mutate(
+    row_id = row_number(),  # 1-based row number
+    # Adjust column names if yours are different!
+    death_time_r = round(death_time_from_disch_m, 2),  # or your death time column
+    adm_age_r = adm_age_rec3,  # or your age column
+    # Create signature for matching
+    signature = paste0("d", death_time_r, "_a", adm_age_r)
+  )
+
+# 4. Create same signature in Python data
+py_split$signature <- paste0("d", py_split$death_time_from_disch_m, "_a", py_split$adm_age_rec3)
+
+# 5. Find discrepancies
+in_py_not_r <- py_split %>% filter(!signature %in% r_data$signature)
+in_r_not_py <- r_data %>% filter(!signature %in% py_split$signature)
+
+cat("\n--- MISMATCHES ---\n")
+cat("In Python but NOT in R:", nrow(in_py_not_r), "rows\n")
+cat("In R but NOT in Python:", nrow(in_r_not_py), "rows\n")
+
+# 6. Show examples of missing rows
+if(nrow(in_py_not_r) > 0) {
+  cat("\nFirst 10 rows in Python but missing in R:\n")
+  print(head(in_py_not_r[, c("row_id", "is_train", "death_time_from_disch_m", "adm_age_rec3")], 10))
+}
+
+if(nrow(in_r_not_py) > 0) {
+  cat("\nFirst 10 rows in R but missing in Python:\n")
+  print(head(in_r_not_py[, c("row_id", "death_time_r", "adm_age_r")], 10))
+}
+
+# 7. Check if row_id ranges match
+cat("\n--- ROW ID RANGES ---\n")
+cat("Python row_id range:", min(py_split$row_id), "-", max(py_split$row_id), "\n")
+cat("R row_id range:", min(r_data$row_id), "-", max(r_data$row_id), "\n")
 ```
 
 We generated a defensive reproducibility check with automatic triggers that stop execution if something changed of the 80/20 split (row order, split mismatch, unexpected counts, etc.).
 
 ```{r}
 #| label: format-python-split
-df <- cbind.data.frame(corrected_datasets_nondum[[1]], split2125)|> 
+df <- cbind.data.frame(corrected_datasets_nondum_filt[[1]], dplyr::select(split2125, is_train))|> 
   dplyr::filter(is_train==T)
 message(paste0("The training database is composed of ", nrow(df)," observations"))
-expected_n_train <- 70510   # replace with known expected value
+expected_n_train <- 70521   # replace with known expected value
 if (nrow(df) != expected_n_train) {
   stop("❌ Inconsistency detected: Training sample size does not match expected value.")
 } else {
@@ -786,7 +880,7 @@ if (nrow(df) != expected_n_train) {
 observed_foreign_n <- df |>
   dplyr::summarise(n = sum(national_foreign == 1, na.rm = TRUE)) |>
   dplyr::pull(n)
-if (observed_foreign_n != 462) {
+if (observed_foreign_n != 453) {
   stop(paste0("❌ Inconsistency detected: national_foreign count is ",
               observed_foreign_n,
               " but expected ",
@@ -794,12 +888,12 @@ if (observed_foreign_n != 462) {
 } else {
   message("✔ national_foreign count verified.")
 }
-if (abs(mean(df$adm_age_rec3, na.rm = TRUE) -  35.78624) > 0.01) {
+if (abs(mean(df$adm_age_rec3, na.rm = TRUE) -  35.7256) > 0.01) {
   stop("❌ Age distribution changed — possible split mismatch.")
 }
 ```
 
-To ensure complete consistency between our R and Python modeling environments, we implemented a harmonized feature preprocessing pipeline. First, we isolated and preserved our target and metadata variables (such as readmission and death events, time-to-event tracking, and center identifiers) to ensure they remained unaltered during transformations. We then generated **dummy variables** (one-hot encoding with k-1 categories) for nominal and ordinal features (such as housing status, urbanicity, clinical evaluations, and educational attainment). Crucially, we explicitly defined the **reference category** for each variable (e.g., 'marihuana' for the primary substance `primary_sub_mod` and first substance `first_sub_used`, and 'pg-pab' for the treatment plan type) to guarantee that both environments dropped the exact same baseline category. 
+To ensure consistency between our R and Python modeling environments, we implemented a harmonized feature preprocessing pipeline. First, we isolated and preserved our target and metadata variables (such as readmission and death events, time-to-event tracking, and center identifiers) to ensure they remained unaltered during transformations. We then generated **dummy variables** (one-hot encoding with k-1 categories) for nominal and ordinal features (such as housing status, urbanicity, clinical evaluations, and educational attainment). Crucially, we explicitly defined the **reference category** for each variable (e.g., 'marihuana' for the primary substance `primary_sub_mod` and first substance `first_sub_used`, and 'pg-pab' for the treatment plan type) to guarantee that both environments dropped the exact same baseline category. 
 
 To overcome native differences in how R and Python name generated dummy variables, we implemented a **custom string harmonization** step in R to perfectly replicate Python's snake_case format. Finally, to handle high cardinality and sparse dummy variables within the first_sub_used feature, we **collapsed low-frequency substances** (such as opioids, hallucinogens, inhalants, tranquilizers, and amphetamines) into a single, aggregated first_sub_used_other indicator. This combination of strict reference matching, naming harmonization, and dimensionality reduction guaranteed a uniform input shape of exactly 62 identically named columns (56 features and 6 metadata variables) across all datasets in both programming environments.
 
@@ -812,10 +906,10 @@ heavy_to_remove <- Filter(function(x) {
   # Calculate size in MB
   obj_size <- object.size(get(x)) / (1024^2)
   # Logic: Is it heavy AND is it NOT one of my protected objects?
-  obj_size > threshold_mb && !(x %in% c("corrected_datasets_nondum", "py_corrected_datasets"))
+  obj_size > threshold_mb && !(x %in% c("corrected_datasets_nondum_filt", "py_corrected_datasets"))
 }, ls())
 # Excepting the databases of focus
-heavy_to_remove<- setdiff(heavy_to_remove , c("py_corrected_datasets", "corrected_datasets_nondum"))
+heavy_to_remove<- setdiff(heavy_to_remove , c("py_corrected_datasets", "corrected_datasets_nondum_filt"))
 # 3. Remove them and clean up
 if (length(heavy_to_remove) > 0) {
   rm(list = heavy_to_remove)
@@ -852,7 +946,7 @@ cox_columns <- c(
   "sub_dep_icd10_status_drug_dependence", 
   "any_violence_1_domestic_violence_sex_abuse", "tr_outcome_referral", 
   "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", 
-  "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "tr_outcome_adm_discharge_adm_reasons", #"tr_outcome_other", 
   "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", 
   "adm_motive_justice_sector", "adm_motive_other", "first_sub_used_alcohol", 
   "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other",
@@ -1025,10 +1119,10 @@ collapse_first_sub_used_other <- function(df) {
   }
   df
 }
-idx <- seq_len(min(5, length(corrected_datasets_nondum)))
+idx <- seq_len(min(5, length(corrected_datasets_nondum_filt)))
 all_required_cols <- c(meta_cols, cox_columns)
 py_corrected_datasets <- purrr::map(
-  corrected_datasets_nondum[idx],
+  corrected_datasets_nondum_filt[idx],
   \(x) {
     x_proc <- x |>
       preprocess_features_robust(
@@ -1060,7 +1154,8 @@ predictors <- c(
   "cohabitation_family_of_origin", "cohabitation_with_couple_children", "cohabitation_others", 
   "sub_dep_icd10_status_drug_dependence", 
   "any_violence_1_domestic_violence_sex_abuse", 
-  "tr_outcome_referral", "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", "tr_outcome_adm_discharge_adm_reasons", "tr_outcome_other", 
+  "tr_outcome_referral", "tr_outcome_dropout", "tr_outcome_adm_discharge_rule_violation_undet", "tr_outcome_adm_discharge_adm_reasons", 
+  #"tr_outcome_other",  #eliminated because of the artifact issue
   "adm_motive_sanitary_sector", "adm_motive_another_sud_facility_fonodrogas_senda_previene", "adm_motive_justice_sector", "adm_motive_other", 
   "first_sub_used_alcohol", "first_sub_used_cocaine_paste", "first_sub_used_cocaine_powder", "first_sub_used_other", 
   "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder", "primary_sub_mod_alcohol", "primary_sub_mod_others", 
@@ -1163,8 +1258,8 @@ py_corrected_datasets <- purrr::map(
       readmit_time_from_disch_m = dplyr::if_else(readmit_time_from_disch_m <= 0, 1e-6, readmit_time_from_disch_m)
     )
 )
-#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
-#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
+#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#:#
 #Large generalized VIF (as calculated by rms::vif()) suggests that there might be large off-diagonal elements in the variance-covariance matrix of the coefficient estimates
 cox_readmit <- coxph(  formula_readmit,  data = py_corrected_datasets[[1]] )
 cox_death <- coxph(formula_death, data = py_corrected_datasets[[1]] )
@@ -1201,7 +1296,7 @@ formula_death_updated <- update(
 ```{r}
 #| label: EVALUATE-MI-CV
 
-registerDoFuture()  # Register with foreach
+doFuture::registerDoFuture()  # Register with foreach
 options(future.globals.maxSize = 2 * 1024^3)  # 2 GiB
 #HELPER FUNCTION: Evaluates a Cox model with multiple imputation and cross-validation, computing C-index, Uno's C, and IBS at specified time points. Handles parallel processing and ensures reproducibility with seeds. Validates input schema and provides detailed error messages for missing variables.
 # Define these at TOP LEVEL, outside evaluate_mi_cv()
@@ -1216,6 +1311,7 @@ ibs_ipcw_train <- function(df_train, df_test, surv_mat, times,
                             time_col, event_col, eps = 1e-8, g_min = 0.05) {
   ev_train <- to01(df_train[[event_col]])
   sf_cens  <- survival::survfit(
+    Surv(df_train[[time_col]], 1 - ev_train) ~ 1
   )
   # ── KEY FIX: find the last time G(t) >= g_min in THIS fold's training KM ──
   safe_times <- sf_cens$time[sf_cens$surv >= g_min]
@@ -2387,75 +2483,119 @@ plot_schoenfeld_residuals <- function(formula, variable, df, span = 0.50) {
 
 ```{r}
 #| label: update-gvif-cindex-ibs
+
+total_cpus <- parallel::detectCores()
+cpus <- ifelse(total_cpus > 30, 16, 7)
+
 results_readmit <- evaluate_mi_cv(
-  formula = formula_readmit, 
-  imputed_list = py_corrected_datasets, 
-  time_col = "readmit_time_from_disch_m", 
+  formula = formula_readmit,
+  imputed_list = py_corrected_datasets,
+  time_col = "readmit_time_from_disch_m",
   event_col = "readmit_event",
   k = length(py_corrected_datasets),
-  n_repeats=2
+  n_repeats = 2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 99.10 months
+# Pooled Uno's C-Index: 0.6067 (95% CI 0.6066-0.6068)
+# Pooled UnoC (survAUC::UnoC): 0.6679 (95% CI 0.6477-0.6882)
+# Pooled IBS: 0.1599 (95% CI 0.1598-0.1599)
+# Pooled IBS (IPCW-train): 0.3475 (95% CI 0.3474-0.3476)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.6312 (95% CI 0.6308-0.6315, valid repeats=2)
+#   t=36 m: C=0.6153 (95% CI 0.6152-0.6153, valid repeats=2)
+#   t=60 m: C=0.6099 (95% CI 0.6099-0.6100, valid repeats=2)
+# ============================================================
 results_death <- evaluate_mi_cv(
-  formula = formula_death, 
-  imputed_list = py_corrected_datasets, 
-  time_col = "death_time_from_disch_m", 
+  formula = formula_death,
+  imputed_list = py_corrected_datasets,
+  time_col = "death_time_from_disch_m",
   event_col = "death_event",
   k = length(py_corrected_datasets),
-  n_repeats=2
+  n_repeats = 2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 107.94 months
+# Pooled Uno's C-Index: 0.7456 (95% CI 0.7455-0.7456)
+# Pooled UnoC (survAUC::UnoC): 0.7923 (95% CI 0.7618-0.8228)
+# Pooled IBS: 0.0351 (95% CI 0.0351-0.0351)
+# Pooled IBS (IPCW-train): 0.0886 (95% CI 0.0885-0.0887)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.7581 (95% CI 0.7578-0.7583, valid repeats=2)
+#   t=36 m: C=0.7634 (95% CI 0.7626-0.7641, valid repeats=2)
+#   t=60 m: C=0.7624 (95% CI 0.7618-0.7630, valid repeats=2)
+# ============================================================
 results_readmit_ibs <- cph_evaluate_boot_oob_mi_corrected(
-    formula = formula_readmit,
-    imputed_list = py_corrected_datasets,
-    time_col = "readmit_time_from_disch_m", 
-    event_col = "readmit_event",
-    tau = 99,             # Your maximum time horizon
-    B = 2,              # Standard for stable 95% CIs
-    seed = 2125,
-    cpus= 16,
-    verbose = TRUE
+  formula = formula_readmit,
+  imputed_list = py_corrected_datasets,
+  time_col = "readmit_time_from_disch_m",
+  event_col = "readmit_event",
+  tau = 99, # Your maximum time horizon
+  B = 2, # Standard for stable 95% CIs
+  seed = 2125,
+  cpus = cpus,
+  verbose = TRUE
 )
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.1585 (95% CI: 0.1582 - 0.1589)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
 results_death_ibs <- cph_evaluate_boot_oob_mi_corrected(
-    formula = formula_death,
-    imputed_list = py_corrected_datasets,
-    time_col = "death_time_from_disch_m", 
-    event_col = "death_event",
-    tau = 107,             # Your maximum time horizon
-    B = 2,              # Standard for stable 95% CIs
-    seed = 2125,
-    cpus=16,
-    verbose = TRUE
+  formula = formula_death,
+  imputed_list = py_corrected_datasets,
+  time_col = "death_time_from_disch_m",
+  event_col = "death_event",
+  tau = 107, # Your maximum time horizon
+  B = 2, # Standard for stable 95% CIs
+  seed = 2125,
+  cpus = cpus,
+  verbose = TRUE
 )
-
-cal_readmit<- 
-calibrate_cph_corrected(
-    formula = formula_readmit,  # Original formula with months variable
-    data = py_corrected_datasets,      # Original data (months)
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.0357 (95% CI: 0.0356 - 0.0359)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
+cal_readmit <-
+  calibrate_cph_corrected(
+    formula = formula_readmit, # Original formula with months variable
+    data = py_corrected_datasets, # Original data (months)
     times = c(12, 36, 60, 96),
     seed = 2125,
     n_imputations = 5
-)
+  )
 print(cal_readmit)
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00201  0.00147   0.990     5
-# 2          36  0.00292  0.00223   0.987     5
-# 3          60  0.00461  0.00408   0.982     5
-# 4          96  0.00497  0.00398   0.975     5
-cal_death<- 
-calibrate_cph_corrected(
-    formula = formula_death,  # Original formula with months variable
-    data = py_corrected_datasets,      # Original data (months)
+# 1          12  0.00298  0.00199   0.990     5
+# 2          36  0.00436  0.00349   0.987     5
+# 3          60  0.00505  0.00400   0.983     5
+# 4          96  0.00482  0.00373   0.975     5
+cal_death <-
+  calibrate_cph_corrected(
+    formula = formula_death, # Original formula with months variable
+    data = py_corrected_datasets, # Original data (months)
     times = c(12, 36, 60, 96),
     seed = 2125,
     n_imputations = 5
-)
+  )
 print(cal_death)
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00196  0.00183    1.02     5
-# 2          36  0.00256  0.00241    1.02     5
-# 3          60  0.00269  0.00246    1.04     5
-# 4          96  0.00421  0.00428    1.08     5
+# 1          12  0.00178  0.00173    1.01     5
+# 2          36  0.00276  0.00268    1.01     5
+# 3          60  0.00319  0.00300    1.02     5
+# 4          96  0.00357  0.00322    1.06     5
+gc()
 ```
 
 ```{r}
@@ -2476,6 +2616,19 @@ results_readmit2 <- evaluate_mi_cv(
   k = length(py_corrected_datasets),
   n_repeats=2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 99.10 months
+# Pooled Uno's C-Index: 0.6067 (95% CI 0.6066-0.6069)
+# Pooled UnoC (survAUC::UnoC): 0.6686 (95% CI 0.6480-0.6891)
+# Pooled IBS: 0.1599 (95% CI 0.1598-0.1599)
+# Pooled IBS (IPCW-train): 0.3475 (95% CI 0.3474-0.3476)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.6313 (95% CI 0.6309-0.6316, valid repeats=2)
+#   t=36 m: C=0.6154 (95% CI 0.6153-0.6154, valid repeats=2)
+#   t=60 m: C=0.6100 (95% CI 0.6099-0.6100, valid repeats=2)
+# ============================================================
 results_readmit2_ibs <- cph_evaluate_boot_oob_mi_corrected(
   formula = formula_readmit_updated,
   imputed_list = py_corrected_datasets, # List of data.frames
@@ -2485,6 +2638,13 @@ results_readmit2_ibs <- cph_evaluate_boot_oob_mi_corrected(
   B = 2,                  # Small number for testing
   cpus = 16
 )
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.1585 (95% CI: 0.1582 - 0.1589)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
 results_death2 <- evaluate_mi_cv(
   formula = formula_death_updated, 
   imputed_list = py_corrected_datasets, 
@@ -2493,6 +2653,19 @@ results_death2 <- evaluate_mi_cv(
   k = length(py_corrected_datasets),
   n_repeats=2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 107.94 months
+# Pooled Uno's C-Index: 0.7456 (95% CI 0.7456-0.7457)
+# Pooled UnoC (survAUC::UnoC): 0.7919 (95% CI 0.7611-0.8228)
+# Pooled IBS: 0.0351 (95% CI 0.0351-0.0351)
+# Pooled IBS (IPCW-train): 0.0886 (95% CI 0.0885-0.0887)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.7581 (95% CI 0.7578-0.7584, valid repeats=2)
+#   t=36 m: C=0.7634 (95% CI 0.7627-0.7642, valid repeats=2)
+#   t=60 m: C=0.7625 (95% CI 0.7619-0.7631, valid repeats=2)
+# ============================================================
 results_death2_ibs <- cph_evaluate_boot_oob_mi_corrected(
   formula = formula_death_updated,
   imputed_list = py_corrected_datasets, # List of data.frames
@@ -2502,10 +2675,19 @@ results_death2_ibs <- cph_evaluate_boot_oob_mi_corrected(
   B = 2,                  # Small number for testing
   cpus = 16
 )
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.0357 (95% CI: 0.0356 - 0.0359)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
 aicc_readmit_upd <- compute_mi_aicc(formula_readmit_updated, py_corrected_datasets)
+#Mean AICc: 282681.18
 aicc_readmit <- compute_mi_aicc(formula_readmit, py_corrected_datasets)
+#Mean AICc: 282683.12
 cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_upd$mean_aic - aicc_readmit$mean_aic))
-#Difference in Mean AIC: 0.02
+#Difference in Mean AIC: -1.94
 
 compare_mi_models_d1(
     formula_full = formula_readmit,           # This one has 'logro_minimo'
@@ -2515,14 +2697,16 @@ compare_mi_models_d1(
 # ============================================================
 # MODEL COMPARISON RESULT (D1 Statistic)
 # ============================================================
-#    test  statistic df1 df2 dfcom   p.value         riv
-#  1 ~~ 2 0.04459632   1   4  3091 0.8430707 0.002728568
+#    test  statistic df1 df2 dfcom   p.value           riv
+#  1 ~~ 2 0.07629859   1   4 15182 0.7960619 0.00009791482
 # ============================================================
-#not nested: compare_mi_models_d1(formula_readmit_updated, formula_readmit, py_corrected_datasets)
+
 aicc_death_upd <- compute_mi_aicc(formula_death_updated, py_corrected_datasets)
+#Mean AICc: 53930.03
 aicc_death <- compute_mi_aicc(formula_death, py_corrected_datasets)
+#Mean AICc: 53932.12
 cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_upd$mean_aic - aicc_death$mean_aic))
-#Difference in Mean AIC: -2.04
+#Difference in Mean AIC: -2.08
 compare_mi_models_d1(
     formula_full = formula_death,           # This one has 'logro_minimo'
     formula_reduced = formula_death_updated,# This one does not
@@ -2531,8 +2715,8 @@ compare_mi_models_d1(
 # ============================================================
 # MODEL COMPARISON RESULT (D1 Statistic)
 # ============================================================
-#    test statistic df1 df2 dfcom   p.value          riv
-#  1 ~~ 2    2.0308   1   4 15190 0.2272661 0.0009341646
+#    test   statistic df1 df2 dfcom   p.value          riv
+#  1 ~~ 2 0.003735574   1   4  2974 0.9541961 0.0002646455
 # ============================================================
 
 cal_readmit2<- 
@@ -2546,10 +2730,10 @@ calibrate_cph_corrected(
 print(cal_readmit2)
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00233  0.00144   0.990     5
-# 2          36  0.00322  0.00221   0.987     5
-# 3          60  0.00468  0.00401   0.983     5
-# 4          96  0.00492  0.00398   0.975     5
+# 1          12  0.00297  0.00206   0.990     5
+# 2          36  0.00434  0.00343   0.987     5
+# 3          60  0.00506  0.00401   0.983     5
+# 4          96  0.00503  0.00381   0.975     5
 cal_death2<- 
 calibrate_cph_corrected(
     formula = formula_death_updated,  # Original formula with months variable
@@ -2561,10 +2745,10 @@ calibrate_cph_corrected(
 print(cal_death2)
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00195  0.00182    1.02     5
-# 2          36  0.00255  0.00242    1.02     5
-# 3          60  0.00269  0.00244    1.04     5
-# 4          96  0.00422  0.00429    1.08     5
+# 1          12  0.00176  0.00171    1.01     5
+# 2          36  0.00276  0.00268    1.01     5
+# 3          60  0.00321  0.00301    1.02     5
+# 4          96  0.00360  0.00327    1.06     5
 ```
 
 ## Proportionallity
@@ -2690,21 +2874,15 @@ dev.off()
 combined_plots
 ```
 
-We decided to stratify by treatment outcome for mortality by `tr_outcome_adm_discharge_adm_reasons` and `tr_outcome_adm_discharge_rule_violation_undet`.
-
+We decided to stratify by treatment outcome for mortality by  `tr_outcome_adm_discharge_rule_violation_undet`.
 
 
 ```{r}
 #| label: nonprop3-5-test-coxzph-death-spec
-par(mfrow=c(1,2))
+par(mfrow=c(1,1))
 plot_schoenfeld_residuals(
     formula = formula_death_updated,
     variable = "tr_outcome_adm_discharge_rule_violation_undet",
-    df = py_corrected_datasets[[1]]
-)
-plot_schoenfeld_residuals(
-    formula = formula_death_updated,
-    variable = "tr_outcome_adm_discharge_adm_reasons",
     df = py_corrected_datasets[[1]]
 )
 ```
@@ -2763,11 +2941,11 @@ knitr::kable(result_df,
 # 
 # |Intervals | total| Rule violation| Adm reasons|
 # |:---------|-----:|--------------:|-----------:|
-# |(0,5]     |  6294|            243|         258|
-# |(5,10]    |  1452|             49|          32|
-# |(10,20]   |  5686|            174|         160|
-# |(20,60]   | 25594|           1194|         605|
-# |(60,120]  | 29474|           3252|           5|
+# |(0,5]     |  6159|            256|         155|
+# |(5,10]    |  1464|             45|          30|
+# |(10,20]   |  5695|            174|         159|
+# |(20,60]   | 25526|           1158|         579|
+# |(60,120]  | 29412|           3269|           7|
 ```
 
 
@@ -2782,7 +2960,7 @@ df_surv <- py_corrected_datasets[[1]] %>%
       tr_outcome_dropout == 1 ~ "dropout",
       tr_outcome_adm_discharge_rule_violation_undet == 1 ~ "rule violation/undet",
       tr_outcome_adm_discharge_adm_reasons == 1 ~ "adm reasons",
-      tr_outcome_other == 1 ~ "other",
+      #tr_outcome_other == 1 ~ "other",
       T~ "completion"
     ),
     tr_outcome_strata = factor(
@@ -2792,8 +2970,8 @@ df_surv <- py_corrected_datasets[[1]] %>%
         "referral",
         "dropout",
         "rule violation/undet",
-        "adm reasons",
-        "other"
+        "adm reasons"#,
+        #"other"
       )
     )
   )
@@ -2943,8 +3121,8 @@ ggsave(
 
 We see that treatment outcome has different baseline shapes.
 
-### Correction of strata
 
+### Correction of strata
 
 ```{r}
 #| label: update-model-to-nph
@@ -2956,7 +3134,7 @@ formula_readmit_updated2 <- update(
 # 2. Clean the Death Formula (Subtract both violators)
 formula_death_updated2 <- update(
   formula_death_updated, 
-  . ~ . - tr_outcome_adm_discharge_rule_violation_undet - tr_outcome_adm_discharge_adm_reasons
+  . ~ . - tr_outcome_adm_discharge_rule_violation_undet# - tr_outcome_adm_discharge_adm_reasons
 )
 # 1. READMISSION FORMULA
 # Safely collapse the formula into a single text string first
@@ -2972,7 +3150,7 @@ formula_readmit_updated2 <- as.formula(
 formula_death_updated2 <- as.formula(
   gsub(
     "strata\\(plan_type_strata\\)",
-    "strata(plan_type_strata) +strata(tr_outcome_adm_discharge_rule_violation_undet)+ strata(tr_outcome_adm_discharge_adm_reasons)",
+    "strata(plan_type_strata) +strata(tr_outcome_adm_discharge_rule_violation_undet)",
     paste(deparse(formula_death_updated2), collapse = " ")
   )
 )
@@ -2985,6 +3163,19 @@ results_readmit3 <- evaluate_mi_cv(
   k = length(py_corrected_datasets),
   n_repeats=2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 99.10 months
+# Pooled Uno's C-Index: 0.6066 (95% CI 0.6064-0.6068)
+# Pooled UnoC (survAUC::UnoC): 0.6674 (95% CI 0.6473-0.6876)
+# Pooled IBS: 0.1598 (95% CI 0.1597-0.1598)
+# Pooled IBS (IPCW-train): 0.3474 (95% CI 0.3473-0.3475)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.6317 (95% CI 0.6313-0.6321, valid repeats=2)
+#   t=36 m: C=0.6152 (95% CI 0.6150-0.6153, valid repeats=2)
+#   t=60 m: C=0.6098 (95% CI 0.6097-0.6099, valid repeats=2)
+# ============================================================
 results_death3 <- evaluate_mi_cv(
   formula = formula_death_updated2, 
   imputed_list = py_corrected_datasets, 
@@ -2993,6 +3184,19 @@ results_death3 <- evaluate_mi_cv(
   k = length(py_corrected_datasets),
   n_repeats=2
 )
+# ============================================================
+# FINAL POOLED RESULTS (Cross-Validated + Multiply Imputed)
+# ============================================================
+# Global Evaluation Time (tau): 107.94 months
+# Pooled Uno's C-Index: 0.7449 (95% CI 0.7449-0.7449)
+# Pooled UnoC (survAUC::UnoC): 0.7885 (95% CI 0.7529-0.8241)
+# Pooled IBS: 0.0350 (95% CI 0.0350-0.0350)
+# Pooled IBS (IPCW-train): 0.0883 (95% CI 0.0881-0.0884)
+# RMST-based Uno C-index by horizon:
+#   t=12 m: C=0.7643 (95% CI 0.7634-0.7653, valid repeats=2)
+#   t=36 m: C=0.7638 (95% CI 0.7629-0.7648, valid repeats=2)
+#   t=60 m: C=0.7618 (95% CI 0.7612-0.7624, valid repeats=2)
+# ============================================================
 results_readmit3_ibs <- cph_evaluate_boot_oob_mi_corrected(
   formula = formula_readmit_updated2,
   imputed_list = py_corrected_datasets, # List of data.frames
@@ -3000,8 +3204,15 @@ results_readmit3_ibs <- cph_evaluate_boot_oob_mi_corrected(
   event_col = "readmit_event",
   tau = 99,                # Evaluate up to 60 months
   B = 2,                  # Small number for testing
-  cpus = 16                # Number of CPU cores to use
+  cpus =cpus                # Number of CPU cores to use
 )
+# ============================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.1585 (95% CI: 0.1582 - 0.1589)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
 results_death3_ibs <- cph_evaluate_boot_oob_mi_corrected(
     formula = formula_death_updated2,
     imputed_list = py_corrected_datasets, # List of data.frames
@@ -3009,11 +3220,20 @@ results_death3_ibs <- cph_evaluate_boot_oob_mi_corrected(
     event_col = "death_event",
     tau = 107,                # Evaluate up to 60 months
     B = 2,                  # Small number for testing
-    cpus = 16
+    cpus =cpus
 )
+# ===========================================================
+# FINAL POOLED RESULTS (OOB Bootstrap + MI)
+# ============================================================
+# Pooled OOB IBS: 0.0356 (95% CI: 0.0355 - 0.0358)
+# Valid bootstrap replicates: 2 / 2
+# Event value used: 1
+# ============================================================
 aicc_readmit_upd2 <- compute_mi_aicc(formula_readmit_updated2, py_corrected_datasets)
+#272549.16
 cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_upd2$mean_aic - aicc_readmit_upd$mean_aic))
 aicc_death_upd2 <- compute_mi_aicc(formula_death_updated2, py_corrected_datasets)
+#51496.24
 cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_death_upd2$mean_aic - aicc_death_upd$mean_aic))
 #compare_mi_models_d1(formula_readmit_updated2, formula_readmit_updated, py_corrected_datasets)
 # Error en mitml::testModels(fit1, fit0, method = "D1", df.com = dfcom): 
@@ -3028,7 +3248,7 @@ compare_mi_models_d1(formula_readmit_updated,update(
 # MODEL COMPARISON RESULT (D1 Statistic)
 # ============================================================
 #    test statistic df1 df2 dfcom     p.value          riv
-#  1 ~~ 2  54.34984   1   4 15191 0.001804165 0.0002539622
+#  1 ~~ 2  51.07488   1   4 15183 0.002028026 0.0001081492
 # ============================================================
 compare_mi_models_d1(formula_death_updated,update(
     formula_death_updated, 
@@ -3037,8 +3257,8 @@ compare_mi_models_d1(formula_death_updated,update(
 # ============================================================
 # MODEL COMPARISON RESULT (D1 Statistic)
 # ============================================================
-#    test statistic df1      df2 dfcom      p.value         riv
-#  1 ~~ 2  145.0107   2 3075.751  3092 6.568309e-61 0.001838865
+#    test statistic df1      df2 dfcom      p.value          riv
+#  1 ~~ 2   25.7481   2 2972.522  2975 8.194034e-12 0.0003485494
 # ============================================================
 
 cal_readmit3<- 
@@ -3052,10 +3272,10 @@ calibrate_cph_corrected(
 print(cal_readmit3)
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00233  0.00147   0.989     5
-# 2          36  0.00337  0.00251   0.987     5
-# 3          60  0.00438  0.00366   0.984     5
-# 4          96  0.00450  0.00376   0.976     5
+# 1          12  0.00327  0.00225   0.990     5
+# 2          36  0.00433  0.00359   0.987     5
+# 3          60  0.00508  0.00386   0.984     5
+# 4          96  0.00495  0.00331   0.976     5
 cal_death3<- 
 calibrate_cph_corrected(
     formula = formula_death_updated2,  # Original formula with months variable
@@ -3066,10 +3286,10 @@ calibrate_cph_corrected(
 )
 #   time_months ece_mean ici_mean eo_mean n_imp
 #         <dbl>    <dbl>    <dbl>   <dbl> <int>
-# 1          12  0.00100 0.000923    1.01     5
-# 2          36  0.00274 0.00260     1.01     5
-# 3          60  0.00359 0.00342     1.02     5
-# 4          96  0.00411 0.00400     1.06     5
+# 1          12  0.00143  0.00135    1.01     5
+# 2          36  0.00271  0.00260    1.01     5
+# 3          60  0.00323  0.00297    1.02     5
+# 4          96  0.00492  0.00460    1.07     5
 print(cal_death3)
 #plot(cal_death2$combined_plot)
 ```
@@ -3078,6 +3298,8 @@ print(cal_death3)
 
 ```{r}
 #| label: shap-criteria
+
+gc()
 
 # # Linear time interaction
 # coxph(Surv(time, death) ~ var + var:time + other_covariates, data = df)
@@ -3248,7 +3470,7 @@ results_readmit_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
     event_col = "readmit_event",
     tau = 99,                # Evaluate up to 60 months
     B = 2,                  # Small number for testing
-    cpus = 16
+    cpus = =cpus
 )
 # ============================================================
 # FINAL POOLED RESULTS (OOB Bootstrap + MI)
@@ -3263,7 +3485,7 @@ results_death_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
     event_col = "death_event",
     tau = 107,                # Evaluate up to 60 months
     B = 2,                  # Small number for testing
-    cpus = 16
+    cpus = =cpus
 )
 # ============================================================
 # FINAL POOLED RESULTS (OOB Bootstrap + MI)
@@ -3373,7 +3595,7 @@ results_readmit_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
   event_col = "readmit_event",
   tau = 99,                # Evaluate up to 60 months
   B = 2,                  # Small number for testing
-  cpus = 16
+  cpus = =cpus
 )
 results_death_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
   formula = formula_shap_death,
@@ -3382,7 +3604,7 @@ results_death_shap_ibs <- cph_evaluate_boot_oob_mi_corrected(
   event_col = "death_event",
   tau = 107,                # Evaluate up to 60 months
   B = 2,                  # Small number for testing
-  cpus = 16
+  cpus = =cpus
 )
 aicc_readmit_shap <- compute_mi_aicc(formula_shap_readmit_clean, py_corrected_datasets)
 cat(sprintf("\nDifference in Mean AIC: %.2f\n", aicc_readmit_shap$mean_aic - aicc_readmit_upd2$mean_aic))
