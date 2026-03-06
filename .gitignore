@@ -14,6 +14,8 @@
 #*.Rhistory
 *.pkl
 .vdoc.*
+*.gsheet
+*.gdocs
 
 # Exceptions (negating previous ignores)
 _input/!2_ndp_2025_03_08.Rdata.7z.001
@@ -25,6 +27,7 @@ _out/!death_split_seed2125_test20.parquet
 _out/!readm_split_seed2125_test20.parquet
 !_out/!death_split_seed2125_test20.parquet
 !_out/!readm_split_seed2125_test20.parquet
+_out/*xgb*.csv
 
 # Sensitive or personal data directories
 data/

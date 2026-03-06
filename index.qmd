@@ -116,5 +116,6 @@ The main processes are summarized in the following figures.
 <img src="https://fondecytacc.github.io/SUD_health_Chile.github.io/Figures/RUT_Administraci%C3%B3n.svg" alt="Diagram" style="width: 85%; height: auto; display: block; margin: 0 auto;">
 
 
-##### Figure 2. STROBE Diagram
+##### Figure 2. Diagram of Thesis project 
 
+<img src="https://fondecytacc.github.io/cons2025/_figs/thesis_scheme.svg" alt="Diagram" style="width: 85%; height: auto; display: block; margin: 0 auto;">
