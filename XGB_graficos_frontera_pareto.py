@@ -1,12 +1,46 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 import os
+from pathlib import Path
+from datetime import datetime
+
+try:
+    from adjustText import adjust_text
+    HAS_ADJUST_TEXT = True
+except ImportError:
+    HAS_ADJUST_TEXT = False
+
+
+def find_project_root(markers=("AGENTS.md", ".git")):
+    try:
+        cur = Path.cwd().resolve()
+    except OSError as e:
+        raise RuntimeError(
+            "Invalid working directory. Run this notebook from inside the project folder."
+        ) from e
+
+    for p in (cur, *cur.parents):
+        if any((p / m).exists() for m in markers):
+            return p
+
+    raise RuntimeError(
+        f"Could not locate project root starting from {cur}. "
+        f"Expected one of markers: {markers}."
+    )
+
+
+PROJECT_ROOT = find_project_root()
+OUT_DIR = PROJECT_ROOT / "_out"
+FIGS_DIR = PROJECT_ROOT / "_figs"
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+FIGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # --- 1. DATOS ---
-readm_path = os.path.join("_out", "Readmission_Optuna2_Pareto_Phase2_20260227_2320.csv")
-mort_path = os.path.join("_out", "Death_Pareto_Phase1_20260227_1822.csv")
+readm_path = OUT_DIR / "Readmission_Optuna2_Pareto_Phase2_20260305_1553_mar26.csv"
+mort_path = OUT_DIR / "Death_Pareto_Phase2_20260305_2039_mar26.csv"
 
 df_readm = pd.read_csv(readm_path)
 df_mort = pd.read_csv(mort_path)
@@ -22,6 +56,7 @@ def normalize_pareto_columns(df):
     ]
     ibs_candidates = [
         "IBS",
+        "Phase2_IBS",
         "Phase2_Aalen_Johansen_Brier_Score",
         "Phase1_IBS",
     ]
@@ -50,123 +85,147 @@ df_mort = normalize_pareto_columns(df_mort)
 def get_best_trial_row(df):
     if "Distance_to_Ideal" in df.columns:
         return df.loc[df["Distance_to_Ideal"].idxmin()]
-    score = ((1.0 - df["C_Index"]) ** 2 + (df["IBS"]) ** 2)
+    score = (1.0 - df["C_Index"]) ** 2 + df["IBS"] ** 2
     return df.loc[score.idxmin()]
 
-# --- 2. CONFIGURACION COMPACTA (1/3 de pagina) ---
-sns.set_theme(style="whitegrid", context="paper")
 
-# Proporcion horizontal y baja (12x5)
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+def compute_pareto_front(df):
+    """Extract non-dominated points: maximize C_Index, minimize IBS."""
+    sorted_df = df.sort_values("IBS").reset_index(drop=True)
+    pareto = [sorted_df.iloc[0]]
+    best_c = sorted_df.iloc[0]["C_Index"]
+    for _, row in sorted_df.iloc[1:].iterrows():
+        if row["C_Index"] >= best_c:
+            pareto.append(row)
+            best_c = row["C_Index"]
+    return pd.DataFrame(pareto)
 
-# Fuentes y escalas
-L_SIZE = 13  # Ejes
-T_SIZE = 10  # Labels de puntos
-TITLE_SIZE = 13
-LEG_SIZE = 10
 
-# PANEL 1: READMISION
-ax1 = axes[0]
-sns.scatterplot(
-    data=df_readm,
-    x="IBS",
-    y="C_Index",
-    s=95,
-    color="#2c7bb6",
-    alpha=0.85,
-    linewidth=0,
-    ax=ax1,
-    label="Pareto trials",
-)
-winner_r = get_best_trial_row(df_readm)
-ax1.scatter(
-    winner_r["IBS"],
-    winner_r["C_Index"],
-    facecolors="none",
-    edgecolors="#111111",
-    s=280,
-    linewidth=1.8,
-    label=f"Best trial (T-{int(winner_r['trial_id'])})",
-)
+# --- 2. PUBLICATION-QUALITY SETUP ---
+mpl.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+    "axes.labelsize": 13,
+    "axes.titlesize": 14,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 11,
+    "figure.dpi": 300,
+})
 
-# Linea de Pareto
-df_r_s = df_readm.sort_values("IBS")
-ax1.plot(df_r_s["IBS"], df_r_s["C_Index"], "--", color="gray", alpha=0.4)
+fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
 
-for i in range(df_readm.shape[0]):
-    ax1.text(df_readm["IBS"].iloc[i], df_readm["C_Index"].iloc[i] + 0.0001, f"T{df_readm['trial_id'].iloc[i]}", fontsize=T_SIZE)
+PANEL_CONFIGS = [
+    {
+        "ax": axes[0],
+        "df": df_readm,
+        "color": "#2c7bb6",
+        "title": "Readmission",
+        "panel_letter": "A",
+    },
+    {
+        "ax": axes[1],
+        "df": df_mort,
+        "color": "#1a9641",
+        "title": "Mortality",
+        "panel_letter": "B",
+    },
+]
 
-ax1.set_xlabel("IBS (Brier Score)", fontsize=L_SIZE)
-ax1.set_ylabel("C-Index", fontsize=L_SIZE)
-ax1.set_title("Readmission", fontsize=TITLE_SIZE, pad=8)
-ax1.legend(
-    fontsize=LEG_SIZE,
-    loc="lower center",
-    bbox_to_anchor=(0.5, 0.02),
-    frameon=True,
-    facecolor="white",
-    edgecolor="#cccccc",
-    ncol=2,
-    columnspacing=1.0,
-    handletextpad=0.5,
-)
+for cfg in PANEL_CONFIGS:
+    ax = cfg["ax"]
+    df = cfg["df"]
+    color = cfg["color"]
+    winner = get_best_trial_row(df)
+    pareto_df = compute_pareto_front(df)
 
-# PANEL 2: MORTALIDAD
-ax2 = axes[1]
-sns.scatterplot(
-    data=df_mort,
-    x="IBS",
-    y="C_Index",
-    s=95,
-    color="#1a9641",
-    alpha=0.85,
-    linewidth=0,
-    ax=ax2,
-    label="Pareto trials",
-)
-winner_m = get_best_trial_row(df_mort)
-ax2.scatter(
-    winner_m["IBS"],
-    winner_m["C_Index"],
-    facecolors="none",
-    edgecolors="#111111",
-    s=280,
-    linewidth=1.8,
-    label=f"Best trial (T-{int(winner_m['trial_id'])})",
-)
+    # All trials
+    ax.scatter(
+        df["IBS"], df["C_Index"],
+        s=70, color=color, alpha=0.8, linewidth=0, zorder=3,
+        label="Pareto candidates",
+    )
 
-# Linea de Pareto
-df_m_s = df_mort.sort_values("IBS")
-ax2.plot(df_m_s["IBS"], df_m_s["C_Index"], "--", color="gray", alpha=0.4)
+    # Pareto staircase (step function: best achievable C for any IBS threshold)
+    pf = pareto_df.sort_values("IBS")
+    ax.step(
+        pf["IBS"], pf["C_Index"],
+        where="post", color=color, alpha=0.3, linewidth=1.5, linestyle="--",
+        zorder=2,
+    )
 
-for i in range(df_mort.shape[0]):
-    ax2.text(df_mort["IBS"].iloc[i], df_mort["C_Index"].iloc[i] + 0.0002, f"T{df_mort['trial_id'].iloc[i]}", fontsize=T_SIZE)
+    # Winner highlight
+    ax.scatter(
+        winner["IBS"], winner["C_Index"],
+        facecolors="none", edgecolors="#111111", s=260, linewidth=2.0, zorder=4,
+        label=f"Selected (T-{int(winner['trial_id'])})",
+    )
 
-ax2.set_xlabel("IBS (Brier Score)", fontsize=L_SIZE)
-ax2.set_ylabel("C-Index", fontsize=L_SIZE)
-ax2.set_title("Mortality", fontsize=TITLE_SIZE, pad=8)
-ax2.legend(
-    fontsize=LEG_SIZE,
-    loc="lower center",
-    bbox_to_anchor=(0.5, 0.02),
-    frameon=True,
-    facecolor="white",
-    edgecolor="#cccccc",
-    ncol=2,
-    columnspacing=1.0,
-    handletextpad=0.5,
-)
+    # Ideal point (C=1, IBS=0) — subtle reference
+    ax.scatter(
+        0, 1, marker="*", s=120, color="#999999", alpha=0.4, zorder=1,
+        label="Ideal point",
+    )
 
-# --- 3. EXPORTACION ---
-plt.tight_layout()
+    # Labels with adjustText to avoid overlap
+    texts = []
+    for _, row in df.iterrows():
+        texts.append(
+            ax.text(
+                row["IBS"], row["C_Index"],
+                f"T{int(row['trial_id'])}",
+                fontsize=8, color="#444444", ha="center", va="bottom",
+            )
+        )
+
+    if HAS_ADJUST_TEXT:
+        adjust_text(
+            texts, ax=ax,
+            arrowprops=dict(arrowstyle="-", color="#bbbbbb", lw=0.5),
+            expand=(1.4, 1.6),
+            force_text=(0.8, 1.0),
+        )
+
+    # Auto-scale axes with padding so no trial is clipped
+    #x_margin = max((df["IBS"].max() - df["IBS"].min()) * 0.0005, 0.005)
+    y_margin = (df["C_Index"].max() - df["C_Index"].min()) * 0.15 + 0.001
+    #ax.set_xlim(df["IBS"].min() - x_margin, df["IBS"].max() + x_margin)
+    ax.set_ylim(df["C_Index"].min() - y_margin, df["C_Index"].max() + y_margin)
+
+    ibs_min = df["IBS"].min()
+    ibs_max_zoom = df["IBS"].quantile(0.2)  # Solo hasta el percentil 30 (zona densa)
+    ax.set_xlim(ibs_min * 0.99, ibs_max_zoom * 1.01)
+    
+    ax.set_xlabel("Integrated Brier Score", fontsize=13)
+    ax.set_ylabel("Multi-Horizon C-Index", fontsize=13)
+    ax.set_title(cfg["title"], fontsize=14, fontweight="bold", pad=10)
+
+    # Panel letter
+    ax.text(
+        0.02, 0.97, cfg["panel_letter"],
+        transform=ax.transAxes, fontsize=16, fontweight="bold",
+        va="top", ha="left",
+    )
+
+    ax.legend(
+        fontsize=9, loc="lower left",
+        frameon=True, facecolor="white", edgecolor="#cccccc",
+        framealpha=0.9,
+    )
+    ax.grid(True, linestyle=":", alpha=0.4)
 
 sns.despine()
+plt.tight_layout()
 
-folder = "_figs"
-if not os.path.exists(folder):
-    os.makedirs(folder)
+# --- 3. EXPORT ---
+timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+fig_path_png = FIGS_DIR / f"pareto_front_{timestamp}_mar26.png"
+fig_path_pdf = FIGS_DIR / f"pareto_front_{timestamp}_mar26.pdf"
 
-plt.savefig(f"{folder}/pareto_compacto_tesis.png", dpi=300, bbox_inches="tight")
-plt.savefig(f"{folder}/pareto_compacto_tesis.pdf", bbox_inches="tight")
-
+plt.savefig(fig_path_png, dpi=300, bbox_inches="tight")
+plt.savefig(fig_path_pdf, bbox_inches="tight")
 plt.show()
+
+print(f"Saved: {fig_path_png}")
+print(f"Saved: {fig_path_pdf}")

@@ -1,0 +1,25 @@
+{
+  "source_tag": "20260305_2232",
+  "shap_file": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_SHAP_Aggregated_20260305_2232_mar26.pkl",
+  "stability_files_used": [
+    "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb8c_dual_death_rank_stability_20260305_2232.csv",
+    "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb8c_dual_readm_rank_stability_20260305_2232.csv"
+  ],
+  "top_n_key": 15,
+  "top_k_stability": 15,
+  "stability_freq_threshold_pct": 90.0,
+  "direction_analysis": {
+    "top_n_features_per_outcome": 20,
+    "n_bootstrap": 500,
+    "seed": 2125,
+    "max_n": 71000,
+    "min_valid_n": 300,
+    "min_group_n": 30,
+    "rule": "Risk-Increasing if CI_low>0; Risk-Decreasing if CI_high<0; else Mixed/Uncertain."
+  },
+  "notes": [
+    "No clinical interpretation text included.",
+    "SHAP magnitude is on log-hazard scale.",
+    "Direction labels are exploratory and not causal."
+  ]
+}

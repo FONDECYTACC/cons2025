@@ -1,0 +1,38 @@
+{
+  "source_bundle_tag": "20260305_2232",
+  "source_files": {
+    "shap": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_SHAP_Aggregated_20260305_2232_mar26.pkl",
+    "raw": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_final_ev_hyp_20260305_2232_mar26.pkl",
+    "baseline_hazards": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_BaselineHazards_20260305_2232_mar26.pkl",
+    "cv_splits": "G:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\xgb6_corr_DUAL_CV_Splits_20260305_2232_mar26.pkl"
+  },
+  "outcomes_processed": [
+    "readm",
+    "death"
+  ],
+  "n_patients": 70521,
+  "n_features": 56,
+  "main_top_k": 15,
+  "inter_top_k": 5,
+  "horizons_months": [
+    3.0,
+    6.0,
+    12.0,
+    36.0,
+    60.0,
+    96.0
+  ],
+  "min_valid_n": 500,
+  "global_method": "Residual-correlation interaction heuristic on SHAP log-hazard scale",
+  "horizon_method": "Approximate risk-scale interaction via weighted SHAP: SHAP * dr/deta, dr/deta=(-ln(1-r))*(1-r)",
+  "weight_clip_pct": 99.5,
+  "fdr_alpha": 0.01,
+  "direction_method": "quartile delta on residuals: mean(resid|Q4 interactor) - mean(resid|Q1 interactor)",
+  "time_dependent_rule": {
+    "rank_range_min": 8,
+    "abs_corr_delta_min": 0.05,
+    "flag_definition": "time_dependent_flag = (rank_range >= threshold) OR (abs_corr_delta >= threshold), with >=2 horizons"
+  },
+  "terminology_note": "'time_dependent_flag' / 'horizon_salience_variation_flag' indicates horizon-dependent interaction salience from risk transformation (and possible PH departures), not time-varying coefficients learned by the Cox model.",
+  "note": "Cox model structure is time-invariant; horizon-specific differences here represent risk-transform-dependent interaction salience, not different learned trees."
+}
