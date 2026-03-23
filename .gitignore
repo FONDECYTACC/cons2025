@@ -29,6 +29,9 @@ _out/!readm_split_seed2125_test20.parquet
 !_out/!readm_split_seed2125_test20.parquet
 _out/*xgb*.csv
 
+#Thesis scheme
+!_figs/thesis_scheme.svg
+
 # Sensitive or personal data directories
 data/
 raw_data/

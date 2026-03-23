@@ -118,4 +118,7 @@ The main processes are summarized in the following figures.
 
 ##### Figure 2. Diagram of Thesis project 
 
-<img src="https://fondecytacc.github.io/cons2025/_figs/thesis_scheme.svg" alt="Diagram" style="width: 85%; height: auto; display: block; margin: 0 auto;">
+
+<a href="https://raw.githubusercontent.com/FONDECYTACC/cons2025/refs/heads/main/_figs/thesis_scheme.svg" target="_blank">To open in a new window</a>
+
+<img src="https://raw.githubusercontent.com/FONDECYTACC/cons2025/refs/heads/main/_figs/thesis_scheme.svg" alt="Diagram" style="width: 85%; height: auto; display: block; margin: 0 auto;">

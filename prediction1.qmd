@@ -1041,7 +1041,7 @@ n0_runs  <- nrow(tidytable::distinct(df0, hash_key))
 
 message("0. INITIAL database, cases: ", formatC(nrow(df0), big.mark=","), sep = "")
 message("0. INITIAL database, RUNs: " , formatC(nrow(tidytable::distinct(df0, hash_key)), big.mark=","), sep = "")
-
+saveRDS(df0,paste0(dirname(path),"/pred1/df0.rds"))
 
 # 1) Qualifying flag (age 18–65 & admission in 2010–2020 inclusive)
 df1 <- df0|>
