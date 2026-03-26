@@ -121,3 +121,5 @@ cons/_out/more_one_overlaps_after_center_id.xlsx
 
 #descartar
 _freeze/
+
+**/*.quarto_ipynb
