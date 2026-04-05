@@ -1,0 +1,32 @@
+{
+  "train_size": 56416,
+  "val_size": 14105,
+  "feature_count": 56,
+  "train_event_counts": {
+    "0": 42264,
+    "1": 1955,
+    "2": 12197
+  },
+  "val_event_counts": {
+    "0": 10566,
+    "1": 489,
+    "2": 3050
+  },
+  "selected_device": "cuda",
+  "training": {
+    "Death": {
+      "epochs_trained": 30,
+      "loss_history_length": 0,
+      "model_device_before_shap": "cuda",
+      "baseline_hazard_len": 6240,
+      "baseline_cumulative_hazard_len": 6240
+    },
+    "Readmission": {
+      "epochs_trained": 26,
+      "loss_history_length": 0,
+      "model_device_before_shap": "cuda",
+      "baseline_hazard_len": 6240,
+      "baseline_cumulative_hazard_len": 6240
+    }
+  }
+}

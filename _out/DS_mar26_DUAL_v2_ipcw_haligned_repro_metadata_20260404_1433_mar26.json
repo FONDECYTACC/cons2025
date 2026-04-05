@@ -1,0 +1,34 @@
+{
+  "pipeline_version": "v2_ipcw_haligned_repro",
+  "seed": 2125,
+  "timestamp": "20260404_1433",
+  "n_imputations": 5,
+  "n_folds": 5,
+  "eval_horizons": [
+    3,
+    6,
+    9,
+    12,
+    24,
+    36,
+    48,
+    60,
+    72,
+    84,
+    96,
+    108
+  ],
+  "compute_cv_shap": true,
+  "torch_deterministic": true,
+  "hyperparameters": {
+    "lr": 0.0008,
+    "weight_decay": 0.00025,
+    "batch_size": 256,
+    "dropout": 0.52,
+    "nodes": [
+      256,
+      256,
+      128
+    ]
+  }
+}

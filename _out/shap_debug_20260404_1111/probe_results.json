@@ -1,0 +1,130 @@
+[
+  {
+    "probe_name": "forward_sanity",
+    "outcome": "Death",
+    "status": "success",
+    "shape": [
+      500
+    ],
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cuda",
+    "error": null
+  },
+  {
+    "probe_name": "gradient_sanity",
+    "outcome": "Death",
+    "status": "success",
+    "shape": [
+      4
+    ],
+    "bg_size": null,
+    "test_size": 4,
+    "device": "cuda",
+    "error": null
+  },
+  {
+    "probe_name": "exact_notebook_selected_device",
+    "outcome": "Death",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cuda",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "exact_notebook_cpu",
+    "outcome": "Death",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cpu",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "tiny_sample_selected_device",
+    "outcome": "Death",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 8,
+    "test_size": 16,
+    "device": "cuda",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "gradient_explainer_tiny_cpu",
+    "outcome": "Death",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 8,
+    "test_size": 16,
+    "device": "cpu",
+    "error": "IndexError('too many indices for tensor of dimension 1')"
+  },
+  {
+    "probe_name": "forward_sanity",
+    "outcome": "Readmission",
+    "status": "success",
+    "shape": [
+      500
+    ],
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cuda",
+    "error": null
+  },
+  {
+    "probe_name": "gradient_sanity",
+    "outcome": "Readmission",
+    "status": "success",
+    "shape": [
+      4
+    ],
+    "bg_size": null,
+    "test_size": 4,
+    "device": "cuda",
+    "error": null
+  },
+  {
+    "probe_name": "exact_notebook_selected_device",
+    "outcome": "Readmission",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cuda",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "exact_notebook_cpu",
+    "outcome": "Readmission",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 100,
+    "test_size": 500,
+    "device": "cpu",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "tiny_sample_selected_device",
+    "outcome": "Readmission",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 8,
+    "test_size": 16,
+    "device": "cuda",
+    "error": "IndexError('tuple index out of range')"
+  },
+  {
+    "probe_name": "gradient_explainer_tiny_cpu",
+    "outcome": "Readmission",
+    "status": "failure",
+    "shape": null,
+    "bg_size": 8,
+    "test_size": 16,
+    "device": "cpu",
+    "error": "IndexError('too many indices for tensor of dimension 1')"
+  }
+]

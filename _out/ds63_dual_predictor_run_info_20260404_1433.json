@@ -1,0 +1,29 @@
+{
+  "source_tag": "20260404_1433",
+  "shap_file": "g:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out\\DS_mar26_DUAL_v2_ipcw_haligned_repro_SHAP_MultiH_20260404_1433_mar26.pkl",
+  "search_dirs": [
+    "g:\\My Drive\\Alvacast\\SISTRAT 2023\\cons",
+    "g:\\My Drive\\Alvacast\\SISTRAT 2023\\cons\\_out"
+  ],
+  "top_n_key": 15,
+  "top_k_stability": 15,
+  "stability_freq_threshold_pct": 75.0,
+  "stability_definition": "Frequency across available horizons with rank <= 15.",
+  "direction_analysis": {
+    "top_n_features_per_outcome": 20,
+    "n_bootstrap": 500,
+    "seed": 2125,
+    "max_n": null,
+    "min_valid_n": 300,
+    "min_group_n": 30,
+    "rule": "Risk-Increasing if CI_low>0; Risk-Decreasing if CI_high<0; else Mixed/Uncertain.",
+    "pooling": "Pooled patient-horizon rows across all available horizons within each outcome."
+  },
+  "notes": [
+    "No clinical interpretation text included.",
+    "SHAP magnitude is on the DeepSurv risk probability scale.",
+    "Baseline table is derived from mean base_values per horizon.",
+    "Stability metrics are horizon-based, not bootstrap-based.",
+    "Direction labels are exploratory and not causal."
+  ]
+}
