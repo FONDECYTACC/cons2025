@@ -103,6 +103,8 @@ This repository is organized into four main sections: data preparation, deduplic
 
 3. [**Step 2.3: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction23_converted.html)
 
+4. [**Step 2.4: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted.html)
+
 ---
 
 ## 4. Documentation
