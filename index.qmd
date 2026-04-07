@@ -54,7 +54,15 @@ This repository is organized into four main sections: data preparation, deduplic
 
 ---
 
-## 3. Predictive Modeling Pipeline
+## 3. Excess mortality following discharge from substance use disorder treatment in Chile
+
+1. [**First draft**](mortality.html)
+
+2. [**Correction after review**](mortality_post_rev.html)
+
+---
+
+## 4. Development and internal validation of machine-learning–informed Cox prediction models for first readmission and all-cause mortality among adults entering substance use disorder treatment in Chile
 
 ### Database Formatting
 
@@ -73,21 +81,8 @@ This repository is organized into four main sections: data preparation, deduplic
 
 ---
 
-### Penalized Survival Models
 
-1. [**Elastic Net Cox Proportional Hazards – Variable Importance & Performance Metrics**](CoxNet_BSS_feb26.html)
-
----
-
-### Deep Learning – DeepHit
-
-1. [**DeepHit – Hyperparameter Tuning Based on Discrimination**](DeepHit_jan26.html)
-
-2. [**DeepHit – Discrimination & SHAP Explanations**](DeepHit2_jan26.html)
-
----
-
-### Deep Learning – DeepSurv
+### Deep Learning – DeepSurv (Sensitivity analysis)
 
 1. [**DeepSurv – Hyperparameter Tuning Based on Discrimination**](DeepSurv_mar26.html)
 
@@ -99,11 +94,9 @@ This repository is organized into four main sections: data preparation, deduplic
 
 1. [**Step 2.1: Format and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards, Traditional Cox PH Baseline & Performance Evaluation**](prediction21_converted.html)
 
-2. [**Step 2.2: SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions**](prediction22_converted.html)
+2. [**Step 2.2: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction22_converted.html)
 
-3. [**Step 2.3: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction23_converted.html)
-
-4. [**Step 2.4: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted.html)
+3. [**Step 2.3: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction23_converted.html)
 
 ---
 
