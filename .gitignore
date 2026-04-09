@@ -123,3 +123,7 @@ cons/_out/more_one_overlaps_after_center_id.xlsx
 _freeze/
 
 **/*.quarto_ipynb
+
+# Windows system files
+desktop.ini
+
