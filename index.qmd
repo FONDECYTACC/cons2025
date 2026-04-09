@@ -70,6 +70,7 @@ This repository is organized into four main sections: data preparation, deduplic
 
 2. [**Translating survival analysis workflows from R to Python: data preprocessing**](model_performance_ml_jan26.html)
 
+---
 
 ### Machine Learning – XGBoost
 
@@ -80,7 +81,6 @@ This repository is organized into four main sections: data preparation, deduplic
 3. [**XGBoost – Hyperparameter Tuning (Death)**](XGboost_death_hyp_tun_mar26.html)
 
 ---
-
 
 ### Deep Learning – DeepSurv (Sensitivity analysis)
 
@@ -96,7 +96,11 @@ This repository is organized into four main sections: data preparation, deduplic
 
 2. [**Step 2.2: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction22_converted.html)
 
-3. [**Step 2.3: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction23_converted.html)
+3. [**Step 2.3: Internal validation of SHAP-informed selected Models: DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction23_converted.html)
+
+4. [**Step 2.4: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted.html)
+
+5. [**Step 2.5: Internal validation of SHAP-informed selected Models (DeepSurv Sensitivity): DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction25_converted.html)
 
 ---
 
