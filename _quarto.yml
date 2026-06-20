@@ -5,7 +5,13 @@ project:
     browser: false
     watch-inputs: false
 website:
-  announcement: 
+  search:
+    location: navbar
+    type: overlay
+    copy-button: true
+    limit: 20
+    collapse-after: 3
+  announcement:
     icon: info-circle
     content: "**In construction**" 
     position: below-navbar 
