@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<style>body{background-color:white;}</style>
+
+
+</head>
+<body>
+<div style="&#10;      max-height: 550px;&#10;      overflow: auto;&#10;      border: 1px solid #ddd;&#10;      font-family: Arial, sans-serif;&#10;      font-size: 12px;&#10;    ">
+  <table style="&#10;        border-collapse: collapse;&#10;        width: max-content;&#10;        min-width: 100%;&#10;      ">
+    <thead>
+      <tr>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Comparison</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Outcome</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Horizon, months</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Continuous NRI</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Continuous NRI, events</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Continuous NRI, nonevents</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Categorical NRI</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Categorical NRI, events</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Categorical NRI, nonevents</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">IDI</th>
+        <th style="&#10;                position: sticky;&#10;                top: 0;&#10;                background: #f3f3f3;&#10;                border-bottom: 1px solid #ccc;&#10;                padding: 4px 8px;&#10;                text-align: left;&#10;                white-space: nowrap;&#10;              ">Discrimination slope, reference vs updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Readmission</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">6</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.030 (-0.129 to 0.075)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.040 (-0.126 to 0.070)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.010 (-0.017 to 0.041)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.006 (-0.015 to 0.037)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.009 (-0.011 to 0.037)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.003 (-0.009 to 0.002)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.000 (-0.001 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.019 (0.016 to 0.022) vs 0.019 (0.016 to 0.022)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Readmission</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">12</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.023 (-0.108 to 0.060)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.038 (-0.111 to 0.053)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.015 (-0.011 to 0.042)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.011 (-0.037 to 0.019)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.003 (-0.030 to 0.028)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.007 (-0.012 to -0.003)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.000 (-0.001 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.025 (0.022 to 0.029) vs 0.025 (0.022 to 0.028)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Readmission</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">36</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.045 (-0.096 to -0.001)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.056 (-0.100 to -0.009)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.011 (-0.011 to 0.037)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.009 (-0.024 to 0.005)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.005 (-0.018 to 0.009)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.004 (-0.012 to 0.003)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.001 (-0.002 to -0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.034 (0.030 to 0.039) vs 0.033 (0.029 to 0.038)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Readmission</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">60</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.052 (-0.098 to 0.006)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.056 (-0.096 to -0.006)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.004 (-0.025 to 0.045)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.007 (-0.022 to 0.009)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.003 (-0.015 to 0.012)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.003 (-0.012 to 0.005)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">-0.001 (-0.002 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.034 (0.030 to 0.038) vs 0.033 (0.029 to 0.038)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Death</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">6</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.016 (0.008 to 0.023) vs 0.016 (0.008 to 0.023)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Death</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">12</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.022 (0.013 to 0.033) vs 0.022 (0.013 to 0.033)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Death</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">36</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.050 (0.041 to 0.059) vs 0.050 (0.041 to 0.059)</td>
+      </tr>
+      <tr>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Full PH updated2 vs SHAP primary</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">Death</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">60</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.000 (0.000 to 0.000)</td>
+        <td style="&#10;                  border-bottom: 1px solid #eee;&#10;                  padding: 3px 8px;&#10;                  white-space: nowrap;&#10;                ">0.074 (0.066 to 0.084) vs 0.074 (0.066 to 0.084)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

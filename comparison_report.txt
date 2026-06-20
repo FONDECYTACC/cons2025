@@ -1,0 +1,17 @@
+=== RESUMEN DE DIFERENCIAS ===
+Celdas idénticas:      132
+Celdas modificadas:    0
+Celdas eliminadas:     0
+Celdas agregadas:      2
+Total base:            132
+Total mod:             134
+
+=== CELDAS AGREGADAS (mod) ===
+  Mod celda 18 [markdown]:
+    ## Reproducible Selection of Predictors (Fixed Rule)  This section replaces the manual curation of `vars_shap_r` / `vars_shap_d` with a pre-specified rule (stability ≥90% → SHAP order → stopping by Uno's dual ΔC ≥0.01 and AICc → complete factors → GVIF/PH repairs), **using the same dual scorer** `evaluate_dual_cox_python_style` as `prediction225_converted.ipynb` (sourced in the previous cell)`(2026-06-08).
+  Mod celda 19 [code]:
+    #| label: shap-criteria-fixed-rule-selection #| message: false  # === Reproducible selection of predictors: pre-specified rule) === # Replaces the manual curation of vars_shap_r / vars_shap_d with the documented rule # in seleccion_predictores_regla_fija.md, using the SAME dual scorer from prediction225 # (evaluate_dual_cox_python_style, already sourced above) and compute_mi_aicc.  source(file.path(project_root, "seleccion_predictores_regla_fija.R"))  sel_rule <- run_selection(   data           
+
+=== CELDAS ELIMINADAS (base) ===
+
+=== PRIMERAS MODIFICACIONES ===

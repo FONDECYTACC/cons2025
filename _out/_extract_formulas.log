@@ -1,0 +1,39 @@
+
+Loading data/20241015_out/pred22_ndp_2026_05_28.Rdata ...
+Loaded in 1.1 min.
+
+### formula_shap_readmit_clean_updated 
+  vars: readmit_time_from_disch_m, readmit_event, primary_sub_mod_cocaine_paste, adm_age_rec3, porc_pobr, sex_rec_woman, ethnicity, dit_m, eva_consumo_logro_intermedio, eva_consumo_logro_minimo, ed_attainment_corr_2_completed_high_school_or_less, ed_attainment_corr_3_completed_primary_school_or_less, sub_dep_icd10_status_drug_dependence, occupation_condition_corr24_unemployed, polysubstance_strict, primary_sub_mod_cocaine_powder, evaluacindelprocesoteraputico_logro_intermedio, dg_psiq_cie_10_dg, eva_sm_logro_intermedio, eva_sm_logro_minimo, prim_sub_freq_rec_2_2_6_days_wk, prim_sub_freq_rec_3_daily, primary_sub_mod_alcohol, plan_type_strata, tr_outcome_adm_discharge_rule_violation_undet 
+
+### formula_death_updated2 
+  vars: death_time_from_disch_m, death_event, adm_age_rec3, porc_pobr, dit_m, national_foreign, ethnicity, dg_psiq_cie_10_instudy, dg_psiq_cie_10_dg, dx_f3_mood, dx_f6_personality, dx_f_any_severe_mental, any_phys_dx, polysubstance_strict, sex_rec_woman, cohabitation_family_of_origin, cohabitation_with_couple_children, cohabitation_others, sub_dep_icd10_status_drug_dependence, any_violence_1_domestic_violence_sex_abuse, tr_outcome_referral, tr_outcome_dropout, tr_outcome_adm_discharge_adm_reasons, adm_motive_sanitary_sector, adm_motive_another_sud_facility_fonodrogas_senda_previene, adm_motive_justice_sector, adm_motive_other, first_sub_used_alcohol, first_sub_used_cocaine_paste, first_sub_used_cocaine_powder, first_sub_used_other, primary_sub_mod_cocaine_paste, primary_sub_mod_cocaine_powder, primary_sub_mod_alcohol, primary_sub_mod_others, tipo_de_vivienda_rec2_other_unknown, occupation_condition_corr24_unemployed, occupation_condition_corr24_inactive, marital_status_rec_single, marital_status_rec_separated_divorced_annulled_widowed, tenure_status_household_renting, tenure_status_household_others, tenure_status_household_stays_temporarily_with_a_relative, tenure_status_household_illegal_settlement, urbanicity_cat_2_mixed, urbanicity_cat_1_rural, evaluacindelprocesoteraputico_logro_intermedio, eva_consumo_logro_intermedio, eva_consumo_logro_minimo, eva_fam_logro_intermedio, eva_fam_logro_minimo, eva_relinterp_logro_intermedio, eva_relinterp_logro_minimo, eva_ocupacion_logro_intermedio, eva_ocupacion_logro_minimo, eva_sm_logro_intermedio, eva_sm_logro_minimo, eva_fisica_logro_intermedio, eva_fisica_logro_minimo, eva_transgnorma_logro_intermedio, eva_transgnorma_logro_minimo, prim_sub_freq_rec_2_2_6_days_wk, prim_sub_freq_rec_3_daily, ed_attainment_corr_2_completed_high_school_or_less, ed_attainment_corr_3_completed_primary_school_or_less, plan_type_strata, tr_outcome_adm_discharge_rule_violation_undet 
+
+### formula_shap_death 
+  vars: death_time_from_disch_m, death_event, adm_age_rec3, primary_sub_mod_cocaine_paste, prim_sub_freq_rec_2_2_6_days_wk, prim_sub_freq_rec_3_daily, occupation_condition_corr24_unemployed, any_phys_dx, eva_ocupacion_logro_intermedio, eva_ocupacion_logro_minimo, first_sub_used_alcohol, sex_rec_woman, eva_fisica_logro_intermedio, eva_fisica_logro_minimo, plan_type_strata 
+
+### formula_readmit_updated2 
+  vars: readmit_time_from_disch_m, readmit_event, adm_age_rec3, porc_pobr, dit_m, national_foreign, ethnicity, dg_psiq_cie_10_instudy, dg_psiq_cie_10_dg, dx_f3_mood, dx_f6_personality, dx_f_any_severe_mental, any_phys_dx, polysubstance_strict, sex_rec_woman, cohabitation_family_of_origin, cohabitation_with_couple_children, cohabitation_others, sub_dep_icd10_status_drug_dependence, any_violence_1_domestic_violence_sex_abuse, tr_outcome_referral, tr_outcome_dropout, tr_outcome_adm_discharge_adm_reasons, adm_motive_sanitary_sector, adm_motive_another_sud_facility_fonodrogas_senda_previene, adm_motive_justice_sector, adm_motive_other, first_sub_used_alcohol, first_sub_used_cocaine_paste, first_sub_used_cocaine_powder, first_sub_used_other, primary_sub_mod_cocaine_paste, primary_sub_mod_cocaine_powder, primary_sub_mod_alcohol, primary_sub_mod_others, tipo_de_vivienda_rec2_other_unknown, occupation_condition_corr24_unemployed, occupation_condition_corr24_inactive, marital_status_rec_single, marital_status_rec_separated_divorced_annulled_widowed, tenure_status_household_renting, tenure_status_household_others, tenure_status_household_stays_temporarily_with_a_relative, tenure_status_household_illegal_settlement, urbanicity_cat_2_mixed, urbanicity_cat_1_rural, evaluacindelprocesoteraputico_logro_intermedio, eva_consumo_logro_intermedio, eva_consumo_logro_minimo, eva_fam_logro_intermedio, eva_fam_logro_minimo, eva_relinterp_logro_intermedio, eva_relinterp_logro_minimo, eva_ocupacion_logro_intermedio, eva_ocupacion_logro_minimo, eva_sm_logro_intermedio, eva_sm_logro_minimo, eva_fisica_logro_intermedio, eva_fisica_logro_minimo, eva_transgnorma_logro_intermedio, eva_transgnorma_logro_minimo, prim_sub_freq_rec_2_2_6_days_wk, prim_sub_freq_rec_3_daily, ed_attainment_corr_2_completed_high_school_or_less, ed_attainment_corr_3_completed_primary_school_or_less, plan_type_strata, tr_outcome_adm_discharge_rule_violation_undet 
+
+=== cols only in _boot (86) not in standard (75) ===
+ [1] "eva_consumo_score"             "eva_sm_score"                 
+ [3] "eva_ocupacion_score"           "eva_fisica_score"             
+ [5] "eva_relinterp_score"           "eva_transgnorma_score"        
+ [7] "eva_fam_score"                 "ed_attainment_score"          
+ [9] "prim_sub_freq_score"           "urbanicity_score"             
+[11] "tenure_status_household_score"
+
+=== cols only in standard (75) not in _boot (86) ===
+character(0)
+
+=== formula vars NOT in standard 75-col set ===
+character(0)
+
+=== formula vars NOT in boot 86-col set    ===
+character(0)
+
+mean adm_age_rec3 (train boot): 35.72562 
+sum national_foreign==1: 453 
+nrow train: 70521 
+key cols present in boot: readmit_event, death_event, readmit_time_from_disch_m, death_time_from_disch_m, plan_type_strata, center_id 
+
+DONE. Artifacts in data/20241015_out/_val_inputs 

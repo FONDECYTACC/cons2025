@@ -1,0 +1,57 @@
+The following package(s) are missing their DESCRIPTION files:
+- desktop.ini [G:/My Drive/Alvacast/SISTRAT 2023/renv/library/windows/R-4.4/x86_64-w64-mingw32/desktop.ini]
+These may be left over from a prior, failed installation attempt.
+Consider removing or reinstalling these packages.
+
+- The project is out-of-sync -- use `renv::status()` for details.
+[14:23:00] Loading .RData (4.6 GB, give it a minute) ...
+  loaded: 5 imputations, 70521 rows each
+The following package(s) are missing their DESCRIPTION files:
+- desktop.ini [G:/My Drive/Alvacast/SISTRAT 2023/renv/library/windows/R-4.4/x86_64-w64-mingw32/desktop.ini]
+These may be left over from a prior, failed installation attempt.
+Consider removing or reinstalling these packages.
+
+The following package(s) are missing their DESCRIPTION files:
+- desktop.ini [G:/My Drive/Alvacast/SISTRAT 2023/renv/library/windows/R-4.4/x86_64-w64-mingw32/desktop.ini]
+These may be left over from a prior, failed installation attempt.
+Consider removing or reinstalling these packages.
+
+The following package(s) are missing their DESCRIPTION files:
+- desktop.ini [G:/My Drive/Alvacast/SISTRAT 2023/renv/library/windows/R-4.4/x86_64-w64-mingw32/desktop.ini]
+These may be left over from a prior, failed installation attempt.
+Consider removing or reinstalling these packages.
+
+The following package(s) are missing their DESCRIPTION files:
+- desktop.ini [G:/My Drive/Alvacast/SISTRAT 2023/renv/library/windows/R-4.4/x86_64-w64-mingw32/desktop.ini]
+These may be left over from a prior, failed installation attempt.
+Consider removing or reinstalling these packages.
+
+- The project is out-of-sync -- use `renv::status()` for details.
+- The project is out-of-sync -- use `renv::status()` for details.
+- The project is out-of-sync -- use `renv::status()` for details.
+- The project is out-of-sync -- use `renv::status()` for details.
+Family levels included in interaction:
+[1] "primary_sub_mod_cocaine_paste"  "primary_sub_mod_cocaine_powder"
+[3] "primary_sub_mod_alcohol"        "primary_sub_mod_others"        
+[14:25:04] Running calibration: SHAP + interactions (corrected) on 4 workers ...
+Registered S3 method overwritten by 'riskRegression':
+  method        from 
+  nobs.multinom broom
+Using 5 imputed dataset(s).
+Validation: cv
+Repetitions: 20 | same fold split across imputations within each repetition.
+ICI: enabled at horizons 6, 12, 36, 60.
+Running CV predictions in parallel across 100 repetition x fold tasks... done
+Calibrating 20 repetitions in parallel... done
+Hubo 39 avisos (use warnings() para verlos)
+
+  OK - SHAP + interactions (corrected)
+  time_months    ici_mean       ici_sd    ece_mean   eo_mean
+1           6 0.006899396 0.0001477244 0.002368412 0.9904989
+2          12 0.008075132 0.0001777197 0.003607648 0.9908178
+3          36 0.009721197 0.0002191300 0.004838010 0.9890602
+4          60 0.010183909 0.0002252177 0.006864778 0.9857711
+
+Saved full result: G:/My Drive/Alvacast/SISTRAT 2023/data/20241015_out/cal_shap_interact_corr_2026_06_17.rds 
+Saved summary csv : G:/My Drive/Alvacast/SISTRAT 2023/data/20241015_out/cal_shap_interact_corr_2026_06_17_pooled_summary.csv 
+[14:43:47] DONE in 21.0 min

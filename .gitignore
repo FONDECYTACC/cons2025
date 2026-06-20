@@ -141,3 +141,6 @@ _out/_overlaps_dup_step_2_after_miss.xlsx
 _out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx
 # Excel lock/owner temp files
 ~$*
+
+# Timestamped backup snapshots
+*.bak*

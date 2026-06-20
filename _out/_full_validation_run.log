@@ -1,0 +1,117 @@
+
+Loading cached holdout sets: data/20241015_out/_val_inputs/holdout_train_val.rds 
+
+== C-index / IBS (held-out) ==
+   best_perf1 
+Held-out dual Cox: 5 imputations, fit train -> predict val
+.....
+   best_perf2 
+Held-out dual Cox: 5 imputations, fit train -> predict val
+.....
+
+== DCA (held-out) ==
+  DCA full summary: best_perf1 | horizons=6, 12, 36, 60
+Readmission observed risk: Aalen-Johansen on 5/5 replicate(s). Death: Kaplan-Meier.
+  DCA full summary: best_perf2 | horizons=6, 12, 36, 60
+Readmission observed risk: Aalen-Johansen on 5/5 replicate(s). Death: Kaplan-Meier.
+
+== Calibration (held-out) ==
+.....
+.....
+.....
+
+== ipeval bootstrap cross-check (B= 500 ) ==
+ipeval readmission [best_perf1]...
+.....
+ipeval death [best_perf1]...
+.....
+ipeval death [best_perf2]...
+.....
+
+Saved:  cons/_out/pred23_holdout_validation_2026_05_31.rds 
+
+=== FULL RUN done in 31.9 min ===
+
+== C-index/IBS GLOBAL (held-out 20%) ==
+      model        Risk        Metric       mean           sd       q025
+ best_perf1       Death           IBS 0.08771675 7.176444e-05 0.08763842
+ best_perf1       Death Uno's C-Index 0.73187247 9.854700e-04 0.73090227
+ best_perf1 Readmission           IBS 0.35185636 2.112061e-05 0.35183019
+ best_perf1 Readmission Uno's C-Index 0.61861981 1.022500e-04 0.61852516
+ best_perf2       Death           IBS 0.09146508 1.115516e-05 0.09145178
+ best_perf2       Death Uno's C-Index 0.72693627 1.891145e-03 0.72517523
+ best_perf2 Readmission           IBS 0.35185636 2.112061e-05 0.35183019
+ best_perf2 Readmission Uno's C-Index 0.61861981 1.022500e-04 0.61852516
+       q975
+ 0.08781772
+ 0.73328892
+ 0.35188229
+ 0.61877197
+ 0.09147780
+ 0.72974904
+ 0.35188229
+ 0.61877197
+
+== Readmit calibration (held-out) ==
+ time_months    ici_mean    ece_mean   eo_mean  mean_pred   observed
+           6 0.009821338 0.006827098 1.0216474 0.07150669 0.06999156
+          12 0.011066125 0.007086482 1.0012407 0.11298220 0.11284220
+          36 0.016027465 0.009176991 0.9941619 0.19884435 0.20001204
+          60 0.018477602 0.012137449 0.9696137 0.24180866 0.24938659
+
+== Death calibration best_perf1 (held-out) ==
+ time_months    ici_mean    ece_mean  eo_mean   mean_pred    observed
+           6 0.002130065 0.001633816 1.181709 0.006952166 0.005883147
+          12 0.002580481 0.001970206 1.172520 0.010819435 0.009227504
+          36 0.007049373 0.004085766 1.020982 0.028979059 0.028383513
+          60 0.008867901 0.004999994 1.069005 0.046356045 0.043363718
+
+== Death calibration best_perf2 (held-out) ==
+ time_months    ici_mean    ece_mean  eo_mean   mean_pred    observed
+           6 0.001330271 0.001921743 1.177587 0.006927916 0.005883147
+          12 0.001367501 0.002285594 1.169164 0.010788469 0.009227504
+          36 0.006203261 0.002830986 1.021474 0.028993019 0.028383513
+          60 0.008531578 0.003975506 1.072813 0.046521140 0.043363718
+
+== ipeval pooled ==
+        risk               model horizon n_imp  auc_mean  brier_mean
+       death   death::best_perf1       6     5 0.7964219 0.005721184
+       death   death::best_perf2       6     5 0.7327720 0.005931767
+ readmission readmit::best_perf1       6     5 0.6620283 0.063950177
+       death   death::best_perf1      12     5 0.7853973 0.009119128
+       death   death::best_perf2      12     5 0.7366105 0.009327397
+ readmission readmit::best_perf1      12     5 0.6440791 0.098277210
+       death   death::best_perf1      36     5 0.7804236 0.026207525
+       death   death::best_perf2      36     5 0.7602028 0.026637558
+ readmission readmit::best_perf1      36     5 0.6202150 0.156295408
+       death   death::best_perf1      60     5 0.7660163 0.038050448
+       death   death::best_perf2      60     5 0.7549769 0.038672153
+ readmission readmit::best_perf1      60     5 0.5963684 0.185232366
+ oeratio_mean auc_lower_mean auc_upper_mean brier_lower_mean brier_upper_mean
+    0.8641896      0.7260534      0.8602814      0.004249924      0.007321620
+    0.8671786      0.6622594      0.8018897      0.004372690      0.007589885
+    0.9874266      0.6393543      0.6845815      0.059503323      0.068597066
+    0.8784050      0.7323769      0.8345410      0.007151629      0.011130037
+    0.8809301      0.6776640      0.7914357      0.007314483      0.011442525
+    1.0108283      0.6257058      0.6627897      0.093256310      0.103281672
+    0.9840695      0.7454153      0.8144253      0.023046045      0.029552127
+    0.9835975      0.7244874      0.7938847      0.023391868      0.030075707
+    1.0152420      0.6035336      0.6365350      0.151143176      0.161644204
+    0.9246304      0.7331714      0.7975117      0.034005444      0.042206079
+    0.9213470      0.7220907      0.7860746      0.034539002      0.042936824
+    1.0502301      0.5798276      0.6127787      0.179675093      0.190754854
+ oeratio_lower_mean oeratio_upper_mean
+          0.6333857           1.105971
+          0.6370911           1.114527
+          0.9131442           1.066021
+          0.6836978           1.081100
+          0.6865261           1.085310
+          0.9511716           1.071422
+          0.8608589           1.117178
+          0.8585953           1.116607
+          0.9707082           1.060299
+          0.8177997           1.032236
+          0.8140330           1.029561
+          1.0041164           1.094889
+
+DONE
