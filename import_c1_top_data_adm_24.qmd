@@ -718,7 +718,7 @@ fix_encoding <- function(x) {
     x <- str_replace_all(x, "MarÁa", "María")
     x <- str_replace_all(x, "Á'UBLE", "ÑUBLE")
     x <- str_replace_all(x, "VÁnculos", "Vínculos")#x <- str_replace_all(x, "CONCEPCIÁ"N", "CONCEPCIÓN")
-    x <- str_replace_all(x,'CONCEPCIÁ\“N', "CONCEPCIÓN")    
+    x <- str_replace_all(x, 'CONCEPCIÁ"N', "CONCEPCIÓN")
     x <- str_replace_all(x, "AYSÁ‰N", "AYSÉN")
     x <- str_replace_all(x, "MÁnimo", "Mínimo")
     x <- str_replace_all(x, "M\\?mo", "Mínimo")

@@ -21,8 +21,10 @@ calibrate_cscox_aj_grouped_corr <- function(
     verbose = TRUE,
     make_plots = TRUE,
     parallel_cv = TRUE,
+    parallel_calibration = parallel_cv,
     future_scheduling = 2,
-    debug_fit = FALSE
+    debug_fit = FALSE,
+    ici_span = 0.75
 ) {
     if (!requireNamespace("survival", quietly = TRUE)) stop("Package 'survival' is required.")
     if (!requireNamespace("riskRegression", quietly = TRUE)) stop("Package 'riskRegression' is required.")
@@ -129,7 +131,17 @@ calibrate_cscox_aj_grouped_corr <- function(
     }
     .build_hist_formula <- function(rhs_formula) {
         f_hist <- stats::update.formula(rhs_formula, prodlim::Hist(.ftime, .fstatus) ~ .)
-        environment(f_hist) <- environment(rhs_formula)
+        # Use a fresh env parented to globalenv() so the formula's environment chain
+        # is always connected to the worker's search path in parallel execution.
+        # Inject strat/strata explicitly: formulas loaded from .Rdata can carry an
+        # orphaned environment whose parent chain never reaches the search path,
+        # causing riskRegression::CSC to fail with "could not find function 'strat'".
+        env <- new.env(parent = globalenv())
+        env$strata <- survival::strata
+        if (exists("strat", envir = asNamespace("riskRegression"), inherits = FALSE)) {
+            env$strat <- get("strat", envir = asNamespace("riskRegression"), inherits = FALSE)
+        }
+        environment(f_hist) <- env
         f_hist
     }
     .make_first_event_data <- function(d) {
@@ -274,6 +286,94 @@ calibrate_cscox_aj_grouped_corr <- function(
         }
         list(r = task$r, te_idx = te_idx, pred_fold_avg = pred_sum / M)
     }
+    .run_one_calibration_repetition <- function(
+        rep_obj,
+        rep_total,
+        times,
+        reference_data,
+        reference_observed,
+        common_cutpoints,
+        common_bin_maps,
+        min_bin_n,
+        compute_ici,
+        ici_times,
+        ici_df,
+        n_input,
+        n_analysis,
+        n_dropped,
+        n_readmit,
+        n_death,
+        M
+    ) {
+        r <- rep_obj$repetition
+        pred_r <- rep_obj$pred
+        curves_rep <- list()
+        metrics_rep <- list()
+        for (j in seq_along(times)) {
+            t_horizon <- times[j]
+            pred_vec <- pred_r[, j]
+            calib_obj <- .grouped_calibration(
+                d = reference_data,
+                pred_vec = pred_vec,
+                t_horizon = t_horizon,
+                cutpoints = common_cutpoints[[j]],
+                bin_map = common_bin_maps[[j]],
+                min_bin_n = min_bin_n
+            )
+            calib_df <- calib_obj$curve
+            if (is.null(calib_df) || nrow(calib_df) == 0L) {
+                warning("No calibration bins survived for repetition ", r, " at time ", t_horizon, ".", call. = FALSE)
+                next
+            }
+            obs_row <- reference_observed[reference_observed$time_months == t_horizon, , drop = FALSE]
+            ece <- stats::weighted.mean(abs(calib_df$mean_predicted - calib_df$observed), w = calib_df$n_patients, na.rm = TRUE)
+            if (isTRUE(compute_ici) && t_horizon %in% ici_times && length(calib_obj$obs_lookup) > 0L) {
+                ici_obj <- .compute_ici_loess(
+                    pred_vec   = pred_vec,
+                    bins       = calib_obj$bins,
+                    obs_lookup = calib_obj$obs_lookup,
+                    loess_span = ici_span
+                )
+            } else {
+                ici_obj <- list(
+                    ici = NA_real_,
+                    e50 = NA_real_,
+                    e90 = NA_real_,
+                    emax = NA_real_
+                )
+            }
+            mean_pred <- mean(pred_vec, na.rm = TRUE)
+            eo_ratio <- if (is.na(obs_row$observed[1]) || obs_row$observed[1] <= 0) NA_real_ else mean_pred / obs_row$observed[1]
+            calib_df$repetition <- r
+            calib_df$time_months <- t_horizon
+            curves_rep[[length(curves_rep) + 1L]] <- calib_df
+            metrics_rep[[length(metrics_rep) + 1L]] <- data.frame(
+                repetition = r,
+                time_months = t_horizon,
+                ici = ici_obj$ici,
+                e50 = ici_obj$e50,
+                e90 = ici_obj$e90,
+                emax = ici_obj$emax,
+                ece = ece,
+                eo_ratio = eo_ratio,
+                mean_predicted = mean_pred,
+                observed = obs_row$observed[1],
+                observed_lower = obs_row$observed_lower[1],
+                observed_upper = obs_row$observed_upper[1],
+                n_input = n_input,
+                n_analysis = n_analysis,
+                n_dropped = n_dropped,
+                n_readmit = n_readmit,
+                n_death = n_death,
+                n_used_calibration = calib_obj$n_used,
+                n_excluded_calibration = calib_obj$n_excluded,
+                n_bins = nrow(calib_df),
+                n_imputations = M,
+                stringsAsFactors = FALSE
+            )
+        }
+        list(repetition = r, rep_total = rep_total, curves = curves_rep, metrics = metrics_rep)
+    }
     .make_cutpoints <- function(x, g = 10L) {
         x <- x[is.finite(x)]
         if (length(x) == 0L) return(numeric(0))
@@ -375,7 +475,8 @@ calibrate_cscox_aj_grouped_corr <- function(
         bins <- .apply_bin_map(bins0, bin_map)
         levs <- sort(unique(stats::na.omit(bins)))
         if (length(levs) == 0L) {
-            return(list(curve = NULL, n_used = 0L, n_excluded = sum(is.finite(pred_vec))))
+            return(list(curve = NULL, n_used = 0L, n_excluded = sum(is.finite(pred_vec)),
+                        bins = bins, obs_lookup = numeric(0)))
         }
         out <- vector("list", length(levs))
         keep_idx <- 0L
@@ -393,94 +494,41 @@ calibrate_cscox_aj_grouped_corr <- function(
             )
         }
         if (keep_idx == 0L) {
-            return(list(curve = NULL, n_used = 0L, n_excluded = sum(is.finite(pred_vec))))
+            return(list(curve = NULL, n_used = 0L, n_excluded = sum(is.finite(pred_vec)),
+                        bins = bins, obs_lookup = numeric(0)))
         }
         curve <- do.call(rbind, out[seq_len(keep_idx)])
+        obs_lookup <- stats::setNames(curve$observed, as.character(curve$bin))
         list(
             curve = curve,
             n_used = sum(curve$n_patients),
-            n_excluded = sum(is.finite(pred_vec)) - sum(curve$n_patients)
+            n_excluded = sum(is.finite(pred_vec)) - sum(curve$n_patients),
+            bins = bins,
+            obs_lookup = obs_lookup
         )
     }
-    .smooth_calibration_metrics <- function(d, pred_vec, t_horizon, ici_df = 4L, eps = 1e-06) {
-        pred_use <- pmin(pmax(pred_vec, eps), 1 - eps)
-        z <- log(-log(1 - pred_use))
-        if (any(!is.finite(z))) {
-            return(list(
-                ici = NA_real_,
-                e50 = NA_real_,
-                e90 = NA_real_,
-                emax = NA_real_,
-                smoothed_observed = rep(NA_real_, length(pred_vec))
-            ))
+    .compute_ici_loess <- function(pred_vec, bins, obs_lookup, loess_span = 0.75) {
+        obs_individual <- obs_lookup[as.character(bins)]
+        valid <- !is.na(obs_individual) & is.finite(pred_vec)
+        if (sum(valid) < 10L) {
+            return(list(ici = NA_real_, e50 = NA_real_, e90 = NA_real_, emax = NA_real_))
         }
-        fit_once <- function(df_use) {
-            d_fit <- d
-            d_fit$.cll_pred <- z
-            if (df_use <= 1L || length(unique(z)) <= 3L) {
-                f_cal <- prodlim::Hist(.ftime, .fstatus) ~ .cll_pred
-            } else {
-                df_eff <- min(as.integer(df_use), length(unique(z)) - 1L)
-                basis <- as.data.frame(splines::ns(z, df = df_eff))
-                names(basis) <- paste0("ici_s", seq_len(ncol(basis)))
-                d_fit[names(basis)] <- basis
-                rhs <- paste(names(basis), collapse = " + ")
-                f_cal <- stats::as.formula(paste0("prodlim::Hist(.ftime, .fstatus) ~ ", rhs))
-            }
-            list(
-                fit = riskRegression::FGR(formula = f_cal, data = d_fit, cause = 1),
-                newdata = d_fit
-            )
-        }
-        fit_obj <- tryCatch(
-            fit_once(ici_df),
-            error = function(e1) {
-                tryCatch(
-                    fit_once(1L),
-                    error = function(e2) {
-                        warning("ICI smoother failed at time ", t_horizon, ": ", conditionMessage(e1), call. = FALSE)
-                        NULL
-                    }
-                )
-            }
+        pv <- pred_vec[valid]
+        ov <- as.numeric(obs_individual[valid])
+        lo <- tryCatch(
+            stats::loess(ov ~ pv, span = loess_span,
+                         control = stats::loess.control(surface = "interpolate")),
+            error = function(e) NULL
         )
-        if (is.null(fit_obj)) {
-            return(list(
-                ici = NA_real_,
-                e50 = NA_real_,
-                e90 = NA_real_,
-                emax = NA_real_,
-                smoothed_observed = rep(NA_real_, length(pred_vec))
-            ))
+        if (is.null(lo)) {
+            return(list(ici = NA_real_, e50 = NA_real_, e90 = NA_real_, emax = NA_real_))
         }
-        obs_smooth <- riskRegression::predictRisk(
-            object = fit_obj$fit,
-            newdata = fit_obj$newdata,
-            times = t_horizon,
-            cause = 1
-        )
-        if (!is.null(dim(obs_smooth))) {
-            obs_smooth <- as.numeric(obs_smooth[, 1L])
-        } else {
-            obs_smooth <- as.numeric(obs_smooth)
-        }
-        if (length(obs_smooth) != length(pred_vec) || any(!is.finite(obs_smooth))) {
-            warning("ICI prediction failed at time ", t_horizon, ".", call. = FALSE)
-            return(list(
-                ici = NA_real_,
-                e50 = NA_real_,
-                e90 = NA_real_,
-                emax = NA_real_,
-                smoothed_observed = rep(NA_real_, length(pred_vec))
-            ))
-        }
-        abs_err <- abs(obs_smooth - pred_vec)
+        abs_err <- abs(stats::fitted(lo) - pv)
         list(
-            ici = mean(abs_err, na.rm = TRUE),
-            e50 = as.numeric(stats::quantile(abs_err, probs = 0.50, na.rm = TRUE, names = FALSE, type = 8)),
-            e90 = as.numeric(stats::quantile(abs_err, probs = 0.90, na.rm = TRUE, names = FALSE, type = 8)),
-            emax = max(abs_err, na.rm = TRUE),
-            smoothed_observed = obs_smooth
+            ici  = mean(abs_err, na.rm = TRUE),
+            e50  = as.numeric(stats::quantile(abs_err, probs = 0.50, na.rm = TRUE, names = FALSE, type = 8)),
+            e90  = as.numeric(stats::quantile(abs_err, probs = 0.90, na.rm = TRUE, names = FALSE, type = 8)),
+            emax = max(abs_err, na.rm = TRUE)
         )
     }
     .pool_summary <- function(by_repetition) {
@@ -627,6 +675,10 @@ calibrate_cscox_aj_grouped_corr <- function(
         rownames(out) <- NULL
         out
     })
+    .needed_cols <- unique(c(".ftime", ".fstatus", all.vars(rhs_readmit), all.vars(rhs_death)))
+    analysis_data <- lapply(analysis_data, function(d) {
+        d[, intersect(.needed_cols, names(d)), drop = FALSE]
+    })
     reference_data <- analysis_data[[1L]]
     .validate_analysis_data(reference_data, validation, folds)
     n_readmit <- sum(reference_data$.fstatus == 1L, na.rm = TRUE)
@@ -641,6 +693,7 @@ calibrate_cscox_aj_grouped_corr <- function(
             stringsAsFactors = FALSE
         )
     }))
+    reference_data <- reference_data[, c(".ftime", ".fstatus"), drop = FALSE]
     pred_rep_list <- list()
     if (validation == "apparent") {
         .msg("Fitting apparent predictions averaged across imputations...", appendLF = FALSE)
@@ -689,7 +742,7 @@ calibrate_cscox_aj_grouped_corr <- function(
                 f2 = f_death,
                 future.seed = TRUE,
                 future.globals = FALSE,
-                future.packages = c("survival", "riskRegression", "prodlim", "splines"),
+                future.packages = c("survival", "riskRegression", "prodlim"),
                 future.scheduling = future_scheduling
             )
             .msg(" done")
@@ -737,78 +790,73 @@ calibrate_cscox_aj_grouped_corr <- function(
             min_bin_n = min_bin_n
         )
     }
-    curves_all <- list()
-    metrics_all <- list()
-    for (rep_idx in seq_along(pred_rep_list)) {
-        rep_obj <- pred_rep_list[[rep_idx]]
-        r <- rep_obj$repetition
-        pred_r <- rep_obj$pred
-        .msg("Calibrating repetition ", r, "/", length(pred_rep_list), "...", appendLF = FALSE)
-        for (j in seq_along(times)) {
-            t_horizon <- times[j]
-            pred_vec <- pred_r[, j]
-            calib_obj <- .grouped_calibration(
-                d = reference_data,
-                pred_vec = pred_vec,
-                t_horizon = t_horizon,
-                cutpoints = common_cutpoints[[j]],
-                bin_map = common_bin_maps[[j]],
-                min_bin_n = min_bin_n
-            )
-            calib_df <- calib_obj$curve
-            if (is.null(calib_df) || nrow(calib_df) == 0L) {
-                warning("No calibration bins survived for repetition ", r, " at time ", t_horizon, ".", call. = FALSE)
-                next
-            }
-            obs_row <- reference_observed[reference_observed$time_months == t_horizon, , drop = FALSE]
-            ece <- stats::weighted.mean(abs(calib_df$mean_predicted - calib_df$observed), w = calib_df$n_patients, na.rm = TRUE)
-            if (isTRUE(compute_ici) && t_horizon %in% ici_times) {
-                ici_obj <- .smooth_calibration_metrics(
-                    d = reference_data,
-                    pred_vec = pred_vec,
-                    t_horizon = t_horizon,
-                    ici_df = ici_df
-                )
-            } else {
-                ici_obj <- list(
-                    ici = NA_real_,
-                    e50 = NA_real_,
-                    e90 = NA_real_,
-                    emax = NA_real_
-                )
-            }
-            mean_pred <- mean(pred_vec, na.rm = TRUE)
-            eo_ratio <- if (is.na(obs_row$observed[1]) || obs_row$observed[1] <= 0) NA_real_ else mean_pred / obs_row$observed[1]
-            calib_df$repetition <- r
-            calib_df$time_months <- t_horizon
-            curves_all[[length(curves_all) + 1L]] <- calib_df
-            metrics_all[[length(metrics_all) + 1L]] <- data.frame(
-                repetition = r,
-                time_months = t_horizon,
-                ici = ici_obj$ici,
-                e50 = ici_obj$e50,
-                e90 = ici_obj$e90,
-                emax = ici_obj$emax,
-                ece = ece,
-                eo_ratio = eo_ratio,
-                mean_predicted = mean_pred,
-                observed = obs_row$observed[1],
-                observed_lower = obs_row$observed_lower[1],
-                observed_upper = obs_row$observed_upper[1],
+    if (isTRUE(parallel_calibration) && length(pred_rep_list) > 1L) {
+        if (!requireNamespace("future.apply", quietly = TRUE)) {
+            stop("Package 'future.apply' is required when parallel_calibration = TRUE.")
+        }
+        .msg(
+            "Calibrating ",
+            length(pred_rep_list),
+            " repetitions in parallel...",
+            appendLF = FALSE
+        )
+        rep_results <- future.apply::future_lapply(
+            X = pred_rep_list,
+            FUN = .run_one_calibration_repetition,
+            rep_total = length(pred_rep_list),
+            times = times,
+            reference_data = reference_data,
+            reference_observed = reference_observed,
+            common_cutpoints = common_cutpoints,
+            common_bin_maps = common_bin_maps,
+            min_bin_n = min_bin_n,
+            compute_ici = compute_ici,
+            ici_times = ici_times,
+            ici_df = ici_df,
+            n_input = n_input,
+            n_analysis = n_analysis,
+            n_dropped = n_dropped,
+            n_readmit = n_readmit,
+            n_death = n_death,
+            M = M,
+            future.seed = TRUE,
+            future.globals = FALSE,
+            future.packages = c("survival"),
+            future.scheduling = future_scheduling
+        )
+        .msg(" done")
+    } else {
+        rep_results <- vector("list", length(pred_rep_list))
+        for (rep_idx in seq_along(pred_rep_list)) {
+            rep_obj <- pred_rep_list[[rep_idx]]
+            r <- rep_obj$repetition
+            .msg("Calibrating repetition ", r, "/", length(pred_rep_list), "...", appendLF = FALSE)
+            rep_results[[rep_idx]] <- .run_one_calibration_repetition(
+                rep_obj = rep_obj,
+                rep_total = length(pred_rep_list),
+                times = times,
+                reference_data = reference_data,
+                reference_observed = reference_observed,
+                common_cutpoints = common_cutpoints,
+                common_bin_maps = common_bin_maps,
+                min_bin_n = min_bin_n,
+                compute_ici = compute_ici,
+                ici_times = ici_times,
+                ici_df = ici_df,
                 n_input = n_input,
                 n_analysis = n_analysis,
                 n_dropped = n_dropped,
                 n_readmit = n_readmit,
                 n_death = n_death,
-                n_used_calibration = calib_obj$n_used,
-                n_excluded_calibration = calib_obj$n_excluded,
-                n_bins = nrow(calib_df),
-                n_imputations = M,
-                stringsAsFactors = FALSE
+                M = M
             )
+            .msg(" done")
         }
-        .msg(" done")
     }
+    curves_all <- do.call(c, lapply(rep_results, function(x) x$curves))
+    metrics_all <- do.call(c, lapply(rep_results, function(x) x$metrics))
+    if (is.null(curves_all)) curves_all <- list()
+    if (is.null(metrics_all)) metrics_all <- list()
     by_repetition <- if (length(metrics_all) > 0L) do.call(rbind, metrics_all) else data.frame()
     curves_df <- if (length(curves_all) > 0L) do.call(rbind, curves_all) else data.frame()
     if (isTRUE(compute_ici) && nrow(by_repetition) > 0L) {
@@ -958,9 +1006,10 @@ calibrate_cscox_aj_grouped_corr <- function(
                 ici_df = ici_df,
                 tie_action = tie_action,
                 parallel_cv = parallel_cv,
+                parallel_calibration = parallel_calibration,
                 future_scheduling = future_scheduling,
                 debug_fit = debug_fit,
-                workflow = "parallel by repetition x fold; same folds across imputations; average held-out predictions across imputations; variability across repetitions"
+                workflow = "parallel by repetition x fold for prediction; optional parallel calibration by repetition; same folds across imputations; average held-out predictions across imputations; variability across repetitions"
             )
         ),
         class = "cscox_aj_grouped_calibration_corr"

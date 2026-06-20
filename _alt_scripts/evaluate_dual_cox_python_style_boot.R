@@ -540,6 +540,70 @@ ibs_ipcw_train <- function(
     )
 }
 
+.dual_cox_safe_concordance_coherent <- function(time, event, lp, ymax = NULL, strata = NULL) {
+    ok <- is.finite(time) & is.finite(event) & is.finite(lp)
+    if (!is.null(strata)) {
+        ok <- ok & !is.na(strata)
+    }
+    if (sum(ok) < 2L) {
+        return(NA_real_)
+    }
+
+    cdat <- data.frame(
+        time_ = as.numeric(time[ok]),
+        event_ = as.numeric(event[ok]),
+        score_ = as.numeric(lp[ok])
+    )
+
+    if (is.null(strata)) {
+        surv_formula <- survival::Surv(time_, event_) ~ score_
+    } else {
+        cdat$stratum_ <- strata[ok]
+        ## NB: survival::concordance() only recognises a *bare* strata() term as a
+        ## stratification special (its detection is name-based). A namespaced
+        ## `survival::strata(...)` is silently treated as a second predictor, so
+        ## $concordance comes back length-2 and the score is scored GLOBALLY, not
+        ## within strata. We therefore build the formula in an env where bare
+        ## strata/Surv resolve to the survival functions (works unattached).
+        f_env <- new.env(parent = parent.frame())
+        f_env$strata <- survival::strata
+        f_env$Surv <- survival::Surv
+        surv_formula <- stats::as.formula(
+            "Surv(time_, event_) ~ score_ + strata(stratum_)",
+            env = f_env
+        )
+    }
+
+    tryCatch(
+        {
+            args <- list(
+                object = surv_formula,
+                data = cdat,
+                timewt = "n/G2",
+                reverse = TRUE
+            )
+            if (!is.null(ymax)) {
+                args$ymax <- ymax
+            }
+            fit <- do.call(survival::concordance, args)
+            cval <- fit$concordance
+            ## Defensive: a correctly stratified fit returns a scalar pooled
+            ## concordance; if any survival version returns per-stratum values,
+            ## pool them from the (concordant/discordant) pair counts.
+            if (length(cval) != 1L) {
+                cnt <- fit$count
+                if (is.matrix(cnt)) {
+                    cnt <- colSums(cnt)
+                }
+                cval <- (cnt[["concordant"]] + 0.5 * cnt[["tied.x"]]) /
+                    (cnt[["concordant"]] + cnt[["discordant"]] + cnt[["tied.x"]])
+            }
+            as.numeric(cval)
+        },
+        error = function(e) NA_real_
+    )
+}
+
 .dual_cox_plan_idx <- function(df, plan_dummy_cols, plan_strata_fallback_col) {
     n <- nrow(df)
     out <- integer(n)
@@ -799,6 +863,132 @@ ibs_ipcw_train <- function(
     )
 }
 
+.dual_cox_fit_one_risk_coherent <- function(
+    df_train_raw,
+    df_test_raw,
+    meta,
+    time_col,
+    event_col,
+    eval_times,
+    min_test_rows
+) {
+    prepared <- .dual_cox_prepare_fold_data(
+        df_train_raw = df_train_raw,
+        df_test_raw = df_test_raw,
+        meta = meta,
+        min_test_rows = min_test_rows
+    )
+    if (nzchar(prepared$error)) {
+        return(list(error = prepared$error, dropped = prepared$dropped))
+    }
+
+    df_train <- prepared$train
+    df_test <- prepared$test
+    fit <- survival::coxph(
+        meta$model_formula,
+        data = df_train,
+        ties = "efron",
+        x = TRUE,
+        y = TRUE,
+        model = TRUE
+    )
+
+    lp_train <- as.numeric(stats::predict(fit, newdata = df_train, type = "lp"))
+    lp_val <- as.numeric(stats::predict(fit, newdata = df_test, type = "lp"))
+    surv_mat <- pec::predictSurvProb(fit, newdata = df_test, times = eval_times)
+    surv_mat <- .dual_cox_matrixify(
+        x = surv_mat,
+        nrow_expected = nrow(df_test),
+        ncol_expected = length(eval_times)
+    )
+
+    ## --- coherence patch: configurable concordance ranking score + optional within-strata ---
+    ## driven by options(); defaults reproduce the ORIGINAL behaviour exactly.
+    .dualcox_score_type <- getOption("dualcox.concordance_score", "lp")
+    .dualcox_within_strata <- isTRUE(getOption("dualcox.concordance_within_strata", FALSE))
+    .dualcox_risk_at <- function(col_idx) as.numeric(1 - surv_mat[, col_idx])
+    ## global marker: eta (lp) or stratum-correct absolute risk at the largest eval_time
+    .dualcox_global_score <- if (identical(.dualcox_score_type, "risk")) {
+        .dualcox_risk_at(length(eval_times))
+    } else {
+        lp_val
+    }
+    .dualcox_val_strata <- NULL
+    if (.dualcox_within_strata && length(meta$strata_term_labels) > 0L) {
+        .dualcox_val_strata <- .dual_cox_make_strata_signature_safe(
+            data = df_test,
+            strata_term_labels = meta$strata_term_labels,
+            formula_env = environment(meta$model_formula)
+        )
+    }
+    ## --- end coherence patch ---
+
+    time_train <- as.numeric(df_train[[time_col]])
+    event_train <- to01(df_train[[event_col]])
+    time_val <- as.numeric(df_test[[time_col]])
+    event_val <- to01(df_test[[event_col]])
+    train_time_max <- max(time_train, na.rm = TRUE)
+
+    c_global <- .dual_cox_safe_concordance_coherent(
+        time = time_val,
+        event = event_val,
+        lp = .dualcox_global_score,
+        strata = .dualcox_val_strata
+    )
+    ibs_global <- ibs_ipcw_train(
+        df_train = df_train,
+        df_test = df_test,
+        surv_mat = surv_mat,
+        times = eval_times,
+        time_col = time_col,
+        event_col = event_col
+    )
+
+    c_horizon <- rep(NA_real_, length(eval_times))
+    ibs_horizon <- rep(NA_real_, length(eval_times))
+
+    for (ii in seq_along(eval_times)) {
+        t_h <- eval_times[ii]
+        if (is.finite(train_time_max) && t_h < train_time_max) {
+            c_horizon[ii] <- .dual_cox_safe_concordance_coherent(
+                time = time_val,
+                event = event_val,
+                lp = if (identical(.dualcox_score_type, "risk")) .dualcox_risk_at(ii) else lp_val,
+                ymax = t_h,
+                strata = .dualcox_val_strata
+            )
+
+            keep <- eval_times <= t_h
+            if (sum(keep) >= 2L) {
+                ibs_horizon[ii] <- ibs_ipcw_train(
+                    df_train = df_train,
+                    df_test = df_test,
+                    surv_mat = surv_mat[, keep, drop = FALSE],
+                    times = eval_times[keep],
+                    time_col = time_col,
+                    event_col = event_col
+                )
+            }
+        }
+    }
+
+    list(
+        error = "",
+        dropped = prepared$dropped,
+        train = df_train,
+        test = df_test,
+        lp_train = lp_train,
+        lp_val = lp_val,
+        surv_val = surv_mat,
+        y_train = data.frame(time = time_train, event = event_train),
+        y_val = data.frame(time = time_val, event = event_val),
+        c_global = c_global,
+        ibs_global = ibs_global,
+        c_horizon = stats::setNames(c_horizon, as.character(eval_times)),
+        ibs_horizon = stats::setNames(ibs_horizon, as.character(eval_times))
+    )
+}
+
 .dual_cox_preflight <- function(meta, df, eval_times) {
     prepared <- .dual_cox_prepare_model_split(
         train = df,
@@ -946,6 +1136,18 @@ evaluate_dual_cox_python_style <- function(
     .dual_cox_preflight(meta_readmit, df_list[[1L]], eval_times)
     .dual_cox_preflight(meta_death, df_list[[1L]], eval_times)
 
+    ## --- coherence dispatch ---
+    ## Default options (score = "lp", within_strata = FALSE) keep the ORIGINAL
+    ## fold fitter, so published numbers are reproduced byte-for-byte. Any active
+    ## coherence option routes to the _coherent fitter (configurable concordance).
+    .dual_cox_fit_one_risk_dispatch <-
+        if (isTRUE(getOption("dualcox.concordance_within_strata", FALSE)) ||
+            !identical(getOption("dualcox.concordance_score", "lp"), "lp")) {
+            .dual_cox_fit_one_risk_coherent
+        } else {
+            .dual_cox_fit_one_risk
+        }
+
     metrics_log <- list()
     failures_log <- list()
     raw_predictions <- list()
@@ -1006,7 +1208,7 @@ evaluate_dual_cox_python_style <- function(
             df_test_raw <- df_imp[val_idx, , drop = FALSE]
 
             readmit_res <- tryCatch(
-                .dual_cox_fit_one_risk(
+                .dual_cox_fit_one_risk_dispatch(
                     df_train_raw = df_train_raw,
                     df_test_raw = df_test_raw,
                     meta = meta_readmit,
@@ -1019,7 +1221,7 @@ evaluate_dual_cox_python_style <- function(
             )
 
             death_res <- tryCatch(
-                .dual_cox_fit_one_risk(
+                .dual_cox_fit_one_risk_dispatch(
                     df_train_raw = df_train_raw,
                     df_test_raw = df_test_raw,
                     meta = meta_death,

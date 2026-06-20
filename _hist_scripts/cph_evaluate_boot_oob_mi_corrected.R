@@ -389,7 +389,9 @@ cph_evaluate_boot_oob_mi_corrected <- function(
     old_plan <- future::plan()
     on.exit(future::plan(old_plan), add = TRUE)
     if (n_cores > 1L) {
-        future::plan(future::multisession, workers = n_cores)
+        future::plan(future::multisession, workers = n_cores,
+                     rscript_args = "--no-init-file",
+                     rscript_libs = .libPaths())
     } else {
         future::plan(future::sequential)
     }

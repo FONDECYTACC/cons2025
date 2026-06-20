@@ -191,7 +191,7 @@
         ),
         "Continuous NRI is the sum of the event and nonevent components. Positive event NRI indicates upward movement in predicted risk among subjects with the event by the stated horizon; positive nonevent NRI indicates downward movement in predicted risk among subjects who remain event-free beyond that horizon.",
         paste0("Categorical NRI was computed using risk categories defined by: ", cut_points_txt, "."),
-        "IDI is the difference in discrimination slopes between the updated and reference models.",
+        "IDI is the difference in discrimination slopes between the updated and reference models; the reported central estimate is the mean across validation replicates and equals the updated-model mean slope minus the reference-model mean slope shown in the adjacent column.",
         "The discrimination slope equals the weighted mean predicted risk among subjects with the event by time t minus the weighted mean predicted risk among subjects who are event-free beyond time t.",
         "All measures were calculated at fixed follow-up horizons using censoring-adjusted weights and out-of-fold validation predictions."
     )

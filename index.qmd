@@ -94,13 +94,19 @@ This repository is organized into four main sections: data preparation, deduplic
 
 1. [**Step 2.1: Format and Export Databases for ML, Deep Learning Survival Models & Non-Proportional Hazards, Traditional Cox PH Baseline & Performance Evaluation**](prediction21_converted.html)
 
-2. [**Step 2.2: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction22_converted.html)
+2. [**Step 2.2: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction22_converted_mod.html)
 
-3. [**Step 2.3: Internal validation of SHAP-informed selected Models: DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction23_converted.html)
+3. [**Step 2.2.5. Complementary metrics: multi-horizon ICI, pending dual metrics, DCA, and consolidated table**](prediction225_converted_mod.html) 
 
-4. [**Step 2.4: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted.html)
+4. [**Step 2.3: Internal validation of SHAP-informed selected Models: DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction23_converted_mod.html)
 
-5. [**Step 2.5: Internal validation of SHAP-informed selected Models (DeepSurv Sensitivity): DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction25_converted.html)
+5. [**Step 2.4: Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection (DeepSurv Sensitivity), Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted_mod.html)
+
+6. [**Step 2.5: Internal validation of SHAP-informed selected Models (DeepSurv Sensitivity): DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction25_converted_mod.html)
+
+7. [**Step 2.6: Multistate semi-Markov nomogram, SHAP-based models**](prediction26_multistate_semimarkov.html)
+
+8. [**Step 2.7: Nomogram app**](https://acc-ndp-anid-fondecyt1240138.shinyapps.io/nomogram/)
 
 ---
 
