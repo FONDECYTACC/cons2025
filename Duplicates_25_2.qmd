@@ -3440,9 +3440,29 @@ cat(paste0("Number of overlaps after replacing center ID, episodes: ", formatC(l
 #opc <- c(10716,2678,5505)
 #194
 
+# Read the manually corrected overlaps table.
+# The plaintext xlsx carries patient-level hash_key codes, so it is not versioned:
+# the repo ships an encrypted '.enc' (httr2::secret_encrypt_file, key = PASSWORD_SECRET).
+# Prefer the local plaintext when present (identical to the historical behaviour);
+# otherwise decrypt the '.enc' on the fly. Pure R, no external 7z dependency.
+.read_overlaps_mod <- function(wdpath) {
+  plain <- paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx")
+  if (file.exists(plain)) return(rio::import(plain))
+  enc <- paste0(plain, ".enc")
+  if (!file.exists(enc))
+    stop("Overlaps table not found (neither plaintext nor encrypted):
+  ", plain, "
+  ", enc)
+  if (Sys.getenv("PASSWORD_SECRET") == "")
+    Sys.setenv(PASSWORD_SECRET = readLines(paste0(wdpath, "secret.txt"), warn = FALSE))
+  dec <- httr2::secret_decrypt_file(enc, key = "PASSWORD_SECRET")
+  on.exit(unlink(dec), add = TRUE)
+  rio::import(dec, format = "xlsx")
+}
+
 multiple_overlaps_manual_correction<-
 #rio::import(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_mod.xlsx"), sheet = "Hoja 1")
-rio::import(paste0(wdpath, "cons/_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx")) |> 
+.read_overlaps_mod(wdpath) |> 
   mutate(hash_prev_sep25= gsub("^x","",hash_prev_sep25))|> 
 #rn's of the pre-aug 2025 manual review to pair with actual. might be imprecise due to changes in rows
   #2025-09-27: modified

@@ -136,3 +136,8 @@ _out/db1c_hash_adm_date25.xlsx
 _input/bd_2022_2024_descuadrado.xlsx
 _out/_overlaps_dup_step_2.xlsx
 _out/_overlaps_dup_step_2_after_miss.xlsx
+
+# Encrypted overlaps table is versioned (.enc); plaintext stays local only
+_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx
+# Excel lock/owner temp files
+~$*
