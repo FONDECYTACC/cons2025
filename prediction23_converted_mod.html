@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Andrés González Santa Cruz">
-<meta name="dcterms.date" content="2026-06-19">
+<meta name="dcterms.date" content="2026-06-21">
 <meta name="description" content="Held-out (20% test split, seed 2125) internal validation of the two primary Cox models (best_perf1, best_perf2) for SUD treatment readmission and all-cause mortality: IBS, Uno’s C-index, calibration (Aalen-Johansen for readmission with death competing, Kaplan-Meier for mortality) and decision curve analysis using the prediction225 estimators, plus an ipeval bootstrap cross-check for consistency. Models are fit on the 80% development set and scored out-of-sample on the retained 20%.">
 
 <title>SENDAs Agreement 1 Update 2010-2022 (Prediction, step 2.3, held-out 20% internal validation) – Index</title>
@@ -4033,17 +4033,16 @@ font-family: inherit;
 </style>
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
-  "copy-button": false,
+  "copy-button": true,
   "collapse-after": 3,
   "panel-placement": "end",
   "type": "overlay",
-  "limit": 50,
+  "limit": 20,
   "keyboard-shortcut": [
     "f",
     "/",
     "s"
   ],
-  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -4479,7 +4478,7 @@ center-table {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 19, 2026</p>
+      <p class="date">June 21, 2026</p>
     </div>
   </div>
   
@@ -6106,7 +6105,7 @@ caught_vs_none = net true cases caught per 1,000 vs treat-none; avoided_vs_all =
 <section id="reclassification-nri-idi-held-out-20" class="level2">
 <h2 class="anchored" data-anchor-id="reclassification-nri-idi-held-out-20">Reclassification: NRI &amp; IDI (held-out 20%)</h2>
 <p>Competing-risk-aware reclassification (readmission via Aalen-Johansen IPCW, mortality via standard IPCW), mirroring <code>prediction225</code>. <code>old</code> = SHAP implemented death (<code>best_perf2</code>), <code>new</code> = Full PH primary death (<code>best_perf1</code>): positive NRI/IDI = the Full PH primary reclassifies better than the parsimonious implementation. Readmission is shared by both models, so its NRI/IDI is 0 by construction — the <strong>mortality</strong> rows carry the signal. NRI/IDI is a secondary metric; its intervals are split-to-split percentiles, not CIs.</p>
-<div id="holdout-nri-idi-run" class="cell" data-message="false" data-execution_count="42">
+<div id="holdout-nri-idi-run" class="cell" data-message="false">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;cons/_alt_scripts/nri_idi_from_results_boot.R&quot;</span>)          <span class="co"># AJ competing-aware</span></span>
@@ -6138,38 +6137,49 @@ caught_vs_none = net true cases caught per 1,000 vs treat-none; avoided_vs_all =
 <span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">old_label  =</span> <span class="st">&quot;SHAP implemented (best_perf2)&quot;</span>,</span>
 <span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">new_label  =</span> <span class="st">&quot;Full PH primary (best_perf1)&quot;</span></span>
 <span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a>nri_idi_model_table <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">Comparison =</span> <span class="st">&quot;Full PH primary vs SHAP implemented&quot;</span>,</span>
-<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a>                             nri_idi_tab<span class="sc">$</span>table)</span>
-<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">write.csv</span>(nri_idi_model_table,</span>
-<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">file.path</span>(out_dir, <span class="st">&quot;table_nri_idi_holdout.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">file.path</span>(<span class="fu">gsub</span>(<span class="st">&quot;/cons&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="fu">getwd</span>()),</span>
+<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;cons&quot;</span>,</span>
+<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;_alt_scripts&quot;</span>,</span>
+<span id="cb52-35"><a href="#cb52-35" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;relabel_nri_idi_table.R&quot;</span>)</span>
+<span id="cb52-36"><a href="#cb52-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb52-37"><a href="#cb52-37" aria-hidden="true" tabindex="-1"></a>nri_idi_fixed <span class="ot">&lt;-</span> <span class="fu">relabel_nri_idi_table</span>(</span>
+<span id="cb52-38"><a href="#cb52-38" aria-hidden="true" tabindex="-1"></a>  nri_idi_tab<span class="sc">$</span>table,</span>
+<span id="cb52-39"><a href="#cb52-39" aria-hidden="true" tabindex="-1"></a>  <span class="at">old_label =</span> <span class="st">&quot;SHAP implemented (best_perf2)&quot;</span>,   <span class="co"># referencia</span></span>
+<span id="cb52-40"><a href="#cb52-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">new_label =</span> <span class="st">&quot;Full PH primary (best_perf1)&quot;</span>     <span class="co"># actualizado</span></span>
+<span id="cb52-41"><a href="#cb52-41" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb52-42"><a href="#cb52-42" aria-hidden="true" tabindex="-1"></a>nri_idi_model_table <span class="ot">&lt;-</span> nri_idi_fixed<span class="sc">$</span>model_table</span>
+<span id="cb52-43"><a href="#cb52-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-44"><a href="#cb52-44" aria-hidden="true" tabindex="-1"></a>utils<span class="sc">::</span><span class="fu">write.csv</span>(nri_idi_model_table,</span>
+<span id="cb52-45"><a href="#cb52-45" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">file.path</span>(<span class="fu">gsub</span>(<span class="st">&quot;/cons&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="fu">getwd</span>()), <span class="st">&quot;table_nri_holdout.csv&quot;</span>), <span class="at">row.names=</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Readmission NRI/IDI: competing-risk (Aalen-Johansen) IPCW on 5 replicate(s). Death: standard IPCW.
 Readmission CR=5 | IPCW fallback=0</code></pre>
 </div>
 </div>
-<div id="cell-holdout-nri-idi-table" class="cell" data-execution_count="46">
+<div id="cell-holdout-nri-idi-table" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>nri_idi_tab<span class="sc">$</span>table <span class="sc">|&gt;</span></span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="st">&quot;markdown&quot;</span>,</span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">&quot;Held-out 20%: NRI/IDI (Full PH primary vs SHAP implemented; readmission shared -&gt; 0)&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>nri_idi_fixed<span class="sc">$</span>table <span class="sc">|&gt;</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="st">&quot;markdown&quot;</span>, <span class="at">caption =</span> nri_idi_fixed<span class="sc">$</span>caption)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div id="holdout-nri-idi-table" class="cell-output cell-output-display" data-execution_count="46">
+<div id="holdout-nri-idi-table" class="cell-output cell-output-display" data-execution_count="17">
 <pre><code>
 
-Table: Held-out 20%: NRI/IDI (Full PH primary vs SHAP implemented; readmission shared -&gt; 0)
+Table: Held-out 20%: NRI/IDI (SHAP implemented (best_perf2) [reference] vs Full PH primary (best_perf1) [updated]; readmission shared, so all readmission values are 0). Positive values favor the updated model (Full PH primary (best_perf1)).
 
-|               |Outcome     | Horizon, months|Continuous NRI         |Continuous NRI, events |Continuous NRI, nonevents |Categorical NRI        |Categorical NRI, events |Categorical NRI, nonevents |IDI                    |Discrimination slope, reference vs updated       |
-|:--------------|:-----------|---------------:|:----------------------|:----------------------|:-------------------------|:----------------------|:-----------------------|:--------------------------|:----------------------|:------------------------------------------------|
-|readmission.6  |Readmission |               6|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.018 (0.018 to 0.018) vs 0.018 (0.018 to 0.018) |
-|readmission.12 |Readmission |              12|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.024 (0.024 to 0.024) vs 0.024 (0.024 to 0.024) |
-|readmission.36 |Readmission |              36|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.032 (0.032 to 0.032) vs 0.032 (0.032 to 0.032) |
-|readmission.60 |Readmission |              60|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.030 (0.030 to 0.030) vs 0.030 (0.030 to 0.030) |
-|death.6        |Death       |               6|0.728 (0.672 to 0.772) |0.568 (0.514 to 0.611) |0.161 (0.158 to 0.164)    |0.038 (0.018 to 0.052) |0.041 (0.021 to 0.055)  |-0.003 (-0.003 to -0.003)  |0.005 (0.005 to 0.006) |0.010 (0.010 to 0.010) vs 0.016 (0.016 to 0.016) |
-|death.12       |Death       |              12|0.606 (0.562 to 0.640) |0.448 (0.406 to 0.482) |0.158 (0.155 to 0.161)    |0.135 (0.126 to 0.145) |0.140 (0.130 to 0.149)  |-0.004 (-0.005 to -0.004)  |0.006 (0.006 to 0.006) |0.016 (0.016 to 0.016) vs 0.021 (0.021 to 0.022) |
-|death.36       |Death       |              36|0.455 (0.429 to 0.479) |0.314 (0.286 to 0.338) |0.141 (0.138 to 0.143)    |0.112 (0.103 to 0.125) |0.115 (0.106 to 0.127)  |-0.003 (-0.003 to -0.002)  |0.009 (0.009 to 0.009) |0.048 (0.048 to 0.048) vs 0.057 (0.057 to 0.058) |
-|death.60       |Death       |              60|0.390 (0.372 to 0.402) |0.263 (0.244 to 0.275) |0.128 (0.124 to 0.131)    |0.095 (0.082 to 0.102) |0.091 (0.077 to 0.099)  |0.003 (0.003 to 0.004)     |0.015 (0.014 to 0.015) |0.078 (0.078 to 0.078) vs 0.092 (0.092 to 0.093) |</code></pre>
+|               |Comparison                          |Outcome     | Horizon, months|Continuous NRI         |Continuous NRI, events |Continuous NRI, nonevents |Categorical NRI        |Categorical NRI, events |Categorical NRI, nonevents |IDI                    |Discrimination slope, reference vs updated       |
+|:--------------|:-----------------------------------|:-----------|---------------:|:----------------------|:----------------------|:-------------------------|:----------------------|:-----------------------|:--------------------------|:----------------------|:------------------------------------------------|
+|readmission.6  |Full PH primary vs SHAP implemented |Readmission |               6|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.018 (0.018 to 0.018) vs 0.018 (0.018 to 0.018) |
+|readmission.12 |Full PH primary vs SHAP implemented |Readmission |              12|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.024 (0.024 to 0.024) vs 0.024 (0.024 to 0.024) |
+|readmission.36 |Full PH primary vs SHAP implemented |Readmission |              36|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.032 (0.032 to 0.032) vs 0.032 (0.032 to 0.032) |
+|readmission.60 |Full PH primary vs SHAP implemented |Readmission |              60|0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)    |0.000 (0.000 to 0.000) |0.000 (0.000 to 0.000)  |0.000 (0.000 to 0.000)     |0.000 (0.000 to 0.000) |0.030 (0.030 to 0.030) vs 0.030 (0.030 to 0.030) |
+|death.6        |Full PH primary vs SHAP implemented |Death       |               6|0.728 (0.672 to 0.772) |0.568 (0.514 to 0.611) |0.161 (0.158 to 0.164)    |0.038 (0.018 to 0.052) |0.041 (0.021 to 0.055)  |-0.003 (-0.003 to -0.003)  |0.005 (0.005 to 0.006) |0.010 (0.010 to 0.010) vs 0.016 (0.016 to 0.016) |
+|death.12       |Full PH primary vs SHAP implemented |Death       |              12|0.606 (0.562 to 0.640) |0.448 (0.406 to 0.482) |0.158 (0.155 to 0.161)    |0.135 (0.126 to 0.145) |0.140 (0.130 to 0.149)  |-0.004 (-0.005 to -0.004)  |0.006 (0.006 to 0.006) |0.016 (0.016 to 0.016) vs 0.021 (0.021 to 0.022) |
+|death.36       |Full PH primary vs SHAP implemented |Death       |              36|0.455 (0.429 to 0.479) |0.314 (0.286 to 0.338) |0.141 (0.138 to 0.143)    |0.112 (0.103 to 0.125) |0.115 (0.106 to 0.127)  |-0.003 (-0.003 to -0.002)  |0.009 (0.009 to 0.009) |0.048 (0.048 to 0.048) vs 0.057 (0.057 to 0.058) |
+|death.60       |Full PH primary vs SHAP implemented |Death       |              60|0.390 (0.372 to 0.402) |0.263 (0.244 to 0.275) |0.128 (0.124 to 0.131)    |0.095 (0.082 to 0.102) |0.091 (0.077 to 0.099)  |0.003 (0.003 to 0.004)     |0.015 (0.014 to 0.015) |0.078 (0.078 to 0.078) vs 0.092 (0.092 to 0.093) |</code></pre>
 </div>
 </div>
 </section>
