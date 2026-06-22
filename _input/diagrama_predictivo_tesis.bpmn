@@ -1,226 +1,631 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0hmm2lb" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.9.0">
-  <bpmn:process id="Process_1yo3w99" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_0poofpz" />
-    <bpmn:task id="Activity_0oap7bu" name="Base de datos construida">
-      <bpmn:outgoing>Flow_02d4jv3</bpmn:outgoing>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_pred_tesis" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.16.0">
+  <bpmn:process id="Process_pred_tesis" isExecutable="false">
+    <bpmn:startEvent id="Start">
+      <bpmn:outgoing>Flow_00</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="A_cohorte" name="Cohorte SISTRAT–SENDA&#10;vinculada a mortalidad DEIS&#10;18–64 años · 2010–2020 · n ≈ 88.152">
+      <bpmn:incoming>Flow_00</bpmn:incoming>
+      <bpmn:outgoing>Flow_01</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:task id="Activity_1f2f7fk" name="Modelos ML&#10;Probar calibración y discriminación en 5 iteraciones">
-      <bpmn:incoming>Flow_02d4jv3</bpmn:incoming>
-      <bpmn:outgoing>Flow_1jfno21</bpmn:outgoing>
-      <bpmn:outgoing>Flow_1ri4vkm</bpmn:outgoing>
+    <bpmn:task id="A_imput" name="Imputación múltiple&#10;5 bases (missRanger / RF + PMM)">
+      <bpmn:incoming>Flow_01</bpmn:incoming>
+      <bpmn:outgoing>Flow_02</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_02d4jv3" sourceRef="Activity_0oap7bu" targetRef="Activity_1f2f7fk" />
-    <bpmn:task id="Activity_0f364la" name="Cox (Elastic Net)">
-      <bpmn:incoming>Flow_1jfno21</bpmn:incoming>
-      <bpmn:outgoing>Flow_1n6vcsk</bpmn:outgoing>
+    <bpmn:task id="A_split" name="División desarrollo / prueba&#10;80% desarrollo (n ≈ 70.521)&#10;20% prueba (n ≈ 17.631)">
+      <bpmn:incoming>Flow_02</bpmn:incoming>
+      <bpmn:outgoing>Flow_03</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1jfno21" sourceRef="Activity_1f2f7fk" targetRef="Activity_0f364la" />
-    <bpmn:exclusiveGateway id="Gateway_1mkn18y" name="Funciona mal&#10;(mal desempeño, peor que nulo)">
-      <bpmn:incoming>Flow_1n6vcsk</bpmn:incoming>
-      <bpmn:outgoing>Flow_0248lmv</bpmn:outgoing>
-      <bpmn:outgoing>Flow_0iqom15</bpmn:outgoing>
+    <bpmn:task id="B_cv" name="Validación cruzada repetida&#10;sobre imputaciones · estructura dual&#10;folds estratificados por evento y modalidad">
+      <bpmn:incoming>Flow_03</bpmn:incoming>
+      <bpmn:outgoing>Flow_04</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="B_fork">
+      <bpmn:incoming>Flow_04</bpmn:incoming>
+      <bpmn:outgoing>Flow_05</bpmn:outgoing>
+      <bpmn:outgoing>Flow_06</bpmn:outgoing>
+      <bpmn:outgoing>Flow_07</bpmn:outgoing>
+      <bpmn:outgoing>Flow_08</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="B_coxph" name="Cox PH completo&#10;marco de Andersen (~60 variables)">
+      <bpmn:incoming>Flow_05</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="B_enet" name="Cox penalizado&#10;(Elastic Net / Coxnet)">
+      <bpmn:incoming>Flow_06</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="B_xgb" name="XGBoost de supervivencia (xgb2)">
+      <bpmn:incoming>Flow_07</bpmn:incoming>
+      <bpmn:outgoing>Flow_09</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="B_shap" name="SHAP&#10;importancia, no linealidad,&#10;interacciones">
+      <bpmn:incoming>Flow_09</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="B_shapcox" name="Cox informado por SHAP&#10;(parsimonioso)">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="B_deep" name="DeepSurv / DeepHit&#10;sensibilidad algorítmica">
+      <bpmn:incoming>Flow_08</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="B_join">
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="B_select" name="Selección multicriterio preespecificada&#10;duales (Uno&#39;s C, IBS) › calibración multihorizonte&#10;› error › discriminación › parsimonia&#10;› estabilidad › interpretabilidad">
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:outgoing>Flow_16</bpmn:outgoing>
+      <bpmn:outgoing>Flow_17</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="C_rd" name="Readmisión: empate dual&#10;(ΔC &#60; 0,01)">
+      <bpmn:incoming>Flow_16</bpmn:incoming>
+      <bpmn:outgoing>Flow_18</bpmn:outgoing>
+      <bpmn:outgoing>Flow_19</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_1n6vcsk" sourceRef="Activity_0f364la" targetRef="Gateway_1mkn18y" />
-    <bpmn:task id="Activity_1baapec" name="Gradient boosting">
-      <bpmn:incoming>Flow_0248lmv</bpmn:incoming>
-      <bpmn:outgoing>Flow_07p328m</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_0248lmv" sourceRef="Gateway_1mkn18y" targetRef="Activity_1baapec" />
-    <bpmn:task id="Activity_0f5hkp6" name="Random forest">
-      <bpmn:incoming>Flow_0iqom15</bpmn:incoming>
-      <bpmn:outgoing>Flow_0q6aetj</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_0iqom15" sourceRef="Gateway_1mkn18y" targetRef="Activity_0f5hkp6" />
-    <bpmn:task id="Activity_0lkl8xg" name="Probar el modelo que propuse">
-      <bpmn:incoming>Flow_1ri4vkm</bpmn:incoming>
-      <bpmn:outgoing>Flow_0ekgor6</bpmn:outgoing>
-      <bpmn:outgoing>Flow_0zrnzt6</bpmn:outgoing>
-      <bpmn:outgoing>Flow_1dt9iz9</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1ri4vkm" sourceRef="Activity_1f2f7fk" targetRef="Activity_0lkl8xg" />
-    <bpmn:task id="Activity_0o16a9j" name="Discriminación">
-      <bpmn:incoming>Flow_0ekgor6</bpmn:incoming>
-    </bpmn:task>
-    <bpmn:task id="Activity_1qwaltf" name="Calibración">
-      <bpmn:incoming>Flow_0zrnzt6</bpmn:incoming>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_0ekgor6" sourceRef="Activity_0lkl8xg" targetRef="Activity_0o16a9j" />
-    <bpmn:sequenceFlow id="Flow_0zrnzt6" sourceRef="Activity_0lkl8xg" targetRef="Activity_1qwaltf" />
-    <bpmn:exclusiveGateway id="Gateway_1yr32pb" name="Mal Disc/calib, hacerlos a puntos fijos">
-      <bpmn:incoming>Flow_07p328m</bpmn:incoming>
-      <bpmn:incoming>Flow_0q6aetj</bpmn:incoming>
-      <bpmn:outgoing>Flow_022sqfb</bpmn:outgoing>
+    <bpmn:exclusiveGateway id="C_dt" name="Mortalidad: Cox PH gana&#10;discriminación / reclasificación&#10;(ΔC ≈ 0,011)">
+      <bpmn:incoming>Flow_17</bpmn:incoming>
+      <bpmn:outgoing>Flow_20</bpmn:outgoing>
+      <bpmn:outgoing>Flow_21</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sequenceFlow id="Flow_07p328m" sourceRef="Activity_1baapec" targetRef="Gateway_1yr32pb" />
-    <bpmn:sequenceFlow id="Flow_0q6aetj" sourceRef="Activity_0f5hkp6" targetRef="Gateway_1yr32pb" />
-    <bpmn:task id="Activity_0jhd1hi" name="- Fijar a 3 meses, 1, 3, 5 y 10 años">
-      <bpmn:incoming>Flow_022sqfb</bpmn:incoming>
+    <bpmn:task id="C_rd1" name="PRIMARIO readmisión&#10;Cox informado por SHAP (22 variables)">
+      <bpmn:incoming>Flow_18</bpmn:incoming>
+      <bpmn:outgoing>Flow_22</bpmn:outgoing>
+      <bpmn:outgoing>Flow_06wb4z4</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_022sqfb" sourceRef="Gateway_1yr32pb" targetRef="Activity_0jhd1hi" />
-    <bpmn:task id="Activity_19bzykw" name="Beneficio Neto= (Verdaderos Positivos−umbral×Falsos Positivos)​/N">
-      <bpmn:incoming>Flow_1dt9iz9</bpmn:incoming>
+    <bpmn:task id="C_rd2" name="Sensibilidad / ancla de Andersen&#10;Cox PH completo">
+      <bpmn:incoming>Flow_19</bpmn:incoming>
+      <bpmn:outgoing>Flow_23</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1dt9iz9" sourceRef="Activity_0lkl8xg" targetRef="Activity_19bzykw" />
-    <bpmn:task id="Activity_1vt852g" name="Modelo multiestado" />
-    <bpmn:group id="Group_0qfajl5" categoryValueRef="CategoryValue_0273sbq" />
-    <bpmn:textAnnotation id="TextAnnotation_0wjbxsj">
-      <bpmn:text>- Interacciones de 2-3 vías
- - Criterio AICc
- - max. 20 modelos candidatos
-- Tener en cuenta la censura de readm. a quienes mueren</bpmn:text>
+    <bpmn:task id="C_dt1" name="PRIMARIO mortalidad&#10;Cox PH completo">
+      <bpmn:incoming>Flow_20</bpmn:incoming>
+      <bpmn:outgoing>Flow_24</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="C_dt2" name="Implementación parsimoniosa&#10;Cox informado por SHAP (13 variables)">
+      <bpmn:incoming>Flow_21</bpmn:incoming>
+      <bpmn:outgoing>Flow_25</bpmn:outgoing>
+      <bpmn:outgoing>Flow_26</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="C_join" name="4 modelos finales → dos combinaciones&#10;best_perf1 = SHAP readm. + Cox PH muerte&#10;best_perf2 = SHAP readm. + SHAP muerte&#10;(readmisión idéntica en ambas)">
+      <bpmn:incoming>Flow_22</bpmn:incoming>
+      <bpmn:incoming>Flow_23</bpmn:incoming>
+      <bpmn:incoming>Flow_24</bpmn:incoming>
+      <bpmn:incoming>Flow_25</bpmn:incoming>
+      <bpmn:outgoing>Flow_27</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="D_ff" name="Sensibilidad por forma funcional&#10;un predictor a la vez:&#10;splines df=3, hinge, cuadrática, log, ordinal">
+      <bpmn:incoming>Flow_26</bpmn:incoming>
+      <bpmn:incoming>Flow_06wb4z4</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="E_holdout" name="Evaluar la combinación de los dos&#10;modelos en el set de prueba&#10;modelo congelado, sin reajuste">
+      <bpmn:incoming>Flow_27</bpmn:incoming>
+      <bpmn:outgoing>Flow_28</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="E_fork">
+      <bpmn:incoming>Flow_28</bpmn:incoming>
+      <bpmn:outgoing>Flow_29</bpmn:outgoing>
+      <bpmn:outgoing>Flow_31</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1r5oz6u</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="E_disc" name="Discriminación&#10;Uno&#39;s C (IPCW) · IC bootstrap">
+      <bpmn:incoming>Flow_29</bpmn:incoming>
+      <bpmn:outgoing>Flow_32</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="E_cal" name="Calibración&#10;ICI / ECE / E:O · IC bootstrap">
+      <bpmn:incoming>Flow_1r5oz6u</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vi2nex</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="E_dca" name="Utilidad clínica (DCA)&#10;beneficio neto · IC bootstrap">
+      <bpmn:incoming>Flow_31</bpmn:incoming>
+      <bpmn:outgoing>Flow_34</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="E_join">
+      <bpmn:incoming>Flow_32</bpmn:incoming>
+      <bpmn:incoming>Flow_34</bpmn:incoming>
+      <bpmn:incoming>Flow_1vi2nex</bpmn:incoming>
+      <bpmn:outgoing>Flow_35</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="F_struct" name="Estructura tipo illness-death&#10;(riesgos semicompetitivos)&#10;post-trat. → readmisión → muerte&#10;(λ12, λ13, λ23)">
+      <bpmn:incoming>Flow_35</bpmn:incoming>
+      <bpmn:outgoing>Flow_36</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="F_trans" name="Probabilidades de transición&#10;probtrans (Markov) · IC = MVN B=500 + Rubin&#10;+ clúster por centro&#10;sensibilidad: semi-Markov / flexsurv, MarkovTest">
+      <bpmn:incoming>Flow_36</bpmn:incoming>
+      <bpmn:outgoing>Flow_37</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="F_nomo" name="Nomograma demostrador (Shiny, EN/ES)&#10;kit desidentificado&#10;horizontes 3/6/12/36/60 meses">
+      <bpmn:incoming>Flow_37</bpmn:incoming>
+      <bpmn:outgoing>Flow_38</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End">
+      <bpmn:incoming>Flow_38</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_00" sourceRef="Start" targetRef="A_cohorte" />
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="A_cohorte" targetRef="A_imput" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="A_imput" targetRef="A_split" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="A_split" targetRef="B_cv" />
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="B_cv" targetRef="B_fork" />
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="B_fork" targetRef="B_coxph" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="B_fork" targetRef="B_enet" />
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="B_fork" targetRef="B_xgb" />
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="B_fork" targetRef="B_deep" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="B_xgb" targetRef="B_shap" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="B_shap" targetRef="B_shapcox" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="B_coxph" targetRef="B_join" />
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="B_shapcox" targetRef="B_join" />
+    <bpmn:sequenceFlow id="Flow_14" sourceRef="B_deep" targetRef="B_join" />
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="B_join" targetRef="B_select" />
+    <bpmn:sequenceFlow id="Flow_16" sourceRef="B_select" targetRef="C_rd" />
+    <bpmn:sequenceFlow id="Flow_17" sourceRef="B_select" targetRef="C_dt" />
+    <bpmn:sequenceFlow id="Flow_18" name="Primario" sourceRef="C_rd" targetRef="C_rd1" />
+    <bpmn:sequenceFlow id="Flow_19" name="Sensibilidad" sourceRef="C_rd" targetRef="C_rd2" />
+    <bpmn:sequenceFlow id="Flow_20" name="Primario" sourceRef="C_dt" targetRef="C_dt1" />
+    <bpmn:sequenceFlow id="Flow_21" name="Implementación" sourceRef="C_dt" targetRef="C_dt2" />
+    <bpmn:sequenceFlow id="Flow_22" sourceRef="C_rd1" targetRef="C_join" />
+    <bpmn:sequenceFlow id="Flow_23" sourceRef="C_rd2" targetRef="C_join" />
+    <bpmn:sequenceFlow id="Flow_24" sourceRef="C_dt1" targetRef="C_join" />
+    <bpmn:sequenceFlow id="Flow_25" sourceRef="C_dt2" targetRef="C_join" />
+    <bpmn:sequenceFlow id="Flow_26" sourceRef="C_dt2" targetRef="D_ff" />
+    <bpmn:sequenceFlow id="Flow_27" sourceRef="C_join" targetRef="E_holdout" />
+    <bpmn:sequenceFlow id="Flow_28" sourceRef="E_holdout" targetRef="E_fork" />
+    <bpmn:sequenceFlow id="Flow_29" sourceRef="E_fork" targetRef="E_disc" />
+    <bpmn:sequenceFlow id="Flow_31" sourceRef="E_fork" targetRef="E_dca" />
+    <bpmn:sequenceFlow id="Flow_32" sourceRef="E_disc" targetRef="E_join" />
+    <bpmn:sequenceFlow id="Flow_34" sourceRef="E_dca" targetRef="E_join" />
+    <bpmn:sequenceFlow id="Flow_35" sourceRef="E_join" targetRef="F_struct" />
+    <bpmn:sequenceFlow id="Flow_36" sourceRef="F_struct" targetRef="F_trans" />
+    <bpmn:sequenceFlow id="Flow_37" sourceRef="F_trans" targetRef="F_nomo" />
+    <bpmn:sequenceFlow id="Flow_38" sourceRef="F_nomo" targetRef="End" />
+    <bpmn:sequenceFlow id="Flow_06wb4z4" sourceRef="C_rd1" targetRef="D_ff" />
+    <bpmn:sequenceFlow id="Flow_1r5oz6u" sourceRef="E_fork" targetRef="E_cal" />
+    <bpmn:sequenceFlow id="Flow_1vi2nex" sourceRef="E_cal" targetRef="E_join" />
+    <bpmn:textAnnotation id="An_split">
+      <bpmn:text>El set de prueba queda reservado: no se usa para seleccionar predictores, formas funcionales ni hiperparámetros, ni para recalibrar antes de reportar.</bpmn:text>
     </bpmn:textAnnotation>
-    <bpmn:association id="Association_0itjmb8" associationDirection="None" sourceRef="Activity_0lkl8xg" targetRef="TextAnnotation_0wjbxsj" />
-    <bpmn:group id="Group_06ua6rb" categoryValueRef="CategoryValue_0i59lmn" />
-    <bpmn:group id="Group_1nvo0bb" categoryValueRef="CategoryValue_1e2j7wh" />
+    <bpmn:association id="Assoc_An_split" associationDirection="None" sourceRef="A_split" targetRef="An_split" />
+    <bpmn:textAnnotation id="An_select">
+      <bpmn:text>Los tres algoritmos de selección de variables convergen al mismo techo de discriminación (readmisión ΔC ≈ 0,001; mortalidad ΔC ≈ 0,012): el modelo final no depende del algoritmo de ML.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_An_select" associationDirection="None" sourceRef="B_select" targetRef="An_select" />
+    <bpmn:textAnnotation id="An_ff">
+      <bpmn:text>Ninguna variante cruza ΔC ≥ 0,01</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_An_ff" associationDirection="None" sourceRef="D_ff" targetRef="An_ff" />
+    <bpmn:textAnnotation id="An_dca">
+      <bpmn:text>Riesgos competidores: readmisión con Aalen-Johansen (muerte competidora); muerte con Kaplan-Meier. Motor stdca auditado (Vickers). IBS, NRI/IDI y métricas por umbral como secundarios.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_An_dca" associationDirection="None" sourceRef="E_dca" targetRef="An_dca" />
+    <bpmn:textAnnotation id="An_struct">
+      <bpmn:text>Reajuste sobre la muestra completa (n ≈ 88k), agrupado sobre 5 imputaciones. λ12 y λ13 sobre especificaciones validadas; λ23 estimada de novo: el conjunto no es un predictor validado.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_An_struct" associationDirection="None" sourceRef="F_struct" targetRef="An_struct" />
+    <bpmn:group id="G_A" categoryValueRef="CV_G_A" />
+    <bpmn:group id="G_B" categoryValueRef="CV_G_B" />
+    <bpmn:group id="G_C" categoryValueRef="CV_G_C" />
+    <bpmn:group id="G_D" categoryValueRef="CV_G_D" />
+    <bpmn:group id="G_E" categoryValueRef="CV_G_E" />
+    <bpmn:group id="G_F" categoryValueRef="CV_G_F" />
   </bpmn:process>
-  <bpmn:category id="Category_0ds9rzd">
-    <bpmn:categoryValue id="CategoryValue_0273sbq" value="Hasta Lunes 19 Enero" />
+  <bpmn:category id="Cat_G_A">
+    <bpmn:categoryValue id="CV_G_A" value="Datos y diseño" />
   </bpmn:category>
-  <bpmn:category id="Category_12a0f83">
-    <bpmn:categoryValue id="CategoryValue_0i59lmn" value="Hasta Lunes 02 Febrero" />
+  <bpmn:category id="Cat_G_B">
+    <bpmn:categoryValue id="CV_G_B" value="Validación interna (desarrollo 80%)" />
   </bpmn:category>
-  <bpmn:category id="Category_1jtbn4p">
-    <bpmn:categoryValue id="CategoryValue_1e2j7wh" value="Hasta ppios. Marzo" />
+  <bpmn:category id="Cat_G_C">
+    <bpmn:categoryValue id="CV_G_C" value="Selección final (4 modelos)" />
+  </bpmn:category>
+  <bpmn:category id="Cat_G_D">
+    <bpmn:categoryValue id="CV_G_D" value="Sensibilidad" />
+  </bpmn:category>
+  <bpmn:category id="Cat_G_E">
+    <bpmn:categoryValue id="CV_G_E" value="Validación held-out (prueba 20%)" />
+  </bpmn:category>
+  <bpmn:category id="Cat_G_F">
+    <bpmn:categoryValue id="CV_G_F" value="Modelo multiestado (demostrador ilustrativo)" />
   </bpmn:category>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1yo3w99">
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_0poofpz">
-        <dc:Bounds x="156" y="82" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0oap7bu_di" bpmnElement="Activity_0oap7bu">
-        <dc:Bounds x="410" y="210" width="100" height="80" />
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_pred_tesis">
+      <bpmndi:BPMNShape id="Start_di" bpmnElement="Start">
+        <dc:Bounds x="182" y="352" width="36" height="36" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1f2f7fk_di" bpmnElement="Activity_1f2f7fk">
-        <dc:Bounds x="410" y="370" width="100" height="80" />
+      <bpmndi:BPMNShape id="A_cohorte_di" bpmnElement="A_cohorte">
+        <dc:Bounds x="265" y="328" width="170" height="84" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0lkl8xg_di" bpmnElement="Activity_0lkl8xg">
-        <dc:Bounds x="410" y="500" width="100" height="80" />
+      <bpmndi:BPMNShape id="A_imput_di" bpmnElement="A_imput">
+        <dc:Bounds x="490" y="328" width="160" height="84" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0f364la_di" bpmnElement="Activity_0f364la">
-        <dc:Bounds x="540" y="370" width="100" height="80" />
+      <bpmndi:BPMNShape id="A_split_di" bpmnElement="A_split">
+        <dc:Bounds x="695" y="328" width="170" height="84" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1yr32pb_di" bpmnElement="Gateway_1yr32pb" isMarkerVisible="true">
-        <dc:Bounds x="885" y="385" width="50" height="50" />
+      <bpmndi:BPMNShape id="C_rd_di" bpmnElement="C_rd" isMarkerVisible="true">
+        <dc:Bounds x="2425" y="185" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="865" y="340" width="90" height="40" />
+          <dc:Bounds x="2419" y="239" width="62" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0jhd1hi_di" bpmnElement="Activity_0jhd1hi">
-        <dc:Bounds x="960" y="370" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1baapec_di" bpmnElement="Activity_1baapec">
-        <dc:Bounds x="765" y="370" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0f5hkp6_di" bpmnElement="Activity_0f5hkp6">
-        <dc:Bounds x="765" y="470" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_1mkn18y_di" bpmnElement="Gateway_1mkn18y" isMarkerVisible="true">
-        <dc:Bounds x="705" y="385" width="50" height="50" />
+      <bpmndi:BPMNShape id="C_dt_di" bpmnElement="C_dt" isMarkerVisible="true">
+        <dc:Bounds x="2425" y="505" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="685" y="340" width="89" height="40" />
+          <dc:Bounds x="2411" y="559" width="78" height="66" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_19bzykw_di" bpmnElement="Activity_19bzykw">
-        <dc:Bounds x="400" y="800" width="100" height="80" />
+      <bpmndi:BPMNShape id="C_rd2_di" bpmnElement="C_rd2">
+        <dc:Bounds x="2578" y="231" width="185" height="78" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0o16a9j_di" bpmnElement="Activity_0o16a9j">
-        <dc:Bounds x="310" y="660" width="100" height="80" />
+      <bpmndi:BPMNShape id="C_dt1_di" bpmnElement="C_dt1">
+        <dc:Bounds x="2578" y="411" width="185" height="78" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1qwaltf_di" bpmnElement="Activity_1qwaltf">
-        <dc:Bounds x="520" y="660" width="100" height="80" />
+      <bpmndi:BPMNShape id="C_dt2_di" bpmnElement="C_dt2">
+        <dc:Bounds x="2578" y="561" width="185" height="78" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1vt852g_di" bpmnElement="Activity_1vt852g">
-        <dc:Bounds x="330" y="1000" width="100" height="80" />
+      <bpmndi:BPMNShape id="C_join_di" bpmnElement="C_join">
+        <dc:Bounds x="2822" y="325" width="215" height="110" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Association_0itjmb8_di" bpmnElement="Association_0itjmb8">
-        <di:waypoint x="510" y="525" />
-        <di:waypoint x="590" y="500" />
+      <bpmndi:BPMNShape id="B_coxph_di" bpmnElement="B_coxph">
+        <dc:Bounds x="1302" y="100" width="175" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_deep_di" bpmnElement="B_deep">
+        <dc:Bounds x="1302" y="521" width="175" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_xgb_di" bpmnElement="B_xgb">
+        <dc:Bounds x="1302" y="332" width="175" height="70" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_shap_di" bpmnElement="B_shap">
+        <dc:Bounds x="1518" y="328" width="165" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_shapcox_di" bpmnElement="B_shapcox">
+        <dc:Bounds x="1705" y="327" width="170" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_join_di" bpmnElement="B_join">
+        <dc:Bounds x="1980" y="341" width="50" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_select_di" bpmnElement="B_select">
+        <dc:Bounds x="2115" y="311" width="210" height="110" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_cv_di" bpmnElement="B_cv">
+        <dc:Bounds x="979" y="325" width="190" height="90" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_fork_di" bpmnElement="B_fork">
+        <dc:Bounds x="1189" y="345" width="50" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="C_rd1_di" bpmnElement="C_rd1">
+        <dc:Bounds x="2578" y="106" width="185" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_fork_di" bpmnElement="E_fork">
+        <dc:Bounds x="3366" y="354" width="50" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_holdout_di" bpmnElement="E_holdout">
+        <dc:Bounds x="3094" y="334" width="185" height="90" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="D_ff_di" bpmnElement="D_ff">
+        <dc:Bounds x="2700" y="835" width="185" height="90" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_cal_di" bpmnElement="E_cal">
+        <dc:Bounds x="3491" y="340" width="180" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_join_di" bpmnElement="E_join">
+        <dc:Bounds x="3766" y="354" width="50" height="50" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_disc_di" bpmnElement="E_disc">
+        <dc:Bounds x="3491" y="191" width="180" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_dca_di" bpmnElement="E_dca">
+        <dc:Bounds x="3491" y="476" width="180" height="90" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="F_struct_di" bpmnElement="F_struct">
+        <dc:Bounds x="3927" y="329" width="190" height="100" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="F_trans_di" bpmnElement="F_trans">
+        <dc:Bounds x="4139" y="323" width="215" height="110" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="F_nomo_di" bpmnElement="F_nomo">
+        <dc:Bounds x="4379" y="333" width="195" height="90" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_di" bpmnElement="End">
+        <dc:Bounds x="4632" y="360" width="36" height="36" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_enet_di" bpmnElement="B_enet">
+        <dc:Bounds x="1302" y="215" width="175" height="78" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Assoc_An_select_di" bpmnElement="Assoc_An_select">
+        <di:waypoint x="2220" y="311" />
+        <di:waypoint x="2220" y="244" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_02d4jv3_di" bpmnElement="Flow_02d4jv3">
-        <di:waypoint x="460" y="290" />
-        <di:waypoint x="460" y="370" />
+      <bpmndi:BPMNEdge id="Assoc_An_ff_di" bpmnElement="Assoc_An_ff">
+        <di:waypoint x="2792" y="925" />
+        <di:waypoint x="2789" y="970" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1jfno21_di" bpmnElement="Flow_1jfno21">
-        <di:waypoint x="510" y="410" />
-        <di:waypoint x="540" y="410" />
+      <bpmndi:BPMNEdge id="Assoc_An_dca_di" bpmnElement="Assoc_An_dca">
+        <di:waypoint x="3581" y="566" />
+        <di:waypoint x="3581" y="634" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1n6vcsk_di" bpmnElement="Flow_1n6vcsk">
-        <di:waypoint x="640" y="410" />
-        <di:waypoint x="705" y="410" />
+      <bpmndi:BPMNEdge id="Assoc_An_struct_di" bpmnElement="Assoc_An_struct">
+        <di:waypoint x="4022" y="329" />
+        <di:waypoint x="4059" y="257" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0248lmv_di" bpmnElement="Flow_0248lmv">
-        <di:waypoint x="755" y="410" />
-        <di:waypoint x="765" y="410" />
+      <bpmndi:BPMNShape id="An_split_di" bpmnElement="An_split">
+        <dc:Bounds x="655" y="160" width="250" height="100" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="An_select_di" bpmnElement="An_select">
+        <dc:Bounds x="2085" y="140" width="270" height="104" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_06wb4z4_di" bpmnElement="Flow_06wb4z4">
+        <di:waypoint x="2763" y="145" />
+        <di:waypoint x="2780" y="145" />
+        <di:waypoint x="2780" y="835" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0iqom15_di" bpmnElement="Flow_0iqom15">
-        <di:waypoint x="730" y="435" />
-        <di:waypoint x="730" y="510" />
-        <di:waypoint x="765" y="510" />
+      <bpmndi:BPMNEdge id="Flow_28_di" bpmnElement="Flow_28">
+        <di:waypoint x="3278" y="379" />
+        <di:waypoint x="3366" y="379" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1ri4vkm_di" bpmnElement="Flow_1ri4vkm">
-        <di:waypoint x="460" y="450" />
-        <di:waypoint x="460" y="500" />
+      <bpmndi:BPMNEdge id="Flow_29_di" bpmnElement="Flow_29">
+        <di:waypoint x="3416" y="379" />
+        <di:waypoint x="3416" y="230" />
+        <di:waypoint x="3491" y="230" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0ekgor6_di" bpmnElement="Flow_0ekgor6">
-        <di:waypoint x="410" y="540" />
-        <di:waypoint x="360" y="540" />
-        <di:waypoint x="360" y="660" />
+      <bpmndi:BPMNEdge id="Flow_31_di" bpmnElement="Flow_31">
+        <di:waypoint x="3416" y="379" />
+        <di:waypoint x="3416" y="521" />
+        <di:waypoint x="3491" y="521" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0zrnzt6_di" bpmnElement="Flow_0zrnzt6">
-        <di:waypoint x="510" y="540" />
-        <di:waypoint x="570" y="540" />
-        <di:waypoint x="570" y="660" />
+      <bpmndi:BPMNEdge id="Flow_34_di" bpmnElement="Flow_34">
+        <di:waypoint x="3671" y="521" />
+        <di:waypoint x="3766" y="521" />
+        <di:waypoint x="3766" y="379" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_07p328m_di" bpmnElement="Flow_07p328m">
-        <di:waypoint x="865" y="410" />
-        <di:waypoint x="885" y="410" />
+      <bpmndi:BPMNEdge id="Flow_32_di" bpmnElement="Flow_32">
+        <di:waypoint x="3671" y="230" />
+        <di:waypoint x="3766" y="230" />
+        <di:waypoint x="3766" y="379" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0q6aetj_di" bpmnElement="Flow_0q6aetj">
-        <di:waypoint x="865" y="510" />
-        <di:waypoint x="910" y="510" />
-        <di:waypoint x="910" y="435" />
+      <bpmndi:BPMNEdge id="Flow_38_di" bpmnElement="Flow_38">
+        <di:waypoint x="4574" y="378" />
+        <di:waypoint x="4632" y="378" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_022sqfb_di" bpmnElement="Flow_022sqfb">
-        <di:waypoint x="935" y="410" />
-        <di:waypoint x="960" y="410" />
+      <bpmndi:BPMNEdge id="Flow_37_di" bpmnElement="Flow_37">
+        <di:waypoint x="4354" y="378" />
+        <di:waypoint x="4379" y="378" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1dt9iz9_di" bpmnElement="Flow_1dt9iz9">
-        <di:waypoint x="460" y="580" />
-        <di:waypoint x="460" y="800" />
+      <bpmndi:BPMNEdge id="Flow_36_di" bpmnElement="Flow_36">
+        <di:waypoint x="4117" y="379" />
+        <di:waypoint x="4128" y="379" />
+        <di:waypoint x="4128" y="378" />
+        <di:waypoint x="4139" y="378" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Group_0qfajl5_di" bpmnElement="Group_0qfajl5">
-        <dc:Bounds x="290" y="300" width="800" height="310" />
+      <bpmndi:BPMNEdge id="Flow_1r5oz6u_di" bpmnElement="Flow_1r5oz6u">
+        <di:waypoint x="3416" y="379" />
+        <di:waypoint x="3491" y="379" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vi2nex_di" bpmnElement="Flow_1vi2nex">
+        <di:waypoint x="3671" y="379" />
+        <di:waypoint x="3766" y="379" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="G_A_di" bpmnElement="G_A">
+        <dc:Bounds x="160" y="85" width="790" height="685" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="650" y="307" width="81" height="27" />
+          <dc:Bounds x="194" y="91" width="73" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_0wjbxsj_di" bpmnElement="TextAnnotation_0wjbxsj">
-        <dc:Bounds x="590" y="470" width="130" height="130" />
+      <bpmndi:BPMNShape id="G_B_di" bpmnElement="G_B">
+        <dc:Bounds x="970" y="85" width="1380" height="685" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1017" y="91" width="171" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_C_di" bpmnElement="G_C">
+        <dc:Bounds x="2370" y="85" width="680" height="685" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2408" y="91" width="133" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_00_di" bpmnElement="Flow_00">
+        <di:waypoint x="218" y="370" />
+        <di:waypoint x="265" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01">
+        <di:waypoint x="435" y="370" />
+        <di:waypoint x="490" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02">
+        <di:waypoint x="650" y="370" />
+        <di:waypoint x="695" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03">
+        <di:waypoint x="865" y="370" />
+        <di:waypoint x="979" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04">
+        <di:waypoint x="1169" y="370" />
+        <di:waypoint x="1189" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05">
+        <di:waypoint x="1239" y="370" />
+        <di:waypoint x="1239" y="139" />
+        <di:waypoint x="1302" y="139" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06">
+        <di:waypoint x="1239" y="370" />
+        <di:waypoint x="1239" y="254" />
+        <di:waypoint x="1302" y="254" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07">
+        <di:waypoint x="1236" y="367" />
+        <di:waypoint x="1302" y="367" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08">
+        <di:waypoint x="1239" y="370" />
+        <di:waypoint x="1239" y="560" />
+        <di:waypoint x="1302" y="560" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09">
+        <di:waypoint x="1477" y="367" />
+        <di:waypoint x="1518" y="367" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1683" y="367" />
+        <di:waypoint x="1694" y="367" />
+        <di:waypoint x="1694" y="366" />
+        <di:waypoint x="1705" y="366" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="1480" y="139" />
+        <di:waypoint x="1840" y="270" />
+        <di:waypoint x="1983" y="363" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="1875" y="366" />
+        <di:waypoint x="1980" y="366" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <di:waypoint x="1477" y="561" />
+        <di:waypoint x="1840" y="470" />
+        <di:waypoint x="1986" y="372" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="2030" y="366" />
+        <di:waypoint x="2115" y="366" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <di:waypoint x="2325" y="366" />
+        <di:waypoint x="2400" y="366" />
+        <di:waypoint x="2400" y="210" />
+        <di:waypoint x="2425" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_di" bpmnElement="Flow_17">
+        <di:waypoint x="2325" y="366" />
+        <di:waypoint x="2400" y="366" />
+        <di:waypoint x="2400" y="530" />
+        <di:waypoint x="2425" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_di" bpmnElement="Flow_18">
+        <di:waypoint x="2450" y="185" />
+        <di:waypoint x="2450" y="145" />
+        <di:waypoint x="2578" y="145" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2504" y="123" width="41" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19">
+        <di:waypoint x="2475" y="210" />
+        <di:waypoint x="2578" y="270" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2490" y="253" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20">
+        <di:waypoint x="2475" y="530" />
+        <di:waypoint x="2578" y="450" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2519" y="453" width="41" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_21_di" bpmnElement="Flow_21">
+        <di:waypoint x="2475" y="530" />
+        <di:waypoint x="2578" y="600" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2511" y="543" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_22_di" bpmnElement="Flow_22">
+        <di:waypoint x="2763" y="145" />
+        <di:waypoint x="2793" y="145" />
+        <di:waypoint x="2793" y="380" />
+        <di:waypoint x="2822" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_23_di" bpmnElement="Flow_23">
+        <di:waypoint x="2762" y="270" />
+        <di:waypoint x="2822" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_24_di" bpmnElement="Flow_24">
+        <di:waypoint x="2762" y="450" />
+        <di:waypoint x="2822" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_25_di" bpmnElement="Flow_25">
+        <di:waypoint x="2762" y="600" />
+        <di:waypoint x="2822" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_26_di" bpmnElement="Flow_26">
+        <di:waypoint x="2763" y="600" />
+        <di:waypoint x="2793" y="600" />
+        <di:waypoint x="2793" y="835" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_27_di" bpmnElement="Flow_27">
+        <di:waypoint x="3037" y="380" />
+        <di:waypoint x="3094" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_35_di" bpmnElement="Flow_35">
+        <di:waypoint x="3816" y="379" />
+        <di:waypoint x="3927" y="379" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Assoc_An_split_di" bpmnElement="Assoc_An_split">
+        <di:waypoint x="780" y="328" />
+        <di:waypoint x="780" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="G_E_di" bpmnElement="G_E">
+        <dc:Bounds x="3076" y="85" width="800" height="685" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3117" y="91" width="163" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="An_dca_di" bpmnElement="An_dca">
+        <dc:Bounds x="3456" y="634" width="250" height="110" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_1xqtmbq" bpmnElement="Group_06ua6rb">
-        <dc:Bounds x="290" y="615" width="800" height="310" />
+      <bpmndi:BPMNShape id="G_F_di" bpmnElement="G_F">
+        <dc:Bounds x="3922" y="87" width="778" height="683" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="650" y="622" width="81" height="27" />
+          <dc:Bounds x="3972" y="93" width="218" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Group_1nvo0bb_di" bpmnElement="Group_1nvo0bb">
-        <dc:Bounds x="290" y="930" width="800" height="300" />
+      <bpmndi:BPMNShape id="An_struct_di" bpmnElement="An_struct">
+        <dc:Bounds x="3942" y="142" width="188" height="115" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_D_di" bpmnElement="G_D">
+        <dc:Bounds x="2368" y="790" width="683" height="260" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="658" y="937" width="65" height="27" />
+          <dc:Bounds x="2571" y="796" width="60" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="An_ff_di" bpmnElement="An_ff">
+        <dc:Bounds x="2691" y="970" width="203.37803643724698" height="40" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

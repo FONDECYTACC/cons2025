@@ -53,7 +53,9 @@ plot_calibration_indices_epi <- function(ici_boot,
                                           lang         = c("en", "es"),
                                           save         = TRUE,
                                           emit_caption = TRUE,
-                                          eo_band      = c(0.80, 1.25)) {
+                                          eo_band      = c(0.80, 1.25),
+                                          eo_breaks    = NULL,
+                                          model_labels = NULL) {
 
   stopifnot(is.data.frame(ici_boot) || is.matrix(ici_boot))
   lang <- match.arg(lang)               # "en" = English, "es" = Spanish (coma decimal)
@@ -86,21 +88,29 @@ plot_calibration_indices_epi <- function(ici_boot,
   long$outcome <- factor(ifelse(long$risk == "readmission", outcome_lab[1], outcome_lab[2]),
                          levels = outcome_lab)
 
-  # ordered model labels: [1] readmission, [2] death best_perf1, [3] death best_perf2
-  model_levels <- if (lang == "es")
-      c("Informado por SHAP (readmisión)",
-        "RP completo, best_perf1 (mortalidad)",
-        "SHAP 13 variables, best_perf2 (mortalidad)")
+  # ordered model labels keyed by the internal model id (fixed display order:
+  # [1] readmission, [2] death best_perf1, [3] death best_perf2). Override any or all of
+  # them with `model_labels`, a named vector keyed by the SAME ids, WITHOUT recoding
+  # ici_boot$model, so colours, shapes and ordering stay aligned.
+  default_labels <- if (lang == "es")
+      c("readmit::shared"   = "Informado por SHAP (readmisión)",
+        "death::best_perf1" = "RP completo, best_perf1 (mortalidad)",
+        "death::best_perf2" = "SHAP 13 variables, best_perf2 (mortalidad)")
     else
-      c("SHAP-informed (readmission)",
-        "Full PH, best_perf1 (mortality)",
-        "SHAP 13-var, best_perf2 (mortality)")
-  long$model_lab <- factor(dplyr::case_when(
-    long$model == "readmit::shared"   ~ model_levels[1],
-    long$model == "death::best_perf1" ~ model_levels[2],
-    long$model == "death::best_perf2" ~ model_levels[3],
-    TRUE ~ long$model),
-    levels = model_levels)
+      c("readmit::shared"   = "SHAP-informed (readmission)",
+        "death::best_perf1" = "Full PH, best_perf1 (mortality)",
+        "death::best_perf2" = "SHAP 13-var, best_perf2 (mortality)")
+
+  if (!is.null(model_labels)) {
+    hit <- intersect(names(default_labels), names(model_labels))
+    if (length(hit)) default_labels[hit] <- model_labels[hit]   # partial override, fixed order
+  }
+  model_levels <- unname(default_labels)
+
+  # map each row's model id to its display label; unknown ids fall back to the raw id
+  lab <- unname(default_labels[long$model])
+  lab[is.na(lab)] <- long$model[is.na(lab)]
+  long$model_lab <- factor(lab, levels = unique(c(model_levels, lab)))
 
   # colorblind-aware: cool hue for readmission, warm hues for the two mortality models
   cols <- stats::setNames(c("#2166AC", "#B2182B", "#E08214"), model_levels)
@@ -162,8 +172,22 @@ plot_calibration_indices_epi <- function(ici_boot,
       theme_epi
 
     if (is_eo) {
-      # ratio -> log axis; 0.8 and 1.25 sit symmetrically about the reference of 1
-      g <- g + ggplot2::scale_y_log10(labels = num_fmt)
+      # ratio -> log axis; 0.8 and 1.25 sit symmetrically about the reference of 1.
+      # scale_y_log10 defaults to powers-of-ten breaks, so in a narrow window around 1
+      # only "1" gets labelled. Set explicit, band-congruent breaks (override via eo_breaks).
+      if (!is.null(eo_breaks)) {
+        eo_brk <- eo_breaks
+      } else {
+        cand <- sort(unique(c(0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 2, eo_band)))
+        rng  <- range(c(dd$value, dd$lower, dd$upper, eo_band), na.rm = TRUE)
+        eo_brk <- cand[cand >= rng[1] * 0.98 & cand <= rng[2] * 1.02]
+      }
+      g <- g + ggplot2::scale_y_log10(labels = num_fmt, breaks = eo_brk)
+      # facets use free_y, so a break only renders if it falls inside that facet's range.
+      # With eo_band = NULL nothing widens the readmission facet (its E:O sits near 1), so
+      # most breaks would be dropped. Expand each facet to span the requested breaks
+      # (expand_limits only grows the range; it never clips points or intervals).
+      if (length(eo_brk)) g <- g + ggplot2::expand_limits(y = range(eo_brk, na.rm = TRUE))
     } else {
       g <- g + ggplot2::scale_y_continuous(labels = num_fmt) +
                ggplot2::expand_limits(y = 0)   # 0 = perfect-calibration anchor
@@ -229,6 +253,18 @@ plot_calibration_indices_epi <- function(ici_boot,
 #
 # # show only a subset of metrics, e.g. ICI + E:O:
 # # plot_calibration_indices_epi(ici_boot, figs_out = figs_out, panels = c("ici", "eo"))
+#
+# # custom (short) legend labels WITHOUT recoding ici_boot$model -- key by the model id:
+# # plot_calibration_indices_epi(
+# #   ici_boot, figs_out = figs_out, lang = "es",
+# #   model_labels = c("readmit::shared"   = "Readmisión",
+# #                    "death::best_perf1" = "Mortalidad: modelo 1",
+# #                    "death::best_perf2" = "Mortalidad: modelo 2"))
+# # (partial override is fine: pass only the ids you want to rename.)
+#
+# # custom E:O axis ticks (defaults are band-congruent; override explicitly if you want):
+# # plot_calibration_indices_epi(ici_boot, figs_out = figs_out, panels = c("ici", "eo"),
+# #                              eo_band = c(0.80, 1.5), eo_breaks = c(0.8, 1, 1.25, 1.5))
 #
 # # If accents look wrong, source this file as UTF-8:
 # # source(".../plot_calibration_indices_epi.R", encoding = "UTF-8")
