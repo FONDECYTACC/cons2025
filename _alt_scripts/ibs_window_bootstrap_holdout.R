@@ -120,15 +120,18 @@
 }
 
 # IBS over [min(full grid), t] for every requested window t, from a contribution matrix.
+# Normalizes by (t - t_min) and returns NA when t is not actually a node of the kept grid
+# (e.g. dropped by the IPCW tau cap), so a returned value is never mislabeled vs [t_min, t].
 .ibsb_windows_from_C <- function(C, grid, eval_times, row_weight) {
   cm <- as.numeric(row_weight %*% C) / sum(row_weight)   # weighted column means (the bootstrap)
   t_min <- min(eval_times)
   vapply(eval_times, function(t) {
     if (t <= t_min) return(NA_real_)
+    if (!any(abs(grid - t) < 1e-8)) return(NA_real_)      # t must be a node of the kept grid
     sel <- grid <= t
     if (sum(sel) < 2L) return(NA_real_)
     g <- grid[sel]; b <- cm[sel]
-    sum(diff(g) * (utils::head(b, -1L) + utils::tail(b, -1L)) / 2) / (max(g) - min(g))
+    sum(diff(g) * (utils::head(b, -1L) + utils::tail(b, -1L)) / 2) / (t - t_min)
   }, numeric(1))
 }
 
@@ -152,15 +155,28 @@ ibs_window_bootstrap_core <- function(results_boot,
                                       B              = 1000,
                                       seed           = 2125,
                                       eval_times     = c(3, 6, 12, 36, 60),
-                                      readmit_method = c("aalen-johansen", "ipcw"),
+                                      readmit_method = c("ipcw", "aalen-johansen"),
                                       g_min          = 0.05,
                                       eps            = 1e-8,
                                       compute_null   = TRUE,
                                       verbose        = TRUE) {
 
-  readmit_method <- match.arg(readmit_method)
+  readmit_method <- match.arg(readmit_method)   # default "ipcw" reproduces the stored dual IBS
   rp <- results_boot$raw_predictions
   if (is.null(rp) || !length(rp)) stop("`results_boot` has no $raw_predictions.", call. = FALSE)
+
+  # Bootstrap row weights are applied POSITIONALLY across imputations, so the validation
+  # rows must be the same patients in the same order in every imputation. Assert it.
+  if (length(rp) > 1L) {
+    ref <- rp[[1]]$death$y_val
+    for (k in 2:length(rp)) {
+      yk <- rp[[k]]$death$y_val
+      if (!isTRUE(all.equal(as.numeric(ref$time), as.numeric(yk$time))) ||
+          !identical(as.integer(ref$event), as.integer(yk$event)))
+        stop("Validation rows differ across imputations (death y_val); cannot pool positionally.",
+             call. = FALSE)
+    }
+  }
 
   # ---- precompute the frozen per-imputation contribution matrices (no resample yet) ----
   per_imp <- lapply(rp, function(item) {
@@ -228,15 +244,19 @@ ibs_window_bootstrap_core <- function(results_boot,
   pooled_field <- function(field, row_weight) {
     Dt <- vapply(per_imp, function(p) .ibsb_windows_from_C(p$death[[field]],   p$death$grid,   eval_times, row_weight), numeric(length(eval_times)))
     Rt <- vapply(per_imp, function(p) .ibsb_windows_from_C(p$readmit[[field]], p$readmit$grid, eval_times, row_weight), numeric(length(eval_times)))
-    stats::setNames(c(rowMeans(Dt, na.rm = TRUE), rowMeans(Rt, na.rm = TRUE)), c(dnm, rnm))
+    out <- stats::setNames(c(rowMeans(Dt, na.rm = TRUE), rowMeans(Rt, na.rm = TRUE)), c(dnm, rnm))
+    out[is.nan(out)] <- NA_real_      # grid-min row is all-NA across imputations -> NA, not NaN
+    out
   }
 
   mk_df <- function(point, bt) {
+    qrow <- function(p) suppressWarnings(apply(bt, 1, stats::quantile, p, na.rm = TRUE, names = FALSE))
     o <- data.frame(metric = names(point), point = point,
                     mean = rowMeans(bt, na.rm = TRUE),
-                    q025 = apply(bt, 1, stats::quantile, 0.025, na.rm = TRUE, names = FALSE),
-                    q975 = apply(bt, 1, stats::quantile, 0.975, na.rm = TRUE, names = FALSE),
+                    q025 = qrow(0.025),
+                    q975 = qrow(0.975),
                     row.names = NULL, stringsAsFactors = FALSE)
+    o$mean[is.nan(o$mean)] <- NA_real_
     o$risk    <- ifelse(grepl("^death", o$metric), "death", "readmission")
     o$horizon <- as.numeric(sub(".*\\.", "", o$metric))
     o <- o[order(o$risk, o$horizon), c("risk", "horizon", "point", "mean", "q025", "q975")]

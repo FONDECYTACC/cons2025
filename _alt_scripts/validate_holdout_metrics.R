@@ -433,7 +433,16 @@ bootstrap_calibration_indices <- function(
     c(ici = m$ici, ece = m$ece, eo = m$eo_ratio)
   }
 
-  one_rep <- function(b, pj, h) {
+  # 2026-06-22: seed INSIDE the per-replicate function so the bootstrap resamples, and hence
+  # the ICI/ECE/E:O percentile CIs, are IDENTICAL whether this runs serial or parallel.
+  # Before, the serial branch seeded once per horizon (Mersenne-Twister) while the parallel
+  # branch used independent L'Ecuyer streams (future.seed = seed + j), so the CIs were not
+  # reproducible across backends (the point estimates were never affected). This mirrors the
+  # seeding of bootstrap_threshold_metrics_holdout (validated serial == parallel).
+  # NOTE for the notebook (holdout-ici-bootstrap-run): re-running regenerates the calibration
+  # CIs ONCE (resamples re-mixed) relative to any previously saved ici_boot; points do not move.
+  one_rep <- function(b, pj, h, j) {
+    set.seed(seed + j * 100000L + b, kind = "Mersenne-Twister")
     idx <- sample.int(n_val, n_val, replace = TRUE)
     cal_pass(pj[idx], ftime[idx], fstatus[idx], h)
   }
@@ -442,10 +451,9 @@ bootstrap_calibration_indices <- function(
     h  <- times[j]; pj <- pred_mat[, j]
     pt <- cal_pass(pj, ftime, fstatus, h)                       # point estimate (full sample)
     bm <- if (use_par) {
-      future.apply::future_sapply(seq_len(B), one_rep, pj = pj, h = h, future.seed = seed + j)
+      future.apply::future_sapply(seq_len(B), one_rep, pj = pj, h = h, j = j, future.seed = TRUE)
     } else {
-      set.seed(seed + j)
-      vapply(seq_len(B), one_rep, numeric(3), pj = pj, h = h)
+      vapply(seq_len(B), one_rep, numeric(3), pj = pj, h = h, j = j)
     }
     qi <- function(x) stats::quantile(x, c(0.025, 0.975), na.rm = TRUE, names = FALSE)
     data.frame(model = model_label, risk = risk, horizon = h,
@@ -495,9 +503,14 @@ bootstrap_threshold_metrics_holdout <- function(
     thresholds = list(readmission = c(0.10, 0.15, 0.20, 0.25, 0.30, 0.40),
                       death       = c(0.01, 0.02, 0.03, 0.05, 0.075, 0.10)),
     metrics = c("Sens", "Spec", "PPV", "NPV"),
+    central = c("plugin", "median", "mean"),
+    ci_method = c("percentile", "bca"),
+    freeze_g = TRUE,
     B = 500L, seed = 2125L, g_min = 0.05, tie_action = "death_first",
     parallel = FALSE, verbose = TRUE) {
 
+  central <- match.arg(central)
+  ci_method <- match.arg(ci_method)
   if (!exists(".tm_confusion", mode = "function") ||
       !exists(".tm_cr_ipcw_weights", mode = "function"))
     source(file.path(project_root, "cons/_alt_scripts/threshold_metrics_from_results_boot.R"))
@@ -527,6 +540,24 @@ bootstrap_threshold_metrics_holdout <- function(
   }
   n <- nrow(pool[[risks[1]]]$pred)
 
+  # freeze_g = TRUE: the IPCW censoring distribution G is part of the FROZEN held-out
+  # estimator, so estimate it ONCE on the full sample and only resample patients. This
+  # keeps the bootstrap coherent with the full-sample plug-in point (otherwise re-estimating
+  # G per resample shifts the bootstrap below the plug-in, leaving the point marginally
+  # outside its own percentile interval for rare-event metrics like death sensitivity).
+  Wfull <- list()
+  if (isTRUE(freeze_g)) {
+    for (risk in risks) {
+      P <- pool[[risk]]
+      for (h in horizons) {
+        hj <- which(eval_times == h); if (!length(hj)) next
+        Wfull[[paste(risk, h, sep = "|")]] <-
+          if (P$type == "cr") .tm_cr_ipcw_weights(P$ftime, P$fstatus, h, g_min = g_min)
+          else                .tm_admin_ipcw_weights(P$time, P$event, h, g_min = g_min)
+      }
+    }
+  }
+
   one_rep <- function(idx) {
     out <- list()
     for (risk in risks) {
@@ -534,10 +565,16 @@ bootstrap_threshold_metrics_holdout <- function(
       for (h in horizons) {
         hj <- which(eval_times == h); if (!length(hj)) next
         pr <- P$pred[idx, hj[1]]
-        w <- if (P$type == "cr") .tm_cr_ipcw_weights(P$ftime[idx], P$fstatus[idx], h, g_min = g_min)
-             else                .tm_admin_ipcw_weights(P$time[idx], P$event[idx], h, g_min = g_min)
+        if (isTRUE(freeze_g)) {
+          wf <- Wfull[[paste(risk, h, sep = "|")]]
+          we <- wf$w_event[idx]; wn <- wf$w_nonevent[idx]      # frozen weights, just indexed
+        } else {
+          w <- if (P$type == "cr") .tm_cr_ipcw_weights(P$ftime[idx], P$fstatus[idx], h, g_min = g_min)
+               else                .tm_admin_ipcw_weights(P$time[idx], P$event[idx], h, g_min = g_min)
+          we <- w$w_event; wn <- w$w_nonevent
+        }
         for (t in thr) {
-          cm <- .tm_confusion(pr, t, w$w_event, w$w_nonevent)
+          cm <- .tm_confusion(pr, t, we, wn)
           out[[length(out) + 1L]] <- data.frame(risk = risk, horizon = h, threshold = t,
             as.list(cm[metrics]), check.names = FALSE, stringsAsFactors = FALSE)
         }
@@ -562,12 +599,88 @@ bootstrap_threshold_metrics_holdout <- function(
   k_all <- paste(allb$risk, allb$horizon, allb$threshold, sep = "|")
   k_pt  <- paste(point$risk, point$horizon, point$threshold, sep = "|")
   res <- point
+  bq    <- function(mt, p) as.numeric(tapply(allb[[mt]], k_all,
+             function(x) stats::quantile(x, p, na.rm = TRUE, names = FALSE))[k_pt])
+  bmean <- function(mt)    as.numeric(tapply(allb[[mt]], k_all,
+             function(x) mean(x, na.rm = TRUE))[k_pt])
   for (mt in metrics) {
-    lo <- tapply(allb[[mt]], k_all, function(x) stats::quantile(x, 0.025, na.rm = TRUE, names = FALSE))
-    hi <- tapply(allb[[mt]], k_all, function(x) stats::quantile(x, 0.975, na.rm = TRUE, names = FALSE))
-    res[[paste0(mt, "_lo")]] <- as.numeric(lo[k_pt])
-    res[[paste0(mt, "_hi")]] <- as.numeric(hi[k_pt])
+    res[[paste0(mt, "_plugin")]] <- res[[mt]]      # full-sample plug-in (the original point)
+    res[[paste0(mt, "_med")]]    <- bq(mt, 0.5)    # bootstrap median: inside [lo, hi] by construction
+    res[[paste0(mt, "_mean")]]   <- bmean(mt)      # bootstrap mean
+    res[[paste0(mt, "_lo")]]     <- bq(mt, 0.025)
+    res[[paste0(mt, "_hi")]]     <- bq(mt, 0.975)
+    # Headline central estimate, HOMOGENIZED with the percentile interval. The plug-in
+    # point can fall marginally outside [lo, hi] for skewed rare-event metrics (e.g. death
+    # sensitivity); central = "median" guarantees the point lies inside its own interval.
+    res[[mt]] <- switch(central,
+                        plugin = res[[paste0(mt, "_plugin")]],
+                        median = res[[paste0(mt, "_med")]],
+                        mean   = res[[paste0(mt, "_mean")]])
   }
+
+  # ---- BCa intervals (keep the plug-in point; bias-correct + accelerate the interval) ----
+  # Fixes the "plug-in marginally outside its percentile CI" artifact: z0 shifts the interval
+  # toward the plug-in (median-bias correction) and a (acceleration) handles skewness. The
+  # acceleration uses a leave-one-out jackknife with the IPCW censoring distribution G held
+  # fixed at the full-sample estimate (standard; a is a 2nd-order skewness term).
+  if (identical(ci_method, "bca")) {
+    zlo <- stats::qnorm(0.025); zhi <- stats::qnorm(0.975)
+    acc <- new.env(parent = emptyenv())
+    for (risk in risks) {
+      P <- pool[[risk]]; thr <- thresholds[[risk]]
+      for (h in horizons) {
+        hj <- which(eval_times == h); if (!length(hj)) next
+        pr <- P$pred[, hj[1]]
+        w  <- if (P$type == "cr") .tm_cr_ipcw_weights(P$ftime, P$fstatus, h, g_min = g_min)
+              else                .tm_admin_ipcw_weights(P$time, P$event, h, g_min = g_min)
+        we <- w$w_event; wn <- w$w_nonevent
+        for (t in thr) {
+          pos  <- pr >= t
+          tp_i <- ifelse(pos, we, 0); fn_i <- ifelse(pos, 0, we)
+          fp_i <- ifelse(pos, wn, 0); tn_i <- ifelse(pos, 0, wn)
+          TP <- sum(tp_i); FN <- sum(fn_i); FP <- sum(fp_i); TN <- sum(tn_i)
+          jk <- list(
+            Sens = { d <- (TP - tp_i) + (FN - fn_i); ifelse(d > 0, (TP - tp_i) / d, NA_real_) },
+            Spec = { d <- (TN - tn_i) + (FP - fp_i); ifelse(d > 0, (TN - tn_i) / d, NA_real_) },
+            PPV  = { d <- (TP - tp_i) + (FP - fp_i); ifelse(d > 0, (TP - tp_i) / d, NA_real_) },
+            NPV  = { d <- (TN - tn_i) + (FN - fn_i); ifelse(d > 0, (TN - tn_i) / d, NA_real_) })
+          av <- vapply(metrics, function(mt) {
+            x <- jk[[mt]]; x <- x[is.finite(x)]
+            if (length(x) < 3L) return(0)
+            u <- mean(x) - x; s2 <- sum(u^2)
+            if (!is.finite(s2) || s2 == 0) return(0)
+            sum(u^3) / (6 * s2^1.5)
+          }, numeric(1))
+          assign(paste(risk, h, t, sep = "|"), av, envir = acc)
+        }
+      }
+    }
+    for (mt in metrics) {
+      lo_v <- res[[paste0(mt, "_lo")]]; hi_v <- res[[paste0(mt, "_hi")]]
+      for (r in seq_len(nrow(res))) {
+        key  <- paste(res$risk[r], res$horizon[r], res$threshold[r], sep = "|")
+        vals <- allb[[mt]][k_all == key]; vals <- vals[is.finite(vals)]
+        th0  <- res[[paste0(mt, "_plugin")]][r]
+        if (length(vals) < 20L || !is.finite(th0)) next     # too few reps -> keep percentile
+        Bv <- length(vals)
+        p_less <- (sum(vals < th0) + 0.5 * sum(vals == th0)) / Bv
+        p_less <- min(max(p_less, 1 / (Bv + 1)), Bv / (Bv + 1))
+        z0 <- stats::qnorm(p_less)
+        a  <- get(key, envir = acc)[[mt]]; if (!is.finite(a)) a <- 0
+        adj <- function(z) { d <- 1 - a * (z0 + z); if (abs(d) < 1e-8) d <- sign(d) * 1e-8 + 1e-12
+                             stats::pnorm(z0 + (z0 + z) / d) }
+        a1 <- adj(zlo); a2 <- adj(zhi)
+        a1 <- min(max(a1, 1 / (Bv + 1)), Bv / (Bv + 1))
+        a2 <- min(max(a2, 1 / (Bv + 1)), Bv / (Bv + 1))
+        qq <- sort(stats::quantile(vals, c(a1, a2), names = FALSE, type = 8))
+        lo_v[r] <- qq[1]; hi_v[r] <- qq[2]
+      }
+      res[[paste0(mt, "_lo")]] <- lo_v
+      res[[paste0(mt, "_hi")]] <- hi_v
+    }
+  }
+  attr(res, "ci_method") <- ci_method
+
   res$model <- model_label
   res <- res[order(res$risk, res$horizon, res$threshold), ]
   rownames(res) <- NULL
@@ -577,9 +690,13 @@ bootstrap_threshold_metrics_holdout <- function(
 # Convenience: run for the best_perf pair (readmission shared -> computed once).
 threshold_bootstrap_holdout <- function(results_boot_val, horizons = c(6, 12, 36, 60),
                                         thresholds = NULL, metrics = c("Sens", "Spec", "PPV", "NPV"),
+                                        central = c("plugin", "median", "mean"),
+                                        ci_method = c("percentile", "bca"),
+                                        freeze_g = TRUE,
                                         B = 500L, seed = 2125L, parallel = FALSE, verbose = TRUE) {
-  args <- list(horizons = horizons, metrics = metrics, B = B, seed = seed,
-               parallel = parallel, verbose = verbose)
+  central <- match.arg(central); ci_method <- match.arg(ci_method)
+  args <- list(horizons = horizons, metrics = metrics, central = central, ci_method = ci_method,
+               freeze_g = freeze_g, B = B, seed = seed, parallel = parallel, verbose = verbose)
   if (!is.null(thresholds)) args$thresholds <- thresholds
   out <- list()
   out[[1]] <- do.call(bootstrap_threshold_metrics_holdout,
