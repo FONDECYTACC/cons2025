@@ -60,6 +60,8 @@ This repository is organized into four main sections: data preparation, deduplic
 
 2. [**Correction after review**](mortality_post_rev.html)
 
+3. [**Years of Life Lost (YLL) after discharge**](mortality_yll.html)
+
 ---
 
 ## 4. Development and internal validation of machine-learning–informed Cox prediction models for first readmission and all-cause mortality among adults entering substance use disorder treatment in Chile
