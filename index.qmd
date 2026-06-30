@@ -106,6 +106,10 @@ This repository is organized into four main sections: data preparation, deduplic
 
 6. [**Step 2.6: Nomogram app**](https://acc-ndp-anid-fondecyt1240138.shinyapps.io/nomogram/)
 
+7. [**Step 2.7: External validation of readmission**](prediction26_ext_val_readm.html)
+
+8. [**Step 2.8: External validation of mortality**](prediction27_ext_val_death.html)
+
 ---
 
 ## 4. Documentation

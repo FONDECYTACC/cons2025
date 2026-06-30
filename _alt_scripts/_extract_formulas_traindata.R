@@ -2,7 +2,10 @@
 # split2125 + column diagnostics, then save small reusable artifacts.
 # Read-only with respect to the notebooks. Run once.
 t0 <- Sys.time()
-rd <- "data/20241015_out/pred22_ndp_2026_05_28.Rdata"
+# Source workspace: point at the CURRENT pred22 workspace. Updated 2026-06-29 from
+# the 2026-05-28 file (which predated the fixed-rule selection of 2026-06-08 and has
+# since been replaced on disk), so the extracted formulas match the selected models.
+rd <- "data/20241015_out/pred22_ndp_2026_06_18.Rdata"
 cat("Loading", rd, "...\n"); flush.console()
 e <- new.env(); load(rd, envir = e)
 cat(sprintf("Loaded in %.1f min.\n", as.numeric(difftime(Sys.time(), t0, units = "mins"))))
