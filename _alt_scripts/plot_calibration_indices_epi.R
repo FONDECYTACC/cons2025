@@ -93,11 +93,15 @@ plot_calibration_indices_epi <- function(ici_boot,
   # them with `model_labels`, a named vector keyed by the SAME ids, WITHOUT recoding
   # ici_boot$model, so colours, shapes and ordering stay aligned.
   default_labels <- if (lang == "es")
-      c("readmit::shared"   = "Informado por SHAP (readmisión)",
+      c("readmit::netrisk"  = "Riesgo neto (readmisión)",
+        "readmit::bp1_cif"  = "CIF, RP completo (readmisión)",
+        "readmit::bp2_cif"  = "CIF, SHAP (readmisión)",
         "death::best_perf1" = "RP completo, best_perf1 (mortalidad)",
         "death::best_perf2" = "SHAP 13 variables, best_perf2 (mortalidad)")
     else
-      c("readmit::shared"   = "SHAP-informed (readmission)",
+      c("readmit::netrisk"  = "Readmission: net risk",
+        "readmit::bp1_cif"  = "Readmission: CIF (Full PH)",
+        "readmit::bp2_cif"  = "Readmission: CIF (SHAP-informed)",
         "death::best_perf1" = "Full PH, best_perf1 (mortality)",
         "death::best_perf2" = "SHAP 13-var, best_perf2 (mortality)")
 
@@ -113,8 +117,8 @@ plot_calibration_indices_epi <- function(ici_boot,
   long$model_lab <- factor(lab, levels = unique(c(model_levels, lab)))
 
   # colorblind-aware: cool hue for readmission, warm hues for the two mortality models
-  cols <- stats::setNames(c("#2166AC", "#B2182B", "#E08214"), model_levels)
-  shp  <- stats::setNames(c(21, 24, 22), model_levels)
+  cols <- stats::setNames(c("#9ECAE1", "#4292C6", "#08519C", "#B2182B", "#E08214"), model_levels)
+  shp  <- stats::setNames(c(21, 23, 25, 24, 22), model_levels)
 
   x_title  <- if (lang == "es") "Meses desde el egreso" else "Months since discharge"
   y_titles <- c(ici = "ICI", ece = "ECE",

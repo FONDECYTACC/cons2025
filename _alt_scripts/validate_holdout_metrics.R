@@ -296,15 +296,24 @@ evaluate_dual_cox_holdout <- function(
 # 3. Readmission calibration on held-out val (CSC -> AJ-CIF), pooled over imputations
 # -----------------------------------------------------------------------------
 calibrate_readmit_holdout <- function(
-    formula_readmit, train_list, val_list, times = c(6, 12, 36, 60),
+    formula_readmit, formula_death, train_list, val_list, times = c(6, 12, 36, 60),
     g = 10L, min_bin_n = 20L, span = 0.75, verbose = TRUE) {
-
-  rhs_txt <- paste(deparse(formula(stats::delete.response(stats::terms(formula_readmit))),
-                           width.cutoff = 500L), collapse = " ")
-  rhs_txt <- gsub("strat\\(", "strata(", rhs_txt)
-  rhs_txt <- sub("^~\\s*", "", rhs_txt)
-  f1 <- stats::as.formula(paste("prodlim::Hist(.ftime, .fstatus) ~", rhs_txt))
-  f2 <- f1  # cause-2 (death) uses same covariates (mirrors calibrate engine, formula_death=NULL)
+  # `formula_death` is REQUIRED (no default) on purpose: before 2026-07-15
+  # this function silently set f2 <- f1, i.e. the cause-2 (death) sub-model
+  # of the joint CSC fit reused the READMISSION covariates, because no
+  # caller ever had to supply a death formula. That mis-specified the
+  # predicted CIF (it conditioned on the wrong death risk factors). Forcing
+  # an explicit argument here, instead of a default that falls back to f1,
+  # makes that bug impossible to repeat by omission: a missing argument now
+  # throws instead of silently miscomputing.
+  .readmit_calib_rhs <- function(f) {
+    txt <- paste(deparse(formula(stats::delete.response(stats::terms(f))),
+                         width.cutoff = 500L), collapse = " ")
+    txt <- gsub("strat\\(", "strata(", txt)
+    sub("^~\\s*", "", txt)
+  }
+  f1 <- stats::as.formula(paste("prodlim::Hist(.ftime, .fstatus) ~", .readmit_calib_rhs(formula_readmit)))
+  f2 <- stats::as.formula(paste("prodlim::Hist(.ftime, .fstatus) ~", .readmit_calib_rhs(formula_death)))
 
   metrics_all <- list(); curves_all <- list()
   for (i in seq_along(train_list)) {
@@ -387,12 +396,28 @@ calibrate_death_holdout <- function(
 bootstrap_calibration_indices <- function(
     formula, train_list, val_list, risk = c("readmission", "death"),
     times = c(6, 12, 36, 60), B = 500L, g = 10L, min_bin_n = 20L, span = 0.75,
-    seed = 2125L, model_label = "model", parallel = FALSE, verbose = TRUE) {
+    seed = 2125L, model_label = "model", parallel = FALSE, verbose = TRUE,
+    formula_death = NULL) {
   risk <- match.arg(risk)
-  rhs_txt <- paste(deparse(stats::formula(stats::delete.response(stats::terms(formula))),
-                           width.cutoff = 500L), collapse = " ")
-  rhs_txt <- base::gsub("strat\\(", "strata(", rhs_txt)
-  rhs_txt <- base::sub("^~[[:space:]]*", "", rhs_txt)
+  # `formula_death` is REQUIRED when risk == "readmission": the CSC cause-2
+  # (death) sub-model that builds the joint CIF must use the real death
+  # formula, not the readmission one. Before 2026-07-15 this branch did
+  # CSC(list(f1, f1), ...), silently reusing readmission covariates for
+  # death (same bug as calibrate_readmit_holdout(), fixed there the same
+  # day). `formula_death` is ignored (may be left NULL) when risk == "death".
+  if (identical(risk, "readmission")) {
+    stopifnot(
+      "formula_death is required when risk == 'readmission' (no silent f1,f1 fallback)" =
+        !is.null(formula_death)
+    )
+  }
+  .bci_rhs <- function(f) {
+    txt <- paste(deparse(stats::formula(stats::delete.response(stats::terms(f))),
+                         width.cutoff = 500L), collapse = " ")
+    txt <- base::gsub("strat\\(", "strata(", txt)
+    base::sub("^~[[:space:]]*", "", txt)
+  }
+  rhs_txt <- .bci_rhs(formula)
 
   nimp <- length(train_list); n_val <- nrow(as.data.frame(val_list[[1]])); ntimes <- length(times)
 
@@ -403,7 +428,8 @@ bootstrap_calibration_indices <- function(
     if (risk == "readmission") {
       fe <- .vhm_first_event(tr); tr$.ftime <- fe$.ftime; tr$.fstatus <- fe$.fstatus
       f1 <- stats::as.formula(paste("prodlim::Hist(.ftime, .fstatus) ~", rhs_txt))
-      fit <- riskRegression::CSC(list(f1, f1), data = tr)
+      f2 <- stats::as.formula(paste("prodlim::Hist(.ftime, .fstatus) ~", .bci_rhs(formula_death)))
+      fit <- riskRegression::CSC(list(f1, f2), data = tr)
       pm  <- riskRegression::predictRisk(fit, newdata = te, times = times, cause = 1)
     } else {
       f   <- stats::as.formula(paste("survival::Surv(death_time_from_disch_m, death_event) ~", rhs_txt))
@@ -469,12 +495,18 @@ bootstrap_calibration_indices <- function(
 # models (readmission computed once; mortality for each death model).
 ici_bootstrap_holdout <- function(models, train_list, val_list, times = c(6, 12, 36, 60),
                                   B = 500L, seed = 2125L, parallel = FALSE, verbose = TRUE) {
-  f_readmit <- models[[1]]$readmit
+  # 2026-07-15: DEATH ONLY. Readmission calibration (net risk AND both joint-
+  # CIF pairings) is now bootstrapped via
+  # .holdout_bootstrap_calibration_readmit_from_raw() in holdout_cif_cache.R,
+  # which reads the already-frozen predictions from raw_predictions /
+  # the CIF cache instead of refitting CSC per imputation here. Keeping a
+  # second, refit-based readmission bootstrap in this function would fit the
+  # identical joint model a second time on the full development set for no
+  # benefit (same numbers, confirmed to match exactly by cross-check in the
+  # 2026-07-15 review session). bootstrap_calibration_indices()'s
+  # `risk = "readmission"` branch (and its required `formula_death` guard)
+  # is left in place for standalone/other use, just not called from here.
   out <- list()
-  if (verbose) cat("ICI bootstrap: readmission (shared)\n")
-  out[[1]] <- bootstrap_calibration_indices(f_readmit, train_list, val_list, "readmission",
-                times, B, seed = seed, model_label = "readmit::shared",
-                parallel = parallel, verbose = verbose)
   for (mn in names(models)) {
     if (verbose) cat(sprintf("ICI bootstrap: death [%s]\n", mn))
     out[[length(out) + 1L]] <- bootstrap_calibration_indices(models[[mn]]$death, train_list,

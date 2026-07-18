@@ -106,7 +106,11 @@ ibs_ipcw_train <- function(
     }
     node_name <- .mi_cv_normalize_call_name(expr[[1L]])
     if (node_name %in% c("strat", "strata")) {
-        expr[[1L]] <- str2lang("survival::strata")
+        # coxph recognises strata as a special only when the call head is the
+        # bare symbol `strata`. A namespaced call such as survival::strata(...)
+        # is treated as an ordinary covariate and silently fits one baseline
+        # hazard instead of the requested stratum-specific baselines.
+        expr[[1L]] <- as.name("strata")
     }
     for (i in seq_along(expr)) {
         expr[[i]] <- .mi_cv_rewrite_strata_calls(expr[[i]])
@@ -543,7 +547,17 @@ evaluate_mi_cv_safe_strata <- function(
 
     model_formula <- .mi_cv_rewrite_strata_calls(formula)
     class(model_formula) <- class(formula)
-    environment(model_formula) <- environment(formula)
+    # Keep the call head bare so coxph detects the special, while making the
+    # function resolvable even when the survival package is not attached in
+    # the calling session or in a future worker.
+    formula_parent <- environment(formula)
+    if (is.null(formula_parent)) {
+        formula_parent <- parent.frame()
+    }
+    model_formula_env <- new.env(parent = formula_parent)
+    model_formula_env$strata <- survival::strata
+    model_formula_env$Surv <- survival::Surv
+    environment(model_formula) <- model_formula_env
 
     strata_term_labels <- .mi_cv_collect_strata_term_labels(rhs_expr)
     explicit_factor_vars <- .mi_cv_collect_explicit_factor_vars(rhs_expr)
