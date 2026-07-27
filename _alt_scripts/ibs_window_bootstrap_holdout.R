@@ -40,8 +40,18 @@
   sf <- survival::survfit(survival::Surv(time, cens_event) ~ 1)
   list(
     fun = function(tt) {
-      g <- summary(sf, times = pmax(tt, 0), extend = TRUE)$surv
-      pmax(as.numeric(g), g_min)
+      requested_times <- pmax(as.numeric(tt), 0)
+      unique_times <- sort(unique(requested_times))
+      g_unique <- as.numeric(summary(sf, times = unique_times, extend = TRUE)$surv)
+
+      if (length(g_unique) != length(unique_times))
+        stop("Censoring-survival lookup returned an unexpected length.", call. = FALSE)
+
+      lookup_index <- match(requested_times, unique_times)
+      if (anyNA(lookup_index))
+        stop("Censoring-survival lookup could not restore request order.", call. = FALSE)
+
+      pmax(g_unique[lookup_index], g_min)
     },
     # largest time where the censoring survival is still >= g_min (IPCW horizon cap)
     tau = {

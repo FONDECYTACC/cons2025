@@ -59,8 +59,22 @@ ibs_ipcw_train <- function(
     surv_use <- surv_mat[, keep, drop = FALSE]
 
     G_at <- function(tt) {
-        g <- summary(sf_cens, times = pmax(tt, 0), extend = TRUE)$surv
-        pmax(g, g_min)
+        requested_times <- pmax(as.numeric(tt), 0)
+        unique_times <- sort(unique(requested_times))
+        g_unique <- as.numeric(
+            summary(sf_cens, times = unique_times, extend = TRUE)$surv
+        )
+
+        if (length(g_unique) != length(unique_times)) {
+            stop("Censoring-survival lookup returned an unexpected length.")
+        }
+
+        lookup_index <- match(requested_times, unique_times)
+        if (anyNA(lookup_index)) {
+            stop("Censoring-survival lookup could not restore request order.")
+        }
+
+        pmax(g_unique[lookup_index], g_min)
     }
 
     Tt <- as.numeric(df_test[[time_col]])
@@ -1453,6 +1467,7 @@ evaluate_dual_cox_python_style <- function(
             plan_dummy_cols = plan_dummy_cols,
             plan_strata_fallback_col = plan_strata_fallback_col,
             min_test_rows = min_test_rows,
+            ipcw_order_contract = "ordered_patient_times_v1",
             timestamp = as.character(Sys.time())
         )
     )

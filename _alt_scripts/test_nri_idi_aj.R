@@ -3,7 +3,7 @@
 #   N1 runs; both risks; required metrics present
 #   N2 readmission CR (Aalen-Johansen) differs from death-as-censoring IPCW;
 #      death is unaffected by readmit_method
-#   N3 DEATH NRI/IDI identical to the _hist engine (death untouched)
+#   N3 corrected DEATH NRI/IDI differs from the historical order-bug engine
 #   N4 identical death predictions  ->  death IDI/NRI ~ 0  (the Full PH vs SHAP
 #      primary case: same death_updated2 on both sides)
 #   N5 a competing death before t is a NON-event under CR weights (not dropped)
@@ -77,7 +77,7 @@ report("N2a readmission discrimination differs CR vs death-as-censoring",
 report("N2b death NRI/IDI unaffected by readmit_method",
        isTRUE(abs(de_aj - de_ip) < 1e-9), sprintf("|diff|=%.2e", abs(de_aj - de_ip)))
 
-# ---- N3 death identical to _hist engine ----
+# ---- N3 corrected death differs from the historical order-bug engine ----
 res_hist <- hist_env$run_nri_idi_from_results_boot(rb_old, rb_new, horizons=EV, cut_points=CP,
               output_dir=file.path(TD,"hist"), prefix="t", save_raw=FALSE)
 da <- res_aj$summary[res_aj$summary$risk=="death", ]
@@ -87,7 +87,8 @@ da <- da[order(k(da)), ]; dh <- dh[order(k(dh)), ]
 common <- intersect(paste(da$horizon,da$metric), paste(dh$horizon,dh$metric))
 da2 <- da[paste(da$horizon,da$metric) %in% common, ]; dh2 <- dh[paste(dh$horizon,dh$metric) %in% common, ]
 death_diff <- max(abs(da2$mean - dh2$mean), na.rm=TRUE)
-report("N3 DEATH NRI/IDI identical to _hist engine", isTRUE(death_diff < 1e-9),
+report("N3 corrected DEATH NRI/IDI differs from order-bug _hist engine",
+       isTRUE(death_diff > 1e-4),
        sprintf("max |diff|=%.2e", death_diff))
 
 # ---- N4 identical death predictions -> death IDI/NRI ~ 0 ----

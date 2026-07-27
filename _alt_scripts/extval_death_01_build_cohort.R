@@ -116,6 +116,38 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
     stringr::str_detect(v, "minimo|nulo") ~ "logro minimo",
     TRUE ~ NA_character_)
 }
+# cohabitation status -> {alone(ref), with couple/children, family of origin, others}.
+# Same category scheme/logic as extval_01_build_cohort.R's cohabitation recoder
+# (traced to prediction1.qmd:1682-1715), extended for the "/a"/"/as" gender-suffix
+# raw variants observed in the SENDA C3/C5 con_quien_vive field (e.g. "solo/a",
+# "unicamente con hijos/as") and for "con el padre (solo)" (C5), which was missing
+# from the original regex even though its exact counterpart "con la madre (sola)"
+# was already mapped to Family of origin.
+.evd_cohabitation <- function(x) {
+  cqv <- .evd_norm(x)
+  joel5 <- dplyr::case_when(
+    is.na(x) ~ NA_character_,
+    stringr::str_detect(cqv, "^solo(/a)?$") ~ "Alone",
+    stringr::str_detect(cqv, "^unicamente con (la )?pareja( e hijos(/as)?)?$") |
+      stringr::str_detect(cqv, "^unicamente con pareja$") |
+      stringr::str_detect(cqv, "^unicamente con hijos(/as)?$") ~ "Couple/children only",
+    stringr::str_detect(cqv, "(pareja|hijos).*(padres|familia de origen)") |
+      stringr::str_detect(cqv, "^con la pareja,? hijos y padres") ~ "Couple/children + origin",
+    stringr::str_detect(cqv, "^unicamente con padres|^con padres|familia de origen$") |
+      stringr::str_detect(cqv, "^con la madre \\(sola\\)$") |
+      stringr::str_detect(cqv, "^con el padre \\(solo\\)$") |
+      stringr::str_detect(cqv, "^con abuelos$") |
+      stringr::str_detect(cqv, "^con hermanos$") ~ "Family of origin",
+    stringr::str_detect(cqv, "con amigos|otro no pariente|otro pariente|^otros$") ~ "Others",
+    TRUE ~ "Others")
+  dplyr::case_when(
+    joel5 == "Alone" ~ "alone",
+    joel5 %in% c("Couple/children only", "Couple/children + origin") ~ "with couple/children",
+    joel5 == "Family of origin" ~ "family of origin",
+    is.na(joel5) ~ NA_character_,
+    TRUE ~ "others")
+}
+
 # any physical comorbidity: non-empty, non-"none"/"in study" physical diagnosis
 .evd_any_phys <- function(...) {
   cols <- list(...)
@@ -138,6 +170,7 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
     occupation = "condicion_ocupacional",
     eva_ocupacion = "evaluacion_al_egreso_respecto_sit_ocup",
     eva_fisica = "evaluacion_al_egreso_respecto_salud_fisica",
+    cohab = "con_quien_vive",
     phys = c("diagnostico_trs_fisico", "diagnostico_trs_fisico2", "diagnostico_trs_fisico3"),
     adm = "fecha_ingreso_a_tratamiento", disch = "fecha_egreso_de_tratamiento",
     plan = NA_character_),                          # no plan column -> fixed pg-pr
@@ -148,6 +181,7 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
     occupation = "estado_laboral",
     eva_ocupacion = "evaluacion_al_egreso_respecto_a_situacion_ocupacional",
     eva_fisica = "evaluacion_al_egreso_respecto_salud_fisica",
+    cohab = "con_quien_vive",
     phys = c("diagnostico_trs_fisico"),
     adm = "fecha_ingreso_a_tratamiento", disch = "fecha_egreso_de_tratamiento",
     plan = "tipo_de_plan")
@@ -193,6 +227,7 @@ build_extval_death_cohort <- function(which = c("C3", "C5"),
   d$occupation_condition_corr24 <- .evd_occupation(raw[[cm$occupation]])
   d$eva_ocupacion     <- .evd_eva(raw[[cm$eva_ocupacion]])
   d$eva_fisica        <- .evd_eva(raw[[cm$eva_fisica]])
+  d$cohabitation      <- .evd_cohabitation(raw[[cm$cohab]])
   d$any_phys_dx       <- do.call(.evd_any_phys, lapply(cm$phys, function(cc) raw[[cc]]))
   d$plan_type_corr <- if (is.na(cm$plan)) "pg-pr" else .evd_plan_c5(raw[[cm$plan]])
 

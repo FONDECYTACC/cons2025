@@ -226,14 +226,34 @@
   sum(x[keep] * w[keep]) / sum(w[keep])
 }
 
+.rb_survfit_lookup_ordered <- function(fit, tt, g_min = 0.05) {
+  requested_times <- pmax(as.numeric(tt), 0)
+  out <- rep(NA_real_, length(requested_times))
+  finite <- is.finite(requested_times)
+  if (!any(finite)) return(out)
+
+  unique_times <- sort(unique(requested_times[finite]))
+  surv_unique <- as.numeric(
+    summary(fit, times = unique_times, extend = TRUE)$surv
+  )
+  if (length(surv_unique) != length(unique_times))
+    stop("Censoring-survival lookup returned an unexpected length.", call. = FALSE)
+
+  lookup_index <- match(requested_times[finite], unique_times)
+  if (anyNA(lookup_index))
+    stop("Censoring-survival lookup could not restore request order.", call. = FALSE)
+
+  out[finite] <- pmax(surv_unique[lookup_index], g_min)
+  out
+}
+
 # ---- Standard IPCW (used for DEATH; treats admin censoring via 1 - event) ----
 .rb_censor_survival_function <- function(time, event, g_min = 0.05) {
   fit <- survival::survfit(survival::Surv(time, 1 - event) ~ 1)
   function(tt) {
-    surv <- summary(fit, times = tt, extend = TRUE)$surv
-    surv <- as.numeric(surv)
+    surv <- .rb_survfit_lookup_ordered(fit, tt, g_min = g_min)
     surv[!is.finite(surv)] <- NA_real_
-    pmax(surv, g_min)
+    surv
   }
 }
 
@@ -271,9 +291,9 @@
   cens_indicator <- as.integer(fstatus == 0L)
   fitG <- survival::survfit(survival::Surv(ftime, cens_indicator) ~ 1)
   Ghat <- function(tt) {
-    s <- summary(fitG, times = tt, extend = TRUE)$surv
-    s <- as.numeric(s); s[!is.finite(s)] <- NA_real_
-    pmax(s, g_min)
+    s <- .rb_survfit_lookup_ordered(fitG, tt, g_min = g_min)
+    s[!is.finite(s)] <- NA_real_
+    s
   }
   g_t  <- Ghat(horizon)[1]
   g_tm <- Ghat(pmax(ftime - eps, 0))

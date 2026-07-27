@@ -1,0 +1,56 @@
+1. Actual fitted Cox coefficients/HR (primary, most authoritative)
+File: g:\My Drive\Alvacast\SISTRAT 2023\cons\_out\pooled_HR_multistate.csv (rows 13–14, transition "1_2_readmission", n_event=19,060)
+
+Produced by g:\My Drive\Alvacast\SISTRAT 2023\cons\prediction25_multistate_semimarkov.ipynb, cell formulas (defines covs_full_readmit / strata_readmit_full) and cell probtrans-pooled-fullsample-table (Rubin's-rule pooling of coxph(..., robust=TRUE, x=TRUE) fits across the 5 MI datasets, ms_fits).
+
+I verified this covariate+strata list is identical to formula_shap_readmit_clean_updated by diffing against g:\My Drive\Alvacast\SISTRAT 2023\cons\_out\_extract_formulas.log (lines 5–6): same 23 covariates + plan_type_strata + tr_outcome_adm_discharge_rule_violation_undet dual strata. So this is effectively that model's coefficients, fit inside the illness-death/multistate framework.
+
+term	coef	se	HR	lo95	hi95	p	fmi
+ed_attainment_corr_2_completed_high_school_or_less	−0.08534	0.02201	0.9182	0.8794	0.9587	1.06e-04	0.0033
+ed_attainment_corr_3_completed_primary_school_or_less	−0.24207	0.02697	0.7850	0.7446	0.8276	2.83e-19	0.0016
+Reference category (per term naming, and confirmed explicitly in prediction21.qmd line 1263: ed_attainment_corr = "1-More than high school" inside DUMMY_REFERENCE): "1-More than high school." Both dummy terms have negative coefficients / HR<1 relative to that reference, and the effect is larger (further from 1) for the least-educated category ("3-Completed primary school or less") than the middle category — a monotonic dose-response.
+
+Note: formula_readmit_updated2 (Full PH sensitivity/anchor model) also contains these same two terms (confirmed via _extract_formulas.log lines 14–15), but I could not locate a printed coefficient/HR table for that specific ~60-variable fit anywhere in the repo — only VIF and Schoenfeld outputs reference it (see §3).
+
+2. Corroborating SHAP-based direction evidence (informs the same primary model)
+A. Step-9 SHAP predictor/direction table — cons\prediction22_converted_mod.html (~line 6171) and its .ipynb:
+
+
+Readmission | ed_attainment_corr | mean_abs_shap=0.0416 | rank 10 | direction_method=quartile_q4_minus_q1
+  delta_point=-0.1052401 [CI -0.1057542, -0.1047200] | n=70369 | direction_label="Risk-Decreasing"
+Method definition (found in XGboost_combined_feb26.ipynb, function direction_bootstrap_feature): compares mean SHAP value in the top quartile (Q4, high numeric-encoded value) vs. bottom quartile (Q1) of the feature. ed_attainment_corr's numeric encoding is the leading digit of the level string (confirmed via Duplicates_25_4.qmd line 2396: esc_num_corr = as.numeric(str_extract(ed_attainment_corr, "^[0-9]+"))), so Q4 = "3-Completed primary school or less" (least educated) and Q1 = "1-More than high school" (most educated). Negative delta ⇒ SHAP (and thus predicted hazard) is lower for the least-educated group than the most-educated group.
+
+B. SHAP functional-form screen at the 60-month horizon — cons\_out\shap_60m_variable_summary.csv:
+
+
+readmission,ed_attainment_c,...,feature_shap_corr=-0.8153790176,"strong_negative: higher feature values decrease SHAP"
+death,     ed_attainment_c,...,feature_shap_corr= 0.9231435102,"strong_positive: higher feature values increase SHAP"
+Same encoding direction as above (higher numeric value = less education). Readmission and mortality point in opposite directions: for readmission, less education → lower SHAP/risk; for mortality, less education → higher SHAP/risk. Caveat: ed_attainment_corr/ed_attainment is not in the final Cox death formula — confirmed by an explicit runtime log line in cons\prediction22_converted_mod.html (~line 11710): ">>> Skipping: ed_attainment - not in death formula <<<", and by _extract_formulas.log (formula_death_updated2's variable list does not include ed_attainment_corr). So the death-side SHAP signal reflects an exploratory/earlier XGBoost specification, not the final mortality Cox model.
+
+cons\_out\shap_60m_functional_form_screen.csv / shap_60m_functional_form_recommendations.csv additionally show the linear/ordinal specification was judged adequate for readmission ("linear_or_current_dummy_form_sufficient"), consistent with a monotonic trend rather than a reversal across categories.
+
+3. Non-coefficient corroborating context (VIF / Schoenfeld — no sign info)
+cons\prediction21_converted.html:
+
+GVIF table (readmission, Full PH formula_readmit_updated2, ~line 8123): ed_attainment_corr_3_completed_primary_school_or_less GVIF=1.9156; ed_attainment_corr_2_completed_high_school_or_less GVIF=1.8317 (no collinearity concern; confirms inclusion, not direction).
+Schoenfeld residual test (death model, ~lines 13507/13708): ed_attainment_corr_3... χ²(1)=0.58, p=0.448; ed_attainment_corr_2... χ²(1)=0.26, p=0.613 (PH holds; again no coefficient sign).
+4. Descriptive/Table-1 cross-tabs
+I checked cons\_out\table1_split_seed2125_multilevel.csv / table1_split_excluded_nonbinary.csv — these are train/test split-balance tables (SMD between splits), not readmission-rate-by-education crosstabs, so not useful for a crude rate comparison. I did not find a genuine "readmission % by ed_attainment" descriptive table anywhere in the HTML/qmd outputs searched (prediction1.qmd, Duplicates_25*.qmd, codebook.qmd all just list ed_attainment_corr as a Table-1 row/label, not stratified by outcome).
+
+Summary of what was found where (no conflicting signs across sources)
+Source	Model/context	Term	Value	Direction (as coded: higher value = less education)
+_out/pooled_HR_multistate.csv	Multistate 1→2 (readmission), = formula_shap_readmit_clean_updated covariates	ed_attainment_corr_2...	HR 0.918 (0.879–0.959), p=1.1e-4	less education → lower hazard
+same	same	ed_attainment_corr_3...	HR 0.785 (0.745–0.828), p=2.8e-19	less education → lower hazard
+prediction22_converted_mod.html (Step 9 SHAP table)	XGBoost/SHAP feeding the SHAP-derived primary model	ed_attainment_corr	Δ(Q4−Q1)=−0.1052 [−0.1058,−0.1047], "Risk-Decreasing"	less education → lower SHAP/risk
+_out/shap_60m_variable_summary.csv	SHAP @ 60 months, readmission	ed_attainment_c	corr=−0.815, "higher feature values decrease SHAP"	less education → lower risk
+_out/shap_60m_variable_summary.csv	SHAP @ 60 months, death (not in final Cox death formula)	ed_attainment_c	corr=+0.923, "higher feature values increase SHAP"	opposite sign vs. readmission
+No formal HR/coefficient table was located for formula_readmit_updated2 in isolation (only VIF/Schoenfeld diagnostics reference it); everything with actual signed coefficients traces to the SHAP-derived primary model's formula, replicated inside the multistate framework.
+
+Confirmación independiente: un agente que lancé en paralelo encontró coeficientes ya pooleados (regla de Rubin, las 5 imputaciones) desde el pipeline multistate (cons/_out/pooled_HR_multistate.csv, transición 1→2 = readmisión, mismas covariables que formula_shap_readmit_clean_updated), y coinciden con lo que fiteé directamente:
+
+Término	HR pooled (5 MI, Rubin)	vs. mi fit (imputación 1)
+Media completa o menos	0,918 (0,879–0,959), p ≈ 1,1e-4	0,92 (0,88–0,96)
+Básica completa o menos	0,785 (0,745–0,828), p ≈ 2,8e-19	0,80 (0,76–0,84)
+Prácticamente idéntico, así que el hallazgo no es sensible a usar una sola imputación: se sostiene con las 5 pooleadas. También encontró que el análisis de SHAP (cuartil 4 menos cuartil 1, en prediction22_converted_mod.html y _out/shap_60m_variable_summary.csv) apunta a la misma dirección de forma no paramétrica ("Risk-Decreasing" para menor escolaridad), y que para mortalidad la correlación SHAP tiene signo contrario (menor escolaridad → mayor riesgo), coherente con lo que yo encontré en el chequeo de Aalen-Johansen (HR de muerte 1,43 en el grupo de básica-o-menos). Ojo con un detalle que aportó el agente: ed_attainment no forma parte del modelo final de mortalidad (formula_death_updated2), así que esa señal de SHAP en muerte es exploratoria, no del modelo Cox definitivo; no cambia la lectura, solo hay que no citarla como si viniera del modelo primario de mortalidad.
+
+Con esto, diría que la dirección está bien establecida por cuatro vías independientes (Cox crudo, Cox ajustado imputación única, Cox pooled multistate 5-MI, y Aalen-Johansen). ¿Registro esto en seleccion_modelos_desempeno_tesis.md?

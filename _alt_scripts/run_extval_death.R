@@ -1,27 +1,39 @@
 # =============================================================================
 # run_extval_death.R
-# External (case-mix) validation of the FROZEN SHAP mortality Cox model
-# (best_perf2 = formula_shap_death) on SENDA convenios 3 and 5, which the
-# development cohort (convenio 1 + women's plans) never saw.
+# External (case-mix) validation of the FROZEN SHAP-informed, rule-based mortality
+# Cox model (best_perf2 = formula_shap_death_rule2) on SENDA convenios 3 and 5,
+# which the development cohort (convenio 1 + women's plans) never saw.
 #
 # "Frozen" = the model is the one defined by the development data: we fit
-# formula_shap_death on the FULL development cohort (5 MICE imputations) and pool
-# predictions across imputations (Rubin: average lp for ranking, average risk for
-# IBS/calibration). No tuning or refitting on C3/C5. This reproduces prediction23
-# best_perf2 exactly (same engine internals) but scores an external population.
+# formula_shap_death_rule2 on the FULL development cohort (5 MICE imputations) and
+# pool predictions across imputations (Rubin: average lp for ranking, average risk
+# for IBS/calibration). No tuning or refitting on C3/C5. This reproduces
+# prediction23_converted_mod's best_perf2 exactly (same engine internals, same
+# formula) but scores an external population.
 #
-# Mortality model (best_perf2):
+# 2026-07-20 update: switched from the retired 13-var hand-curated
+# formula_shap_death (isolated primary_sub_mod dummy, no cohabitation) to
+# formula_shap_death_rule2 (family-complete primary_sub_mod, PH-clean via a SECOND
+# stratum on any_phys_dx), matching prediction23_converted_mod's current best_perf2
+# and the project's "SHAP-informed / rule2 only" convention. Discrimination
+# (Uno's C) also switched from linear-predictor ranking to per-horizon absolute-risk
+# (1-S(t)) ranking, matching the risk-based convention already adopted by
+# prediction26_ext_val_readm_mod (evaluate_uno_absolute_risk).
+#
+# Mortality model (best_perf2 = formula_shap_death_rule2):
 #   Surv(death_time_from_disch_m, death_event) ~ adm_age_rec3 +
-#     primary_sub_mod_cocaine_paste + prim_sub_freq_rec_2_2_6_days_wk +
-#     prim_sub_freq_rec_3_daily + occupation_condition_corr24_unemployed +
-#     any_phys_dx + eva_ocupacion_logro_intermedio + eva_ocupacion_logro_minimo +
-#     first_sub_used_alcohol + sex_rec_woman + eva_fisica_logro_intermedio +
-#     eva_fisica_logro_minimo + strata(plan_type_strata)
+#     primary_sub_mod_cocaine_paste + primary_sub_mod_cocaine_powder +
+#     primary_sub_mod_alcohol + primary_sub_mod_others +
+#     prim_sub_freq_rec_2_2_6_days_wk + prim_sub_freq_rec_3_daily +
+#     occupation_condition_corr24_unemployed + occupation_condition_corr24_inactive +
+#     eva_ocupacion_logro_intermedio + eva_ocupacion_logro_minimo +
+#     cohabitation_family_of_origin + cohabitation_with_couple_children +
+#     cohabitation_others + strata(plan_type_strata) + strata(any_phys_dx)
 #
 # Plan stratum mapping (user-agreed): C3 -> pg-pr (single residential stratum);
 # C5 pai-ia -> pg-pai, pr-ia/ml-pr -> pg-pr. Discrimination (Uno's C) does NOT use
 # the baseline hazard, so it is transportable regardless; IBS/calibration borrow
-# the development baseline of the mapped stratum.
+# the development baseline of the mapped (plan_type_strata, any_phys_dx) combo.
 #
 # Reused engines (pure functions; identical encoding/estimators as prediction23):
 #   val_holdout_02_build_sets.R              (.vh_* dummify pipeline, contract cols)
@@ -45,8 +57,8 @@ suppressWarnings({
   stopifnot(requireNamespace("nanoparquet", quietly = TRUE))
   stopifnot(requireNamespace("janitor", quietly = TRUE))
 })
-# Attach survival so bare Surv()/strata() in formula_shap_death resolve when coxph
-# builds its model frame (the formula environment is globalenv()).
+# Attach survival so bare Surv()/strata() in formula_shap_death_rule2 resolve when
+# coxph builds its model frame (the formula environment is globalenv()).
 suppressWarnings(suppressMessages(library(survival)))
 
 if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
@@ -69,27 +81,47 @@ source(file.path(project_root, "cons/_alt_scripts/validate_holdout_metrics.R"))
 # sorted to match the development plan_type_strata factor (as.factor in .vh_finalize)
 .EVD_PLAN_LEVELS <- c("m-pai", "m-pr", "pg-pab", "pg-pai", "pg-pr")
 
-# Mortality model formula (best_perf2), read from the frozen formulas.rds.
+# Mortality model formula (best_perf2 = formula_shap_death_rule2). Hardcoded
+# verbatim from prediction23_converted_mod (it is NOT in formulas.rds: that cache
+# was extracted from an Rdata snapshot that predates rule2's adoption as best_perf2
+# -- see the 2026-07-20 header note).
 load_death_formula <- function() {
-  f <- readRDS(file.path(.EVD_VAL_INPUTS, "formulas.rds"))$formula_shap_death
-  stopifnot(inherits(f, "formula"))
+  f <- stats::as.formula(paste(
+    "Surv(death_time_from_disch_m, death_event) ~ adm_age_rec3 +",
+    "primary_sub_mod_cocaine_paste + primary_sub_mod_cocaine_powder +",
+    "primary_sub_mod_alcohol + primary_sub_mod_others +",
+    "prim_sub_freq_rec_2_2_6_days_wk + prim_sub_freq_rec_3_daily +",
+    "occupation_condition_corr24_unemployed + occupation_condition_corr24_inactive +",
+    "eva_ocupacion_logro_intermedio + eva_ocupacion_logro_minimo +",
+    "cohabitation_family_of_origin + cohabitation_with_couple_children +",
+    "cohabitation_others + strata(plan_type_strata) + strata(any_phys_dx)"))
   environment(f) <- globalenv()
   f
 }
 
-# SHAP-death covariate terms (for guards + propensity matching).
+# rule2 coefficient (dummy) terms -- used for the "zero-filled in external data"
+# guard. any_phys_dx and plan_type_strata are strata, not coefficients, so they
+# are handled separately (see .EVD_DEATH_MATCH_COVARS below); a stratifier being
+# single-valued in the external set is not a modeling problem the way a zeroed-out
+# coefficient dummy would be (quasi-separation).
 .EVD_DEATH_TERMS <- c(
-  "adm_age_rec3", "primary_sub_mod_cocaine_paste",
+  "adm_age_rec3", "primary_sub_mod_cocaine_paste", "primary_sub_mod_cocaine_powder",
+  "primary_sub_mod_alcohol", "primary_sub_mod_others",
   "prim_sub_freq_rec_2_2_6_days_wk", "prim_sub_freq_rec_3_daily",
-  "occupation_condition_corr24_unemployed", "any_phys_dx",
+  "occupation_condition_corr24_unemployed", "occupation_condition_corr24_inactive",
   "eva_ocupacion_logro_intermedio", "eva_ocupacion_logro_minimo",
-  "first_sub_used_alcohol", "sex_rec_woman",
-  "eva_fisica_logro_intermedio", "eva_fisica_logro_minimo")
+  "cohabitation_family_of_origin", "cohabitation_with_couple_children",
+  "cohabitation_others")
+
+# Propensity-matching covariate set: the 14 rule2 coefficient dummies PLUS
+# any_phys_dx (a stratifier, but still a substantively important variable to
+# balance the external cohort on).
+.EVD_DEATH_MATCH_COVARS <- c(.EVD_DEATH_TERMS, "any_phys_dx")
 
 # Non-dummy source columns the death cohort provides (others are zero-filled and
-# unused by the SHAP model).
-.EVD_NONDUM <- c("sex_rec", "primary_sub_mod", "prim_sub_freq_rec",
-  "occupation_condition_corr24", "eva_ocupacion", "eva_fisica", "first_sub_used",
+# unused by the rule2 model).
+.EVD_NONDUM <- c("primary_sub_mod", "prim_sub_freq_rec",
+  "occupation_condition_corr24", "eva_ocupacion", "cohabitation",
   "plan_type_corr", "adm_age_rec3", "any_phys_dx")
 .EVD_META <- c("death_time_from_disch_m", "death_event",
                "readmit_time_from_disch_m", "readmit_event")
@@ -136,13 +168,15 @@ dummify_extval_death <- function(nondum, complete_case = TRUE, verbose = TRUE) {
   stopifnot(all(.EVD_NONDUM %in% names(nondum)))
   sub <- as.data.frame(nondum[, unique(c(.EVD_META, .EVD_NONDUM)), drop = FALSE],
                        stringsAsFactors = FALSE)
-  # any_phys_dx must stay LOGICAL to match the development fit term (any_phys_dxTRUE).
+  # any_phys_dx must stay LOGICAL: it is a stratum in rule2 (strata(any_phys_dx)),
+  # and the frozen fit's basehaz()/predict() machinery below assumes a genuine
+  # logical column, matching how it was encoded at fit time.
   sub$any_phys_dx <- as.logical(sub$any_phys_dx)
   n0 <- nrow(sub)
   cc_index <- seq_len(n0)
   if (complete_case) {
-    need <- c("sex_rec", "primary_sub_mod", "prim_sub_freq_rec", "occupation_condition_corr24",
-              "eva_ocupacion", "eva_fisica", "first_sub_used", "plan_type_corr",
+    need <- c("primary_sub_mod", "prim_sub_freq_rec", "occupation_condition_corr24",
+              "eva_ocupacion", "cohabitation", "plan_type_corr",
               "adm_age_rec3", "any_phys_dx", "death_time_from_disch_m", "death_event")
     cc <- stats::complete.cases(sub[, need, drop = FALSE])
     cc_index <- which(cc)
@@ -178,30 +212,68 @@ dummify_extval_death <- function(nondum, complete_case = TRUE, verbose = TRUE) {
 }
 
 # ---- 4. MI-pooled predictions ------------------------------------------------
-# lp pooled by mean (ranking / Uno's C); survival pooled by mean (IBS / calibration).
-# Survival is computed directly from the Breslow baseline cumulative hazard by
-# stratum: S_i(t) = exp(-H0_s(t) * exp(lp0_i)), lp0 = X %*% beta (reference="zero").
-# This avoids riskRegression::predictRisk, which mis-reconstructs the model frame
-# for these stratified fits (logical covariate + formula environment), and matches
+# lp pooled by mean (ranking); survival pooled by mean (IBS / calibration / the
+# risk-based Uno's C used per horizon, see section 5). Survival is computed
+# directly from the Breslow baseline cumulative hazard by stratum:
+# S_i(t) = exp(-H0_s(t) * exp(lp0_i)), lp0 = X %*% beta (reference="zero"). This
+# avoids riskRegression::predictRisk, which mis-reconstructs the model frame for
+# these stratified fits (logical covariate + formula environment), and matches
 # survival::survfit to machine precision (same approach as run_extval_readmit.R).
-.evd_strata_level <- function(s) {
-  hit <- .EVD_PLAN_LEVELS[vapply(.EVD_PLAN_LEVELS, function(L) grepl(L, s, fixed = TRUE), logical(1))]
-  if (length(hit) == 1L) hit else NA_character_
+#
+# rule2 has TWO strata (plan_type_strata x any_phys_dx), so basehaz()'s combined
+# strata labels mix two formats: survival::strata() prints a bare factor level
+# with no "varname=" prefix for the FIRST term (plan_type_strata, e.g. "pg-pr")
+# but DOES prefix a logical/numeric term (any_phys_dx, e.g. "any_phys_dx=FALSE"),
+# joined by ", " -- e.g. "pg-pr, any_phys_dx=FALSE". .evd_parse_strata_label()
+# is format-agnostic: any comma-separated part containing "=" is read directly as
+# var=val; any bare part (no "=") is assigned to whichever of the two known
+# stratum variables hasn't been claimed yet. Verified against survival::survfit()
+# on synthetic two-strata data (incl. a logical stratum) to machine precision
+# (max|manual - survfit| ~ 1e-16, both at the stratum-baseline level and for
+# individual predictions using each person's own lp).
+.EVD_DEATH_STRATA_VARS <- c("plan_type_strata", "any_phys_dx")
+.evd_parse_strata_label <- function(lab, strata_vars = .EVD_DEATH_STRATA_VARS) {
+  parts <- strsplit(lab, ",\\s*")[[1]]
+  out <- stats::setNames(rep(NA_character_, length(strata_vars)), strata_vars)
+  bare <- character(0)
+  for (part in parts) {
+    if (grepl("=", part, fixed = TRUE)) {
+      kv <- strsplit(part, "=", fixed = TRUE)[[1]]
+      out[[trimws(kv[1])]] <- trimws(kv[2])
+    } else {
+      bare <- c(bare, trimws(part))
+    }
+  }
+  unclaimed <- strata_vars[is.na(out)]
+  if (length(bare) != length(unclaimed))
+    stop("strata label parsing mismatch: '", lab, "'", call. = FALSE)
+  out[unclaimed] <- bare
+  out
+}
+.evd_strata_key <- function(plan, phys) {
+  paste0("plan=", as.character(plan), "|phys=", as.character(phys))
 }
 predict_death_pooled <- function(fits, newdata, times) {
   times <- sort(unique(as.numeric(times)))
   newdata <- as.data.frame(newdata, stringsAsFactors = FALSE)
   newdata$plan_type_strata <- factor(as.character(newdata$plan_type_strata), levels = .EVD_PLAN_LEVELS)
-  n <- nrow(newdata); keylev <- as.character(newdata$plan_type_strata)
+  newdata$any_phys_dx <- as.logical(newdata$any_phys_dx)
+  n <- nrow(newdata)
+  keylev <- .evd_strata_key(newdata$plan_type_strata, newdata$any_phys_dx)
   lp_acc <- numeric(n); surv_acc <- matrix(0, n, length(times))
   for (fit in fits) {
     lp  <- as.numeric(stats::predict(fit, newdata = newdata, type = "lp"))
     lp0 <- as.numeric(stats::predict(fit, newdata = newdata, type = "lp", reference = "zero"))
     bh <- survival::basehaz(fit, centered = FALSE)
-    bh$.lev <- vapply(as.character(bh$strata), .evd_strata_level, character(1))
+    bh_levels <- levels(bh$strata)
+    parsed <- lapply(bh_levels, .evd_parse_strata_label)
+    bh_key <- stats::setNames(
+      vapply(parsed, function(p) .evd_strata_key(p[["plan_type_strata"]], p[["any_phys_dx"]]), character(1)),
+      bh_levels)
+    bh$.key <- bh_key[as.character(bh$strata)]
     sm <- matrix(NA_real_, n, length(times))
     for (st in unique(keylev)) {
-      b <- bh[!is.na(bh$.lev) & bh$.lev == st, c("time", "hazard")]
+      b <- bh[!is.na(bh$.key) & bh$.key == st, c("time", "hazard")]
       if (!nrow(b)) stop("stratum '", st, "' absent from baseline hazard", call. = FALSE)
       b <- b[order(b$time), ]
       H0 <- stats::approx(c(0, b$time), c(0, b$hazard), xout = times,
@@ -217,6 +289,15 @@ predict_death_pooled <- function(fits, newdata, times) {
 }
 
 # ---- 5. Discrimination (Uno's C) + optional IBS ------------------------------
+# Per-horizon Uno's C ranks by ABSOLUTE RISK at that horizon (1-S(h)), not by the
+# linear predictor: with a stratified baseline hazard, 1-S(t) is not a monotone
+# transform of lp, so risk-based concordance is horizon-specific and matches the
+# convention already adopted in prediction26_ext_val_readm_mod's primary table
+# (evaluate_uno_absolute_risk) and the CV pipeline's
+# options(dualcox.concordance_score = "risk"). The "Global" row has no single
+# natural risk horizon, so it is reported separately on the (horizon-independent)
+# linear predictor, exactly as prediction26's supplementary within-stratum table
+# does; it is NOT comparable to the risk-based horizon-specific rows above it.
 evaluate_extval_death <- function(fits, dat, eval_times = c(3, 6, 12, 36, 60),
                                   do_ibs = TRUE,
                                   time_col = "death_time_from_disch_m",
@@ -226,13 +307,13 @@ evaluate_extval_death <- function(fits, dat, eval_times = c(3, 6, 12, 36, 60),
   tt <- as.numeric(dat[[time_col]]); ee <- to01(dat[[event_col]])
   tmax <- max(tt, na.rm = TRUE)
 
-  c_global <- .dual_cox_safe_concordance(tt, ee, pr$lp)
+  c_global <- .dual_cox_safe_concordance(tt, ee, pr$lp)     # lp-based; see note above
   ibs_global <- if (do_ibs) ibs_ipcw_train(dat, dat, pr$surv_mat, eval_times, time_col, event_col) else NA_real_
   c_h <- ibs_h <- stats::setNames(rep(NA_real_, length(eval_times)), as.character(eval_times))
   for (ii in seq_along(eval_times)) {
     h <- eval_times[ii]
     if (h < tmax) {
-      c_h[ii] <- .dual_cox_safe_concordance(tt, ee, pr$lp, ymax = h)
+      c_h[ii] <- .dual_cox_safe_concordance(tt, ee, pr$risk_mat[, ii], ymax = h)
       if (do_ibs) {
         keep <- eval_times <= h
         if (sum(keep) >= 2L)
@@ -283,16 +364,21 @@ bootstrap_extval_death <- function(fits, dat, eval_times = c(3, 6, 12, 36),
   cal_times  <- sort(unique(as.numeric(cal_times)))
   all_times  <- sort(unique(c(eval_times, cal_times)))
   pr <- predict_death_pooled(fits, dat, all_times)
-  lp <- pr$lp; surv_all <- pr$surv_mat
+  lp <- pr$lp; surv_all <- pr$surv_mat; risk_all <- pr$risk_mat
   tt <- as.numeric(dat[[time_col]]); ee <- to01(dat[[event_col]]); n <- length(tt)
 
   one_rep <- function(bi) {
-    t <- tt[bi]; e <- ee[bi]; s <- lp[bi]; sv <- surv_all[bi, , drop = FALSE]
+    t <- tt[bi]; e <- ee[bi]; s <- lp[bi]
+    sv <- surv_all[bi, , drop = FALSE]; rv <- risk_all[bi, , drop = FALSE]
     tmax <- max(t, na.rm = TRUE)
-    cg <- .dual_cox_safe_concordance(t, e, s)
+    cg <- .dual_cox_safe_concordance(t, e, s)     # Global: lp-based, see evaluate_extval_death() note
     ig <- if (do_ibs) ibs_ipcw_train(data.frame(t = t, e = e), data.frame(t = t, e = e),
             sv[, match(eval_times, all_times), drop = FALSE], eval_times, "t", "e") else NA_real_
-    ch <- vapply(eval_times, function(h) if (h < tmax) .dual_cox_safe_concordance(t, e, s, ymax = h) else NA_real_, numeric(1))
+    # Per-horizon: absolute-risk (1-S(h)) ranking, matching evaluate_extval_death().
+    ch <- vapply(eval_times, function(h) {
+      j <- match(h, all_times)
+      if (h < tmax) .dual_cox_safe_concordance(t, e, rv[, j], ymax = h) else NA_real_
+    }, numeric(1))
     ici <- if (do_cal) vapply(cal_times, function(h) {
       j <- match(h, all_times); risk <- 1 - sv[, j]
       obs_overall <- .vhm_km_risk(t, e, h)
@@ -325,7 +411,7 @@ bootstrap_extval_death <- function(fits, dat, eval_times = c(3, 6, 12, 36),
 # Keep the external rows whose membership-model propensity falls within the
 # development support (common-support trimming). dev_ref is one dummified dev
 # imputation; ext is a dummified external cohort. Returns the kept external rows.
-match_common_support <- function(dev_ref, ext, covars = .EVD_DEATH_TERMS,
+match_common_support <- function(dev_ref, ext, covars = .EVD_DEATH_MATCH_COVARS,
                                  trim = 0.0, seed = 2125L, verbose = TRUE) {
   covars <- intersect(covars, intersect(names(dev_ref), names(ext)))
   d <- rbind(
@@ -370,7 +456,7 @@ match_common_support <- function(dev_ref, ext, covars = .EVD_DEATH_TERMS,
 # cohort (without replacement, caliper = caliper_sd x SD of the pooled logit-PS).
 # Returns the kept external rows; this is the stricter complement to the
 # common-support trim and is meant to reduce residual covariate imbalance.
-match_nn_1to1 <- function(dev_ref, ext, covars = .EVD_DEATH_TERMS,
+match_nn_1to1 <- function(dev_ref, ext, covars = .EVD_DEATH_MATCH_COVARS,
                           caliper_sd = 0.2, verbose = TRUE) {
   covars <- intersect(covars, intersect(names(dev_ref), names(ext)))
   d <- rbind(data.frame(.member = 0L, dev_ref[, covars, drop = FALSE]),
@@ -394,7 +480,7 @@ match_nn_1to1 <- function(dev_ref, ext, covars = .EVD_DEATH_TERMS,
 # (ESS x weighted event rate) show whether a balanced comparison is even powered:
 # when the populations differ strongly (e.g. age/sex), ESS collapses and any balanced
 # subset/weight scheme (cardinality matching, CEM, IPW) is uninformative. base-R only.
-matching_feasibility <- function(dev_ref, ext, covars = .EVD_DEATH_TERMS,
+matching_feasibility <- function(dev_ref, ext, covars = .EVD_DEATH_MATCH_COVARS,
                                  event_col = "death_event", verbose = TRUE) {
   covars <- intersect(covars, intersect(names(dev_ref), names(ext)))
   d <- rbind(data.frame(.member = 0L, dev_ref[, covars, drop = FALSE]),
@@ -477,7 +563,7 @@ run_extval_death <- function(eval_times = c(3, 6, 12, 36), cal_times = c(6, 12, 
     "C5" = res_c5$nondum_cc, "C5 (CS)" = res_c5$nondum_matched, "C5 (1:1 NN)" = res_c5$nondum_nn))
 
   out <- list(C3 = res_c3, C5 = res_c5, smd = smd, eval_times = eval_times, cal_times = cal_times,
-              model = "frozen formula_shap_death (best_perf2), dev-fit MI-pooled, applied to C3/C5",
+              model = "frozen formula_shap_death_rule2 (best_perf2), dev-fit MI-pooled, applied to C3/C5",
               created = as.character(Sys.time()))
   if (save) {
     out_dir <- file.path(.EVD_DATA_DIR, "pred27"); dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

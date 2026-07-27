@@ -127,7 +127,15 @@
 
 if (!exists("run_adca_from_results_boot", mode = "function")) {
   # AJ-for-readmission / KM-for-death version (audited). See header of that file.
-  source("cons/_alt_scripts/adca_from_results_boot.R")
+  # Resolve from the project root; fall back one level up when the working
+  # directory is cons/ (e.g. when sourced from a notebook kernel).
+  adca_path <- "cons/_alt_scripts/adca_from_results_boot.R"
+  if (!file.exists(adca_path)) adca_path <- file.path("..", adca_path)
+  if (!file.exists(adca_path)) {
+    stop("Could not locate cons/_alt_scripts/adca_from_results_boot.R from ",
+         getwd(), call. = FALSE)
+  }
+  source(adca_path)
 }
 
 # Internal: horizons actually available inside a results_boot object.

@@ -286,12 +286,33 @@
 }
 
 # ---- IPCW weight builders ----
+.tm_survfit_lookup_ordered <- function(fit, tt, g_min = 0.05) {
+    requested_times <- pmax(as.numeric(tt), 0)
+    out <- rep(NA_real_, length(requested_times))
+    finite <- is.finite(requested_times)
+    if (!any(finite)) return(out)
+
+    unique_times <- sort(unique(requested_times[finite]))
+    surv_unique <- as.numeric(
+        summary(fit, times = unique_times, extend = TRUE)$surv
+    )
+    if (length(surv_unique) != length(unique_times))
+        stop("Censoring-survival lookup returned an unexpected length.", call. = FALSE)
+
+    lookup_index <- match(requested_times[finite], unique_times)
+    if (anyNA(lookup_index))
+        stop("Censoring-survival lookup could not restore request order.", call. = FALSE)
+
+    out[finite] <- pmax(surv_unique[lookup_index], g_min)
+    out
+}
+
 .tm_admin_ipcw_weights <- function(time, event, horizon, eps = 1e-8, g_min = 0.05) {
     fitG <- survival::survfit(survival::Surv(time, 1 - event) ~ 1)
     Ghat <- function(tt) {
-        s <- summary(fitG, times = tt, extend = TRUE)$surv
-        s <- as.numeric(s); s[!is.finite(s)] <- NA_real_
-        pmax(s, g_min)
+        s <- .tm_survfit_lookup_ordered(fitG, tt, g_min = g_min)
+        s[!is.finite(s)] <- NA_real_
+        s
     }
     g_t <- Ghat(horizon)[1]
     g_tm <- Ghat(pmax(time - eps, 0))
@@ -305,9 +326,9 @@
     cens_indicator <- as.integer(fstatus == 0L)
     fitG <- survival::survfit(survival::Surv(ftime, cens_indicator) ~ 1)
     Ghat <- function(tt) {
-        s <- summary(fitG, times = tt, extend = TRUE)$surv
-        s <- as.numeric(s); s[!is.finite(s)] <- NA_real_
-        pmax(s, g_min)
+        s <- .tm_survfit_lookup_ordered(fitG, tt, g_min = g_min)
+        s[!is.finite(s)] <- NA_real_
+        s
     }
     g_t <- Ghat(horizon)[1]
     g_tm <- Ghat(pmax(ftime - eps, 0))
