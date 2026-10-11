@@ -100,15 +100,17 @@ This repository is organized into four main sections: data preparation, deduplic
 
 3. [**Step 2.2.5. Complementary metrics: multi-horizon ICI, pending dual metrics, DCA, and consolidated table**](prediction225_converted_mod.html) 
 
-4. [**Step 2.3: Internal validation of SHAP-informed selected Models: DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction23_converted_mod.html)
+4. [**Step 2.3: Held-out predictive performance metrics of SHAP-informed selected Models: DCA, Calibration, Discrimination, Threshold-dependent performance metrics**](prediction23_converted_mod.html)
 
-5. [**Step 2.5: Multistate semi-Markov nomogram, SHAP-based models**](prediction25_multistate_semimarkov.html)
+5. [**Step 2.4: DeepSurv. Comparison of metrics of SHAP-Informed Models — ML-Enhanced Selection, Splines & Complex Interactions vs. Traditional Full PH‑adjusted Cox with stratification, DCA, threshold scenarios and threshold-dependent performance metrics**](prediction24_converted_mod.html)
 
-6. [**Step 2.6: Nomogram app**](https://acc-ndp-anid-fondecyt1240138.shinyapps.io/nomogram/)
+6. [**Step 2.5: Multistate semi-Markov nomogram, SHAP-based models**](prediction25_multistate_semimarkov.html)
 
-7. [**Step 2.7: External validation of readmission**](prediction26_ext_val_readm.html)
+7. [**Step 2.6: Nomogram app**](https://acc-ndp-anid-fondecyt1240138.shinyapps.io/nomogram/)
 
-8. [**Step 2.8: External validation of mortality**](prediction27_ext_val_death.html)
+8. [**Step 2.7: External predictive performance metrics of readmission**](prediction26_ext_val_readm_mod.html)
+
+9. [**Step 2.8: External predictive performance metrics of mortality**](prediction27_ext_val_death_mod.html)
 
 ---
 

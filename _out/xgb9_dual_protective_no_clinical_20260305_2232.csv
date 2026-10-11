@@ -1,0 +1,10 @@
+Outcome,Top Risk-Decreasing Predictors (exploratory),Direction basis
+Readmission,"1. adm_age_rec3 (|SHAP|=0.0830, freq=100.0%)
+2. ed_attainment_corr (|SHAP|=0.0428, freq=100.0%)","Bootstrap CI of SHAP delta (Q4-Q1 for numeric, x=1-x=0 for binary)."
+Death,"1. primary_sub_mod_cocaine_paste (|SHAP|=0.2019, freq=100.0%)
+2. primary_sub_mod_cocaine_powder (|SHAP|=0.1096, freq=100.0%)
+3. cohabitation_with_couple_children (|SHAP|=0.0648, freq=100.0%)
+4. sex_rec_woman (|SHAP|=0.0462, freq=100.0%)
+5. primary_sub_mod_marijuana (|SHAP|=0.0440, freq=100.0%)
+6. polysubstance_strict (|SHAP|=0.0403, freq=100.0%)
+7. porc_pobr (|SHAP|=0.0350, freq=100.0%)","Bootstrap CI of SHAP delta (Q4-Q1 for numeric, x=1-x=0 for binary)."

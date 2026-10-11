@@ -1,0 +1,13 @@
+outcome,horizon_months,n_pairs,corr_flip_n,q4q1_flip_n,corr_flip_pct,q4q1_flip_pct
+Death,3.0,200,0,0,0.0,0.0
+Death,6.0,200,0,0,0.0,0.0
+Death,12.0,200,0,0,0.0,0.0
+Death,36.0,200,0,0,0.0,0.0
+Death,60.0,200,0,0,0.0,0.0
+Death,96.0,200,0,0,0.0,0.0
+Readmission,3.0,200,0,0,0.0,0.0
+Readmission,6.0,200,0,0,0.0,0.0
+Readmission,12.0,200,0,0,0.0,0.0
+Readmission,36.0,200,0,0,0.0,0.0
+Readmission,60.0,200,0,0,0.0,0.0
+Readmission,96.0,200,0,0,0.0,0.0

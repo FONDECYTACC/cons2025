@@ -510,7 +510,12 @@ matching_feasibility <- function(dev_ref, ext, covars = .EVD_DEATH_MATCH_COVARS,
 # ---- 9. Orchestrator ---------------------------------------------------------
 run_extval_death <- function(eval_times = c(3, 6, 12, 36), cal_times = c(6, 12, 36),
                              B = 1000L, seed = 2125L, parallel = TRUE,
-                             save = TRUE, verbose = TRUE) {
+                             save = TRUE, verbose = TRUE,
+                             cohort_opts = list()) {
+  # cohort_opts is forwarded verbatim to build_extval_death_cohort(), so the adversarial arm that
+  # reproduces the historical code literally is reachable without editing the builder:
+  #   run_extval_death(cohort_opts = list(alive_at_discharge = FALSE, precaution_scope = "none"))
+  stopifnot(is.list(cohort_opts))
   source(file.path(project_root, "cons/_alt_scripts/extval_death_01_build_cohort.R"))
   source(file.path(project_root, "cons/_alt_scripts/extval_death_02_table1_smd.R"))
   dev_list <- build_dev_full(verbose = verbose)
@@ -519,7 +524,8 @@ run_extval_death <- function(eval_times = c(3, 6, 12, 36), cal_times = c(6, 12, 
 
   run_one <- function(which, do_ibs, do_cal) {
     if (verbose) cat("\n=================", which, "=================\n")
-    built <- build_extval_death_cohort(which, verbose = verbose)
+    built <- do.call(build_extval_death_cohort,
+                     c(list(which = which, verbose = verbose), cohort_opts))
     dat   <- dummify_extval_death(built$nondum, complete_case = TRUE, verbose = verbose)
     nondum_cc <- built$nondum[attr(dat, "cc_index"), , drop = FALSE]   # aligned to dat rows
     ev    <- evaluate_extval_death(fits, dat, eval_times, do_ibs = do_ibs)

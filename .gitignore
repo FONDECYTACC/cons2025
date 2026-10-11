@@ -1,146 +1,121 @@
-# Confidential data files
-*.csv
-*.xls
-*.sav
-*.dta
-*.sas7bdat
-*.parquet
-#*.json
-*.sqlite
-*.db
-*.sql
-*.rds
-*.RData
-#*.Rhistory
-*.pkl
-.vdoc.*
-*.gsheet
-*.gdocs
+# =============================================================================
+# Minimal .gitignore — execution tree of index.qmd
+#
+# Strategy: block everything, then whitelist only the sources, configs and
+# artifacts required to run the pipeline end-to-end from local raw data.
+# Rendered *.html, *_files/, _figs/, caches, legacy/unlinked documents and
+# data dumps stay out of the repository by default.
+# =============================================================================
 
-# Exceptions (negating previous ignores)
-_input/!2_ndp_2025_03_08.Rdata.7z.001
-_input/!2_ndp_2025_03_08.Rdata.7z.002
-_input/!2_ndp_2025_03_08.Rdata.7z.003
-_input/!2_ndp_2025_03_08.Rdata.7z.004
-## From xgb
-_out/!death_split_seed2125_test20.parquet
-_out/!readm_split_seed2125_test20.parquet
-!_out/!death_split_seed2125_test20.parquet
-!_out/!readm_split_seed2125_test20.parquet
-_out/*xgb*.csv
-
-#Thesis scheme
-!_figs/thesis_scheme.svg
-
-# Sensitive or personal data directories
-data/
-raw_data/
-private/
-credentials/
-secrets/
-passwords/
-keys/
-token*
-
-# Configuration and credentials files
-.env
-.Renviron
-.gitcreds
-*.key
-*.pem
-*.crt
-*.p12
-*.jks
-
-# Generated or temporary files
-freeze/
-tmp/
-temp/
-output/
-results/
-reports/
-logs/
-log/
-*.tmp
-*.bak
-*.old
-*~
-
-# Cache files and intermediate files
-.cache/
-__pycache__/
-*.pyc
-*.pyo
-.ipynb_checkpoints
-
-# R Markdown and Quarto output (that may contain sensitive data)
-*.nb.html
-*_cache/
-_site/
-docs/
-*_files/
-
-# Large datasets
-*.feather
-
-# OS-generated files
-.DS_Store
-.AppleDouble
-.LSOverride
-Icon
-._*
-Thumbs.db
-ehthumbs.db
-desktop.ini
-Desktop.ini
-$RECYCLE.BIN/
-
-# Sensitive directories specific to your project
-cons/private/
-cons/confidential/
-cons/raw/
+# --- Rules preserved from the parent .gitignore (SISTRAT 2023/.gitignore) ---
 .Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto
+secret_shinykey.txt
+
+# --- Default: block everything ---
+*
+
+# --- Repo / Quarto configuration ---
+!/.gitignore
+!/.gitattributes
+!/_quarto.yml
+
+# --- Entry point ---
+!/index.qmd
+
+# --- Pipeline documents linked from index.qmd ---
+# 1. Data preparation
+!/import_c1_top_data_adm_25.qmd
+!/import_c2_c6_data_adm_25.qmd
+# 2. Deduplication
+!/Duplicates_25.qmd
+!/Duplicates_25_2.qmd
+!/Duplicates_25_3.qmd
+!/Duplicates_25_4.qmd
+# 3. Excess mortality
+!/mortality.qmd
+!/mortality_post_rev.qmd
+!/mortality_yll.ipynb
+# 4. Prediction & ML-informed survival modeling
+!/prediction1.qmd
+!/model_performance_ml_jan26.ipynb
+!/XGboost_readm_hyp_tun_mar26.ipynb
+!/XGboost_death_hyp_tun_mar26.ipynb
+!/XGboost_combined_mar26.ipynb
+!/DeepSurv_mar26.ipynb
+!/DeepSurv2_mar26.ipynb
+!/prediction21_converted.ipynb
+!/prediction22_converted_mod.ipynb
+!/prediction225_converted_mod.ipynb
+!/prediction23_converted_mod.ipynb
+!/prediction24_converted_mod.ipynb
+!/prediction25_multistate_semimarkov.ipynb
+!/prediction26_ext_val_readm_mod.ipynb
+!/prediction27_ext_val_death_mod.ipynb
+# 5. Documentation
+!/codebook.qmd
+
+# --- Website assets referenced by _quarto.yml ---
+!/_lib/
+!/_lib/custom_light.scss
+!/_style/
+!/_style/Logo nDP_negativo_vertical_en.png
+
+# --- Bibliography (declared in every .qmd) ---
+!/_lit/
+!/_lit/refs.bib
+!/_lit/american-medical-association.csl
+
+# --- Scripts sourced by the pipeline ---
+# Only these two historical scripts are sourced (Duplicates_25_2, prediction1)
+!/_hist_scripts/
+!/_hist_scripts/missranger_truncated_treatments.R
+!/_hist_scripts/missranger_mice_like_pred1.R
+# prediction21-27 source ~30 scripts here; keep all, drop dev noise
+!/_alt_scripts/
+!/_alt_scripts/**
+/_alt_scripts/__pycache__/
+/_alt_scripts/.ipynb_checkpoints/
+/_alt_scripts/PASTE_*.md
+/_alt_scripts/_test_*
+/_alt_scripts/_tmp_*
+/_alt_scripts/*.bak*
+
+# --- Reference inputs read by the pipeline ---
+!/_input/
+!/_input/iconv.xlsx
+!/_input/sub_dsm_iv_to_cie_10_comp_table.xlsx
+!/_input/Clasificacion-comunas-PNDR.xlsx
+!/_input/mltper_*.txt
+!/_input/fltper_*.txt
+!/_input/tablas-de-mortalidad-de-chile-1992-2050.xlsx
+# Encrypted fallback inputs (safe to version); plaintext stays local
+!/_input/*.enc
+!/_input/*.7z
+!/_input/*.7z.*
+# Generated Optuna studies (_input/XGB_*_Optuna*_Study*.pkl) stay blocked.
+
+# --- _out/: generated, but a few artifacts are re-read across documents ---
+!/_out/
+# Train/test splits consumed by the XGBoost/DeepSurv/Cox documents
+!/_out/*_split_seed2125_test20_mar26.parquet
+# Chained model artifacts handed from one notebook to the next
+!/_out/xgb9_dual_predictor_analysis_no_clinical_*.xlsx
+!/_out/[xX][gG][bB]*.pkl
+!/_out/[xX][gG][bB]*.csv
+!/_out/[xX][gG][bB]*.json
+!/_out/[xX][gG][bB]*.xlsx
+!/_out/[dD][sS]*.pkl
+!/_out/[dD][sS]*.csv
+!/_out/[dD][sS]*.json
+!/_out/[dD][sS]*.xlsx
+!/_out/pred23_holdout_validation_*.rds
+# Encrypted overlaps table is versioned; plaintext stays local only
+!/_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx.enc
+
 /.quarto/
-
-# Specific files to ignore
-paquetes_sar.tar.gz
-_out/more_one_overlaps_after_center_id_sep25_long.xlsx
-_out/more_one_overlaps_after_center_id_mod.xlsx
-_out/more_one_overlaps_after_center_id_sep25.xlsx
-_out/more_one_overlaps_after_center_id.xlsx
-_out/_multiple_overlappings.xlsx
-_out/_overlaps_dup_after_manual_imp.xlsx
-_out/_overlaps_dup_after_manual_imp_mod (1).xlsx
-_out/_overlaps_dup_after_manual_imp_mod.xlsx
-_out/~$more_one_overlaps_after_center_id.xlsx
-_out/~$_multiple_overlappings.xlsx
-_out/more_one_overlaps_after_center_idd.xlsx
-_out/more_one_overlaps_after_center_idd (1).xlsx
-cons/_out/more_one_overlaps_after_center_id.xlsx
-/cons/_out
-
-#descartar
-_freeze/
-
 **/*.quarto_ipynb
-
-# Windows system files
-desktop.ini
-
-
-# PII patient-level diagnostic exports (regenerated by Duplicates_25.qmd; never version)
-_out/db1c_hash_adm_date.xlsx
-_out/db1c_hash_adm_date25.xlsx
-
-# PII code-hash diagnostic exports (regenerated by their QMD; never version)
-_input/bd_2022_2024_descuadrado.xlsx
-_out/_overlaps_dup_step_2.xlsx
-_out/_overlaps_dup_step_2_after_miss.xlsx
-
-# Encrypted overlaps table is versioned (.enc); plaintext stays local only
-_out/more_one_overlaps_after_center_id_sep25_long_mod.xlsx
-# Excel lock/owner temp files
-~$*
-
-# Timestamped backup snapshots
-*.bak*

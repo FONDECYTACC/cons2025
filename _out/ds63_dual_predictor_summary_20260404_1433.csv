@@ -1,0 +1,3 @@
+outcome,n_features,n_horizons,top1_feature,top1_importance,top2_feature,top2_importance,top1_to_top2_ratio,top15_stable_freq_ge_75pct_n
+Death,56,6,adm_age_rec3,0.45077499552178785,primary_sub_mod_alcohol,0.24374360875189305,1.8493818066861902,15
+Readmission,56,6,primary_sub_mod_cocaine_paste,0.1301747392706573,plan_type_corr_pg_pr,0.09287024917528035,1.4016839668963272,15

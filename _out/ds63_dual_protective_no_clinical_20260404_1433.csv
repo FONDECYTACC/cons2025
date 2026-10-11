@@ -1,0 +1,7 @@
+Outcome,Top Risk-Decreasing Predictors (exploratory),Direction basis
+Death,"1. cohabitation_with_couple_children (|SHAP|=0.0883, freq=100.0%)
+2. sex_rec_woman (|SHAP|=0.0772, freq=100.0%)
+3. polysubstance_strict (|SHAP|=0.0598, freq=100.0%)
+4. primary_sub_mod_cocaine_paste (|SHAP|=0.0510, freq=0.0%)","Bootstrap CI of pooled patient-horizon SHAP delta (Q4-Q1 for numeric, x=1-x=0 for binary)."
+Readmission,"1. adm_age_rec3 (|SHAP|=0.0648, freq=100.0%)
+2. ed_attainment_corr (|SHAP|=0.0455, freq=100.0%)","Bootstrap CI of pooled patient-horizon SHAP delta (Q4-Q1 for numeric, x=1-x=0 for binary)."

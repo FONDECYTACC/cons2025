@@ -1,0 +1,113 @@
+outcome,feature,mean_abs_shap_log_hazard,rank,rel_to_max_pct,importance_tier,mean_rank,cv_rank_pct,rank_ci2p5,rank_ci97p5,freq_in_top_45_pct,stable_freq_ge_90pct,direction_method,delta_point,delta_ci_low,delta_ci_high,direction_n,direction_label
+Readmission,primary_sub_mod_cocaine_paste,0.09589763829734571,1,100.0,DOMINANT (>=50% max),1.0,0.0,1.0,1.0,100.0,True,binary_x1_minus_x0,0.19642044794453906,0.19600985182439504,0.19683427790576102,70521.0,Risk-Increasing
+Readmission,adm_age_rec3,0.08302355537593448,2,86.57518250710918,DOMINANT (>=50% max),2.0,0.0,2.0,2.0,100.0,True,quartile_q4_minus_q1,-0.18153206178510733,-0.1848779261022606,-0.1781510233789751,35281.0,Risk-Decreasing
+Readmission,porc_pobr,0.07337959061276923,3,76.51866293645759,DOMINANT (>=50% max),3.0,0.0,3.0,3.0,100.0,True,quartile_q4_minus_q1,0.12044873012862825,0.11865998788272573,0.12209034583248064,35755.0,Risk-Increasing
+Readmission,sex_rec_woman,0.07042783911605677,4,73.44063979728486,DOMINANT (>=50% max),4.0,0.0,4.0,4.0,100.0,True,binary_x1_minus_x0,0.1834761143536909,0.18302011327232123,0.18398623608517767,70521.0,Risk-Increasing
+Readmission,plan_type_corr_pg_pr,0.06893950585563839,5,71.8886378013613,DOMINANT (>=50% max),5.0,0.0,5.0,5.0,100.0,True,binary_x1_minus_x0,0.32094074234071934,0.3193874737028468,0.32256719524199245,70521.0,Risk-Increasing
+Readmission,plan_type_corr_m_pr,0.05581716363325013,6,58.20494083512279,DOMINANT (>=50% max),6.01,1.6572044,6.0,6.0,100.0,True,binary_x1_minus_x0,0.5886977241775155,0.584227185836731,0.5931222791218295,70521.0,Risk-Increasing
+Readmission,ethnicity,0.05472579082360987,7,57.066880681590874,DOMINANT (>=50% max),6.99,1.4248639,7.0,7.0,100.0,True,binary_x1_minus_x0,0.4397069803628559,0.43777557323371397,0.4416417898469131,70521.0,Risk-Increasing
+Readmission,dit_m,0.047705741025620425,8,49.74652334784437,MAJOR (20-50% max),8.002,0.5588767,8.0,8.0,100.0,True,quartile_q4_minus_q1,0.07846423010470177,0.07713495730096162,0.07966810237497599,35358.0,Risk-Increasing
+Readmission,eva_consumo,0.047166871493449315,9,49.184601759639804,MAJOR (20-50% max),8.998,0.49701393,9.0,9.0,100.0,True,quartile_q4_minus_q1,0.13169524302633917,0.1313414170336966,0.13208075385113732,50240.0,Risk-Increasing
+Readmission,ed_attainment_corr,0.0428449221645399,10,44.677765714826556,MAJOR (20-50% max),10.0,0.0,10.0,10.0,100.0,True,quartile_q4_minus_q1,-0.10847405703438752,-0.10897538296914959,-0.10791693865407614,70369.0,Risk-Decreasing
+Readmission,occupation_condition_corr24_unemployed,0.036727460993164936,11,38.298608438391014,MAJOR (20-50% max),11.0,0.0,11.0,11.0,100.0,True,binary_x1_minus_x0,0.08140193133202586,0.08116103002346983,0.08166947622024934,70521.0,Risk-Increasing
+Readmission,dg_psiq_cie_10_dg,0.02861409643638948,12,29.8381659282025,MAJOR (20-50% max),12.0,0.0,12.0,12.0,100.0,True,binary_x1_minus_x0,0.057959219228876535,0.057830220877994505,0.05808513004620264,70521.0,Risk-Increasing
+Readmission,polysubstance_strict,0.028194662377008305,13,29.400789088868194,MAJOR (20-50% max),13.0,0.0,13.0,13.0,100.0,True,binary_x1_minus_x0,0.07404094589962779,0.07370935349365916,0.07439832825752916,70521.0,Risk-Increasing
+Readmission,sub_dep_icd10_status_drug_dependence,0.027908322176344445,14,29.102199670246627,MAJOR (20-50% max),14.0,0.0,14.0,14.0,100.0,True,binary_x1_minus_x0,0.07084689584695758,0.07054635197073059,0.07115224796130647,70521.0,Risk-Increasing
+Readmission,primary_sub_mod_cocaine_powder,0.026105495027681745,15,27.222250194251448,MAJOR (20-50% max),15.0,0.0,15.0,15.0,100.0,True,binary_x1_minus_x0,0.08021820352454281,0.07988604145894611,0.08054559675725949,70521.0,Risk-Increasing
+Readmission,eva_sm,0.023630721766932,16,24.641609727302388,MAJOR (20-50% max),16.0,0.0,16.0,16.0,100.0,True,quartile_q4_minus_q1,0.02865367899265563,0.028282427933906455,0.029020287969859407,70512.0,Risk-Increasing
+Readmission,evaluacindelprocesoteraputico,0.02185010714833572,17,22.784823001152567,MAJOR (20-50% max),17.378,2.7930322,17.0,18.0,100.0,True,quartile_q4_minus_q1,0.033597144652788104,0.0332889255708399,0.03393546057037392,70520.0,Risk-Increasing
+Readmission,tr_outcome_adm_discharge_rule_violation_undet,0.021794871869467616,18,22.727224837267826,MAJOR (20-50% max),17.676,3.218607,17.0,19.0,100.0,True,binary_x1_minus_x0,0.14503773724225852,0.14416851435057818,0.14590006020341606,70521.0,Risk-Increasing
+Readmission,prim_sub_freq_rec,0.021554455268692808,19,22.476523563447756,MAJOR (20-50% max),18.946,1.2400253,18.0,19.0,100.0,True,quartile_q4_minus_q1,0.042844510544623474,0.04259537413895465,0.04311683347755366,70310.0,Risk-Increasing
+Readmission,eva_transgnorma,0.018092759464395595,20,18.86674143975908,MODERATE (10-20% max),20.0,0.0,20.0,20.0,100.0,True,quartile_q4_minus_q1,0.030613075221922317,0.030417060086298194,0.03081983082415708,53043.0,Risk-Increasing
+Readmission,eva_ocupacion,0.016314737571428935,21,17.012658352276127,MODERATE (10-20% max),21.03,0.81197613,21.0,22.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,tr_outcome_referral,0.016138978838946383,22,16.82938091645692,MODERATE (10-20% max),22.024,1.4331253,21.0,23.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,cohabitation_with_couple_children,0.01598310149076075,23,16.66683536168287,MODERATE (10-20% max),23.076,1.7035291,22.0,24.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,adm_motive_justice_sector,0.015855000842946974,24,16.533254754184924,MODERATE (10-20% max),23.994,2.1352723,23.0,25.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,primary_sub_mod_marijuana,0.01568249593559794,25,16.353370337413207,MODERATE (10-20% max),24.876,1.3262285,24.0,25.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,tenure_status_household,0.015012921195643831,26,15.655152162448369,MODERATE (10-20% max),26.0,0.0,26.0,26.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,eva_fam,0.014387698912149638,27,15.00318377762163,MODERATE (10-20% max),27.0,0.0,27.0,27.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,any_violence_1_domestic_violence_sex_abuse,0.013938986369915562,28,14.535275964456542,MODERATE (10-20% max),28.0,0.0,28.0,28.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,tr_outcome_dropout,0.012042614471710336,29,12.557780030380222,MODERATE (10-20% max),29.216,1.409935,29.0,30.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,dx_f6_personality,0.011997975758689904,30,12.511231738041651,MODERATE (10-20% max),29.784,1.3830466,29.0,30.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,any_phys_dx,0.01121445814318018,31,11.694196376774148,MODERATE (10-20% max),31.0,0.0,31.0,31.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,adm_motive_sanitary_sector,0.010851200779312535,32,11.315399390406968,MODERATE (10-20% max),32.0,0.0,32.0,32.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,eva_relinterp,0.010703698478515421,33,11.161587155386373,MODERATE (10-20% max),33.196,1.1970264,33.0,34.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,occupation_condition_corr24_inactive,0.010654917490546497,34,11.110719387592477,MODERATE (10-20% max),33.804,1.1754966,33.0,34.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,urbanicity_cat,0.010265180156146119,35,10.704309656007704,MODERATE (10-20% max),35.0,0.0,35.0,35.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,cohabitation_others,0.008771179365829884,36,9.146397681487695,MINOR (<10% max),36.002,0.12421909,36.0,36.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,first_sub_used_alcohol,0.008609726030845437,37,8.978037607297093,MINOR (<10% max),37.114,0.890469,37.0,38.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,cohabitation_family_of_origin,0.008563542779438106,38,8.929878703462432,MINOR (<10% max),37.938,1.0493101,37.0,39.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,plan_type_corr_pg_pai,0.008505263656556997,39,8.869106484338111,MINOR (<10% max),38.946,0.6032333,38.0,39.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,marital_status_rec_single,0.0073634617896185875,40,7.67845999167051,MINOR (<10% max),40.0,0.0,40.0,40.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,eva_fisica,0.005814939329230662,41,6.0636939892101696,MINOR (<10% max),41.0,0.0,41.0,41.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,dx_f3_mood,0.005615756449202599,42,5.855990354830285,MINOR (<10% max),42.0,0.0,42.0,42.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,plan_type_corr_m_pai,0.005107883537305473,43,5.3263913773013645,MINOR (<10% max),43.0,0.0,43.0,43.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,dg_psiq_cie_10_instudy,0.004937785487763172,44,5.149016780218082,MINOR (<10% max),44.0,0.0,44.0,44.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,adm_motive_another_sud_facility_fonodrogas_senda_previene,0.0046908336251405575,45,4.891500675538943,MINOR (<10% max),45.0,0.0,45.0,45.0,100.0,True,not_evaluated,,,,,Not evaluated
+Readmission,first_sub_used_cocaine_powder,0.0036051546216628663,46,3.75937790092861,MINOR (<10% max),46.0,0.0,46.0,46.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,marital_status_rec_separated_divorced_annulled_widowed,0.0034020737519394623,47,3.547609526514926,MINOR (<10% max),47.0,0.0,47.0,47.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,dx_f_any_severe_mental,0.0032033703740108645,48,3.3404059066379825,MINOR (<10% max),48.0,0.0,48.0,48.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,tipo_de_vivienda_rec2_other_unknown,0.0027873768908643327,49,2.9066168263931926,MINOR (<10% max),49.0,0.0,49.0,49.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,primary_sub_mod_others,0.0026355004597888813,50,2.7482433421531174,MINOR (<10% max),50.0,0.0,50.0,50.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,adm_motive_other,0.0023868868122139614,51,2.4889943637746774,MINOR (<10% max),51.0,0.0,51.0,51.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,first_sub_used_cocaine_paste,0.002270607261554911,52,2.367740542800998,MINOR (<10% max),52.002,0.08599927,52.0,52.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,first_sub_used_other,0.0021636305708404736,53,2.2561875446106363,MINOR (<10% max),52.998,0.08438307,53.0,53.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,tr_outcome_adm_discharge_adm_reasons,0.0009835270262602439,54,1.0256008841538553,MINOR (<10% max),54.0,0.0,54.0,54.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,national_foreign,0.0007314542950812304,55,0.7627448475980622,MINOR (<10% max),55.0,0.0,55.0,55.0,0.0,False,not_evaluated,,,,,Not evaluated
+Readmission,tr_outcome_other,0.0,56,0.0,MINOR (<10% max),56.0,0.0,56.0,56.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,adm_age_rec3,0.5188330679528359,1,100.0,DOMINANT (>=50% max),1.0,0.0,1.0,1.0,100.0,True,quartile_q4_minus_q1,1.4419786501165173,1.437293569312489,1.4465811020305048,35281.0,Risk-Increasing
+Death,primary_sub_mod_cocaine_paste,0.20190073955992552,2,38.914393093055345,MAJOR (20-50% max),2.0,0.0,2.0,2.0,100.0,True,binary_x1_minus_x0,-0.44529746725930164,-0.44604640179220706,-0.44441580456965935,70521.0,Risk-Decreasing
+Death,prim_sub_freq_rec,0.1207107988700626,3,23.26582600957804,MAJOR (20-50% max),3.0,0.0,3.0,3.0,100.0,True,quartile_q4_minus_q1,0.24270408643357239,0.24221008154954154,0.24321803799335084,70310.0,Risk-Increasing
+Death,primary_sub_mod_cocaine_powder,0.10959345303816104,4,21.12306632084668,MAJOR (20-50% max),4.0,0.0,4.0,4.0,100.0,True,binary_x1_minus_x0,-0.3831236316001066,-0.3844139632309426,-0.3818128781954426,70521.0,Risk-Decreasing
+Death,occupation_condition_corr24_unemployed,0.10480565636893883,5,20.200265334372656,MAJOR (20-50% max),5.0,0.0,5.0,5.0,100.0,True,binary_x1_minus_x0,0.22828541132193797,0.22768330199621567,0.22889052139048674,70521.0,Risk-Increasing
+Death,any_phys_dx,0.09448502020154004,6,18.211063642175006,MODERATE (10-20% max),6.0,0.0,6.0,6.0,100.0,True,quartile_q4_minus_q1,0.045233015941419465,0.04428915005322822,0.046211386530349445,134297.0,Risk-Increasing
+Death,eva_ocupacion,0.07353710319584482,7,14.173557496248417,MODERATE (10-20% max),7.0,0.0,7.0,7.0,100.0,True,quartile_q4_minus_q1,0.19016299515963697,0.18962104249503775,0.19067207372769313,51704.0,Risk-Increasing
+Death,first_sub_used_alcohol,0.06591560844381232,8,12.704588916025747,MODERATE (10-20% max),8.0,0.0,8.0,8.0,100.0,True,quartile_q4_minus_q1,0.14458672592723543,0.14423492535214028,0.1449189725293923,65597.0,Risk-Increasing
+Death,cohabitation_with_couple_children,0.06476773448677989,9,12.48334743626394,MODERATE (10-20% max),9.0,0.0,9.0,9.0,100.0,True,binary_x1_minus_x0,-0.13108289438639367,-0.1314244610438818,-0.13070760702491813,70521.0,Risk-Decreasing
+Death,eva_fisica,0.054744491596987827,10,10.551465390013332,MODERATE (10-20% max),10.0,0.0,10.0,10.0,100.0,True,quartile_q4_minus_q1,0.1552878981295715,0.154460964610098,0.15611067278779608,48525.0,Risk-Increasing
+Death,adm_motive_sanitary_sector,0.052923941096580114,11,10.200572084852372,MODERATE (10-20% max),11.0,0.0,11.0,11.0,100.0,True,binary_x1_minus_x0,0.12009118144160907,0.11970859774409542,0.12045956729376142,70521.0,Risk-Increasing
+Death,ed_attainment_corr,0.046810773053995336,12,9.022318727427495,MINOR (<10% max),12.0,0.0,12.0,12.0,100.0,True,quartile_q4_minus_q1,0.11479339475239977,0.11431414887980657,0.11533581376664813,70369.0,Risk-Increasing
+Death,sex_rec_woman,0.046155923361419625,13,8.896102853185024,MINOR (<10% max),13.0,0.0,13.0,13.0,100.0,True,binary_x1_minus_x0,-0.12369547768714094,-0.12411350675136322,-0.12322292084287774,70521.0,Risk-Decreasing
+Death,occupation_condition_corr24_inactive,0.04523248753460799,14,8.718119628165223,MINOR (<10% max),14.0,0.0,14.0,14.0,100.0,True,binary_x1_minus_x0,0.15750415200443785,0.15639671729441962,0.15841065323566067,70521.0,Risk-Increasing
+Death,primary_sub_mod_marijuana,0.044021871253609623,15,8.484785179037855,MINOR (<10% max),15.0,0.0,15.0,15.0,100.0,True,binary_x1_minus_x0,-0.35649600618360927,-0.35874485037914977,-0.35454973279878116,70521.0,Risk-Decreasing
+Death,polysubstance_strict,0.04025210627359253,16,7.758199844974341,MINOR (<10% max),16.0,0.0,16.0,16.0,100.0,True,binary_x1_minus_x0,-0.10009704813415116,-0.1005495666007371,-0.09963919397594774,70521.0,Risk-Decreasing
+Death,dit_m,0.037803870960198334,17,7.2863264304569855,MINOR (<10% max),17.0,0.0,17.0,17.0,100.0,True,quartile_q4_minus_q1,0.05969279167087561,0.05860243441518697,0.06071405384049598,35358.0,Risk-Increasing
+Death,plan_type_corr_pg_pr,0.03569887433676845,18,6.88060891678046,MINOR (<10% max),18.0,0.0,18.0,18.0,100.0,True,binary_x1_minus_x0,0.1630428827303004,0.16204323511425722,0.16411822608523033,70521.0,Risk-Increasing
+Death,porc_pobr,0.035043483509757986,19,6.75428874416763,MINOR (<10% max),19.0,0.0,19.0,19.0,100.0,True,quartile_q4_minus_q1,-0.009768896484658555,-0.010950234137962239,-0.008697104119813661,35755.0,Risk-Decreasing
+Death,eva_sm,0.03217082512208281,20,6.2006119326625635,MINOR (<10% max),20.0,0.0,20.0,20.0,100.0,True,quartile_q4_minus_q1,0.05294327424721284,0.05249243513136167,0.05341500155214315,70512.0,Risk-Increasing
+Death,tenure_status_household,0.02997505635084443,21,5.77739897518816,MINOR (<10% max),21.0,0.0,21.0,21.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,marital_status_rec_separated_divorced_annulled_widowed,0.023832381374131205,22,4.593458444768533,MINOR (<10% max),22.0,0.0,22.0,22.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,tipo_de_vivienda_rec2_other_unknown,0.022689003480274066,23,4.3730835372152095,MINOR (<10% max),23.0,0.0,23.0,23.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,marital_status_rec_single,0.017913062469548904,24,3.4525676129759093,MINOR (<10% max),24.0,0.0,24.0,24.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,sub_dep_icd10_status_drug_dependence,0.01758242926373581,25,3.3888412959318406,MINOR (<10% max),25.0,0.0,25.0,25.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,tr_outcome_referral,0.015166383460897884,26,2.9231720947818562,MINOR (<10% max),26.0,0.0,26.0,26.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,tr_outcome_adm_discharge_rule_violation_undet,0.014660694129269966,27,2.8257054214213433,MINOR (<10% max),27.0,0.0,27.0,27.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,dg_psiq_cie_10_instudy,0.013774359320187595,28,2.654873054745181,MINOR (<10% max),28.0,0.0,28.0,28.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,eva_fam,0.013206332956028488,29,2.5453915279796697,MINOR (<10% max),29.01,0.34332505,29.0,29.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,primary_sub_mod_others,0.012773478288376534,30,2.4619630238251693,MINOR (<10% max),30.112,1.148943,30.0,31.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,tr_outcome_dropout,0.012599590693841204,31,2.428447890485377,MINOR (<10% max),30.878,1.0609934,30.0,31.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,eva_transgnorma,0.011705842984064017,32,2.2561867596936067,MINOR (<10% max),32.0,0.0,32.0,32.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,evaluacindelprocesoteraputico,0.011242723079083089,33,2.1669249270181634,MINOR (<10% max),33.154,1.1388761,33.0,34.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,dx_f_any_severe_mental,0.011133823257340369,34,2.1459355513462532,MINOR (<10% max),34.182,1.7786013,33.0,35.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,ethnicity,0.011068896303110257,35,2.133421515861527,MINOR (<10% max),34.664,1.5793084,33.0,35.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,plan_type_corr_m_pr,0.010532045244285282,36,2.0299487243250827,MINOR (<10% max),36.0,0.0,36.0,36.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,eva_consumo,0.009650809361393215,37,1.86009912580794,MINOR (<10% max),37.0,0.0,37.0,37.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,dx_f6_personality,0.008034892046367946,38,1.548646865950794,MINOR (<10% max),38.0,0.0,38.0,38.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,eva_relinterp,0.007277883123686381,39,1.4027407991558418,MINOR (<10% max),39.024,0.4247849,39.0,39.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,plan_type_corr_pg_pai,0.0072036782896233945,40,1.3884385430649224,MINOR (<10% max),40.14,1.0111332,40.0,41.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,dg_psiq_cie_10_dg,0.0071693412787838355,41,1.3818204200190953,MINOR (<10% max),40.836,0.90764743,40.0,41.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,any_violence_1_domestic_violence_sex_abuse,0.006754349354618084,42,1.3018347849856173,MINOR (<10% max),42.0,0.0,42.0,42.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,cohabitation_family_of_origin,0.0057979882282629975,43,1.117505530466701,MINOR (<10% max),43.0,0.0,43.0,43.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,urbanicity_cat,0.005671509351226529,44,1.0931279637985782,MINOR (<10% max),44.0,0.0,44.0,44.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,cohabitation_others,0.005489049260558685,45,1.0579605656626463,MINOR (<10% max),45.0,0.0,45.0,45.0,100.0,True,not_evaluated,,,,,Not evaluated
+Death,adm_motive_another_sud_facility_fonodrogas_senda_previene,0.005263006062548784,46,1.0143929498008044,MINOR (<10% max),46.0,0.0,46.0,46.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,dx_f3_mood,0.004743716091093277,47,0.9143048861188819,MINOR (<10% max),47.0,0.0,47.0,47.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,adm_motive_other,0.004385104775275583,48,0.8451860619790348,MINOR (<10% max),48.0,0.0,48.0,48.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,adm_motive_justice_sector,0.002722243627587349,49,0.5246858374560683,MINOR (<10% max),49.0,0.0,49.0,49.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,plan_type_corr_m_pai,0.0016184447869001587,50,0.3119394053440098,MINOR (<10% max),50.0,0.0,50.0,50.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,first_sub_used_cocaine_paste,0.0013146976365021187,51,0.25339511255316327,MINOR (<10% max),51.0,0.0,51.0,51.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,first_sub_used_other,0.0012145417696291518,52,0.23409104867224054,MINOR (<10% max),52.0,0.0,52.0,52.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,first_sub_used_cocaine_powder,0.0006288869469802738,53,0.12121180892761489,MINOR (<10% max),53.0,0.0,53.0,53.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,national_foreign,0.0,54,0.0,MINOR (<10% max),54.0,0.0,54.0,54.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,tr_outcome_adm_discharge_adm_reasons,0.0,55,0.0,MINOR (<10% max),55.0,0.0,55.0,55.0,0.0,False,not_evaluated,,,,,Not evaluated
+Death,tr_outcome_other,0.0,56,0.0,MINOR (<10% max),56.0,0.0,56.0,56.0,0.0,False,not_evaluated,,,,,Not evaluated

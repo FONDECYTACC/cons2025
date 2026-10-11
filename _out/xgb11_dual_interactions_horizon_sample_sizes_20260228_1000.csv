@@ -1,0 +1,13 @@
+outcome,outcome_code,horizon_months,n_patients_with_risk,n_total_patients,coverage_pct
+Readmission,readm,3.0,70803,70803,100.0
+Readmission,readm,6.0,70803,70803,100.0
+Readmission,readm,12.0,70803,70803,100.0
+Readmission,readm,36.0,70803,70803,100.0
+Readmission,readm,60.0,70803,70803,100.0
+Readmission,readm,96.0,70803,70803,100.0
+Death,death,3.0,70803,70803,100.0
+Death,death,6.0,70803,70803,100.0
+Death,death,12.0,70803,70803,100.0
+Death,death,36.0,70803,70803,100.0
+Death,death,60.0,70803,70803,100.0
+Death,death,96.0,70803,70803,100.0

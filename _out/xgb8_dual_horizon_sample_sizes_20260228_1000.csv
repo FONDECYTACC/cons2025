@@ -1,0 +1,5 @@
+outcome,horizon_months,n_patients_with_risk,n_total_patients,coverage_pct
+Readmission,12.0,70803,70803,100.0
+Readmission,60.0,70803,70803,100.0
+Death,12.0,70803,70803,100.0
+Death,60.0,70803,70803,100.0

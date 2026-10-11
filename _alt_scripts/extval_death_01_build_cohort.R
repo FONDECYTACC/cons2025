@@ -173,6 +173,9 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
     cohab = "con_quien_vive",
     phys = c("diagnostico_trs_fisico", "diagnostico_trs_fisico2", "diagnostico_trs_fisico3"),
     adm = "fecha_ingreso_a_tratamiento", disch = "fecha_egreso_de_tratamiento",
+    # Discharge reason. These two columns were always present in the extract but were not mapped,
+    # which is why earlier notes claimed the convenio files had no discharge reason at all.
+    disch_reason = "motivo_de_egreso", disch_admin_reason = "motivodeegreso_alta_administra",
     plan = NA_character_),                          # no plan column -> fixed pg-pr
   C5 = list(
     id = "HASH_KEY", age = "edad", sex = "sexo",
@@ -184,6 +187,7 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
     cohab = "con_quien_vive",
     phys = c("diagnostico_trs_fisico"),
     adm = "fecha_ingreso_a_tratamiento", disch = "fecha_egreso_de_tratamiento",
+    disch_reason = "motivo_de_egreso", disch_admin_reason = "motivodeegreso_alta_administra",
     plan = "tipo_de_plan")
 )
 
@@ -200,8 +204,12 @@ if (!exists("project_root", inherits = TRUE) || !is.character(project_root) ||
 build_extval_death_cohort <- function(which = c("C3", "C5"),
                                       censor = "2020-12-31",
                                       age_lo = 18, age_hi = 64,
+                                      alive_at_discharge = TRUE,
+                                      precaution_months = 0.23,
+                                      precaution_scope = c("administrative", "any", "none"),
                                       inputs_dir = NULL, verbose = TRUE) {
   which <- match.arg(which)
+  precaution_scope <- match.arg(precaution_scope)
   .msg <- function(...) if (verbose) { cat(...); flush.console() }
   if (is.null(inputs_dir)) inputs_dir <- file.path(project_root, "data/20241015_out/_val_inputs")
   cm <- .evd_colmap[[which]]
@@ -230,6 +238,10 @@ build_extval_death_cohort <- function(which = c("C3", "C5"),
   d$cohabitation      <- .evd_cohabitation(raw[[cm$cohab]])
   d$any_phys_dx       <- do.call(.evd_any_phys, lapply(cm$phys, function(cc) raw[[cc]]))
   d$plan_type_corr <- if (is.na(cm$plan)) "pg-pr" else .evd_plan_c5(raw[[cm$plan]])
+  # Discharge reason, carried through so the alive-at-origin rules below can be reason-based rather
+  # than date-based only. Not a model covariate: the frozen death model does not use it.
+  d$disch_reason <- .evd_norm(raw[[cm$disch_reason]])
+  d$disch_admin_reason <- .evd_norm(raw[[cm$disch_admin_reason]])
 
   # 1) exclude development patients (convenio 1 + women's plans = original sample)
   in_dev <- d$hash_key %in% dev_hash
@@ -261,6 +273,39 @@ build_extval_death_cohort <- function(which = c("C3", "C5"),
     lubridate::time_length(lubridate::interval(d3$.disch, end_date), "months"))
   d3$death_time_from_disch_m <- pmax(d3$death_time_from_disch_m, 0)
 
+  # 5) post-discharge definition: the cohort must be ALIVE at the time origin, and deaths falling
+  #    inside a short precautionary window after an administrative discharge are removed because
+  #    such a discharge is plausibly a consequence of the terminal event rather than a prognosis
+  #    made from a stable state. Both rules are counted before being applied so the flow table
+  #    shows what was removed and why, and both can be switched off to reproduce the historical
+  #    code literally as an adversarial arm.
+  # WHY THIS IS NEEDED: death_event above requires def_date >= .disch. A patient whose registered
+  # death date PRECEDES the discharge date therefore fails that test and is carried as a CENSORED
+  # SURVIVOR, that is, a dead patient counted as alive. Convenio 3 has 20 such patients against 82
+  # deaths, so the misclassification is not a rare edge case.
+  .not_alive <- !is.na(d3$def_date) & !is.na(d3$.disch) & d3$def_date <= d3$.disch
+  .is_admin <- grepl("administrativ", dplyr::coalesce(d3$disch_reason, ""), ignore.case = TRUE)
+  .early <- d3$death_event == 1L & d3$death_time_from_disch_m > 0 &
+    d3$death_time_from_disch_m <= precaution_months
+  .precautionary <- switch(precaution_scope,
+                           administrative = .early & .is_admin,
+                           any = .early,
+                           none = rep(FALSE, nrow(d3)))
+  n_not_alive <- sum(.not_alive)
+  n_zero_time <- sum(d3$death_event == 1L & d3$death_time_from_disch_m <= 0)
+  n_precaution <- sum(.precautionary & !.not_alive)
+  .drop <- (alive_at_discharge & .not_alive) | .precautionary
+  if (verbose) {
+    .msg(sprintf("5. post-discharge definition (alive_at_discharge=%s, precaution=%s %.2f m):\n",
+                 alive_at_discharge, precaution_scope, precaution_months))
+    .msg(sprintf("   not alive at the discharge origin: %d (of which %d were carried as censored survivors, %d as zero-time deaths)\n",
+                 n_not_alive, sum(.not_alive & d3$death_event == 0L), n_zero_time))
+    .msg(sprintf("   deaths inside the precautionary window: %d total, %d after an administrative discharge, %d removed under the chosen scope\n",
+                 sum(.early), sum(.early & .is_admin), n_precaution))
+    .msg(sprintf("   removed in total: %d ; remaining: %d\n", sum(.drop), sum(!.drop)))
+  }
+  d3 <- d3[!.drop, , drop = FALSE]
+
   # placeholders so the shared dummify/contract pipeline is happy (readmission is
   # out of scope here; the death evaluator ignores these)
   d3$readmit_event <- 0L
@@ -271,14 +316,23 @@ build_extval_death_cohort <- function(which = c("C3", "C5"),
     step = c("raw rows", "raw patients", "after excluding development patients",
              paste0("adults ", age_lo, "-", age_hi),
              paste0("with discharge <= ", format(.censor)),
-             "first episode per patient (FINAL)",
+             "first episode per patient",
+             "removed: not alive at the discharge origin",
+             paste0("removed: death within ", precaution_months, " months of a ",
+                    precaution_scope, " discharge"),
+             "alive-at-origin cohort (FINAL)",
              "deaths (post-discharge, <= censor)", "censored"),
-    n = c(n0_rows, n0_pat, nrow(d1), n_adult, n_disch_ok, nrow(d3),
+    n = c(n0_rows, n0_pat, nrow(d1), n_adult, n_disch_ok, nrow(d3) + sum(.drop),
+          if (alive_at_discharge) n_not_alive else 0L, n_precaution, nrow(d3),
           sum(d3$death_event == 1L, na.rm = TRUE), sum(d3$death_event == 0L, na.rm = TRUE)),
     stringsAsFactors = FALSE)
   if (verbose) { cat(sprintf("\n=== %s DEATH COHORT FLOW ===\n", which)); print(flow, row.names = FALSE) }
 
   list(nondum = d3, flow = flow,
        params = list(convenio = which, censor = .censor, age_lo = age_lo, age_hi = age_hi,
+                     alive_at_discharge = alive_at_discharge,
+                     precaution_months = precaution_months, precaution_scope = precaution_scope,
+                     n_removed_not_alive = if (alive_at_discharge) n_not_alive else 0L,
+                     n_removed_precautionary = n_precaution,
                      source = src, created = as.character(Sys.time())))
 }

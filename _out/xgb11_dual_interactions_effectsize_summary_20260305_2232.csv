@@ -1,0 +1,5 @@
+table,outcome,n_rows,fdr_sig_n,clinically_meaningful_r_n,clinically_meaningful_smd_n,clinically_meaningful_combined_n,stat_and_clinical_combined_n
+global_top,Death,150,150,70,37,72,72
+global_top,Readmission,150,150,63,35,65,65
+horizon_top,Death,900,900,484,221,487,487
+horizon_top,Readmission,900,900,611,248,634,634

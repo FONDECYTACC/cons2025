@@ -1,0 +1,5 @@
+outcome,metric,p50,p75,p90,chosen_threshold,chosen_percentile
+Death,rank_range,0.0,0.0,0.0,8.0,100.0
+Death,abs_corr_delta,0.0,0.0,0.0,0.05,100.0
+Readmission,rank_range,0.0,0.0,0.0,8.0,100.0
+Readmission,abs_corr_delta,0.0,0.0,0.0,0.05,100.0

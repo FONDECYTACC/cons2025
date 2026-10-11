@@ -1,0 +1,6 @@
+outcome,rank_bin,n_features,median_mean_rank,median_sd_rank,median_cv_rank_pct,median_freq_topk_pct,stable_freq_pct
+Readmission,"(0.999, 12.0]",12,6.5,0.0,0.0,100.0,100.0
+Readmission,"(12.0, 23.0]",11,18.0,0.108994395,0.5452992,100.0,72.72727272727273
+Readmission,"(23.0, 33.996]",11,29.296,0.06318215,0.19143786,0.0,0.0
+Readmission,"(33.996, 45.082]",11,40.0,0.0,0.0,0.0,0.0
+Readmission,"(45.082, 56.0]",11,51.0,0.0,0.0,0.0,0.0

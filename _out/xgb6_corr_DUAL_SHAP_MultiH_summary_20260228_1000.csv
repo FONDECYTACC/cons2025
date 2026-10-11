@@ -1,0 +1,3 @@
+Outcome,N_patients,N_features,N_contrib_total,Horizons_exported
+Readmission,70803,56,354015,"3,6,12,36,60,96"
+Death,70803,56,354015,"3,6,12,36,60,96"

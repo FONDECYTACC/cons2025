@@ -1,0 +1,3 @@
+outcome,n_features,top1_feature,top1_importance,top2_feature,top2_importance,top1_to_top2_ratio,top15_stable_freq_ge_90pct_n
+Readmission,56,primary_sub_mod_cocaine_paste,0.09589763829734571,adm_age_rec3,0.08302355537593448,1.1550654252653574,15
+Death,56,adm_age_rec3,0.5188330679528359,primary_sub_mod_cocaine_paste,0.20190073955992552,2.5697432762441306,15

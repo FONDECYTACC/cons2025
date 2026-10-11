@@ -1,0 +1,6 @@
+outcome,rank_bin,n_features,median_mean_rank,median_sd_rank,median_cv_rank_pct,median_freq_topk_pct,stable_freq_pct
+Death,"(0.999, 12.0]",12,6.5,0.0,0.0,100.0,100.0
+Death,"(12.0, 23.0]",11,18.0,0.0,0.0,100.0,100.0
+Death,"(23.0, 34.182]",11,29.01,0.0,0.0,100.0,100.0
+Death,"(34.182, 45.0]",11,40.14,0.0,0.0,100.0,100.0
+Death,"(45.0, 56.0]",11,51.0,0.0,0.0,0.0,0.0
